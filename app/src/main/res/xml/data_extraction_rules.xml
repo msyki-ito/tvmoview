@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Data extraction rules for TV Movie Viewer (Android 12+)
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   for details.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- クラウドバックアップに含めるファイル -->
+        <include domain="sharedpref" path="app_preferences.xml"/>
+        <include domain="sharedpref" path="player_settings.xml"/>
+        <include domain="sharedpref" path="display_settings.xml"/>
+
+        <!-- 機密情報は除外 -->
+        <exclude domain="sharedpref" path="auth_tokens.xml"/>
+        <exclude domain="sharedpref" path="device_id.xml"/>
+        <exclude domain="database" path="cache.db"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="logs/"/>
+    </cloud-backup>
+
+    <device-transfer>
+        <!-- デバイス間転送に含めるファイル -->
+        <include domain="sharedpref" path="app_preferences.xml"/>
+        <include domain="sharedpref" path="player_settings.xml"/>
+        <include domain="sharedpref" path="display_settings.xml"/>
+
+        <!-- 機密情報は除外 -->
+        <exclude domain="sharedpref" path="auth_tokens.xml"/>
+        <exclude domain="sharedpref" path="device_id.xml"/>
+        <exclude domain="database" path="cache.db"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="logs/"/>
+    </device-transfer>
+</data-extraction-rules>

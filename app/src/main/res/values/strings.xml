@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ✅ アプリ基本情報 -->
+    <string name="app_name">TV Movie Viewer</string>
+
+    <!-- ログイン画面 -->
+    <string name="login_title">OneDriveにログイン</string>
+    <string name="test_data_button">テストデータで試す</string>
+    <string name="authentication_title">認証が必要です</string>
+    <string name="device_code_title">デバイス認証</string>
+    <string name="enter_code_instruction">この認証コードを入力してください:</string>
+    <string name="visit_url_instruction">PCまたはスマホで以下のURLにアクセス:</string>
+    <string name="waiting_for_auth">認証完了を待機中...</string>
+    <string name="auth_success">認証完了！</string>
+    <string name="auth_error">認証エラーが発生しました</string>
+    <string name="auth_cancel">認証をキャンセル</string>
+    <string name="retry_auth">認証を再試行</string>
+
+    <!-- 一般UI -->
+    <string name="loading">読み込み中...</string>
+    <string name="retry">再試行</string>
+    <string name="cancel">キャンセル</string>
+    <string name="back">戻る</string>
+    <string name="ok">OK</string>
+    <string name="close">閉じる</string>
+
+    <!-- 設定関連 -->
+    <string name="settings">設定</string>
+    <string name="settings_title">アプリ設定</string>
+    <string name="video_quality">動画品質</string>
+    <string name="auto_play">自動再生</string>
+    <string name="auto_play_description">動画選択時に自動で再生を開始</string>
+    <string name="dark_mode">ダークモード</string>
+    <string name="dark_mode_description">暗いテーマを使用</string>
+    <string name="app_version">アプリバージョン</string>
+    <string name="developer">開発者</string>
+    <string name="developer_name">TV Movie Viewer Team</string>
+    <string name="app_info">アプリ情報</string>
+    <string name="playback_settings">再生設定</string>
+    <string name="display_settings">表示設定</string>
+
+    <!-- 動画品質設定 -->
+    <string name="quality_low">低画質</string>
+    <string name="quality_standard">標準画質</string>
+    <string name="quality_high">高画質</string>
+    <string name="quality_highest">最高画質</string>
+
+    <!-- メディアプレイヤー -->
+    <string name="play_button">再生</string>
+    <string name="pause_button">一時停止</string>
+    <string name="stop_button">停止</string>
+    <string name="next_button">次へ</string>
+    <string name="previous_button">前へ</string>
+    <string name="fullscreen_button">フルスクリーン</string>
+    <string name="exit_fullscreen_button">フルスクリーン終了</string>
+
+    <!-- エラーメッセージ -->
+    <string name="error_network">ネットワークエラーが発生しました</string>
+    <string name="error_file_not_found">ファイルが見つかりません</string>
+    <string name="error_playback">再生エラーが発生しました</string>
+    <string name="error_auth_failed">認証に失敗しました</string>
+    <string name="error_unknown">不明なエラーが発生しました</string>
+</resources>

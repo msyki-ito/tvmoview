@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+   Backup rules for TV Movie Viewer
+   See https://developer.android.com/guide/topics/data/autobackup
+   for details.
+   Note: This file is ignored for devices older than API 23 (Android 6.0).
+-->
+<full-backup-content>
+    <!-- 設定ファイルはバックアップに含める -->
+    <include domain="sharedpref" path="app_preferences.xml"/>
+    <include domain="sharedpref" path="player_settings.xml"/>
+    <include domain="sharedpref" path="display_settings.xml"/>
+
+    <!-- 認証情報やキャッシュは除外 -->
+    <exclude domain="sharedpref" path="auth_tokens.xml"/>
+    <exclude domain="sharedpref" path="device_id.xml"/>
+    <exclude domain="database" path="cache.db"/>
+    <exclude domain="file" path="temp/"/>
+    <exclude domain="file" path="cache/"/>
+
+    <!-- ログファイルは除外 -->
+    <exclude domain="file" path="logs/"/>
+</full-backup-content>

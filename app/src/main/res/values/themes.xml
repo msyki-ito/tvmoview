@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 既存テーマ（そのまま） -->
+    <style name="Theme.TvMoview" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- メインテーマ（Androidビルトイン） -->
+    <style name="Theme.TVMovieViewer" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- フルスクリーンテーマ（エラー解決用） -->
+    <style name="Theme.TVMovieViewer.Fullscreen" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:keepScreenOn">true</item>
+    </style>
+</resources>
