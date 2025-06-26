@@ -4,6 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import com.example.tvmoview.presentation.util.ImageLoaderProvider
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,17 +34,25 @@ fun ModernMediaCard(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = when {
-                        item.isFolder -> Icons.Default.Folder
-                        item.isVideo -> Icons.Default.PlayArrow
-                        item.isImage -> Icons.Default.Image
-                        else -> Icons.Default.Description
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                if (item.thumbnailUrl != null) {
+                    AsyncImage(
+                        model = item.thumbnailUrl,
+                        contentDescription = null,
+                        imageLoader = ImageLoaderProvider.create(LocalContext.current)
+                    )
+                } else {
+                    Icon(
+                        imageVector = when {
+                            item.isFolder -> Icons.Default.Folder
+                            item.isVideo -> Icons.Default.PlayArrow
+                            item.isImage -> Icons.Default.Image
+                            else -> Icons.Default.Description
+                        },
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             
             Column(modifier = Modifier.padding(12.dp)) {
