@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
     // ✅ kapt プラグイン追加
     id("org.jetbrains.kotlin.kapt")
+    id("androidx.room")
 }
 
 android {
@@ -106,4 +107,13 @@ dependencies {
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+room {
+    // Room Gradle plugin requires schemaDirectory() invocation
+    schemaDirectory(file("schemas"))
+}
+
+kapt {
+    correctErrorTypes = true
 }
