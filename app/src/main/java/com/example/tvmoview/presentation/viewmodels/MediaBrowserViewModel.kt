@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.MainActivity
+import kotlinx.coroutines.flow.collectLatest
 import java.util.Date
 
 enum class ViewMode {
@@ -20,6 +21,8 @@ enum class SortBy {
 }
 
 class MediaBrowserViewModel : ViewModel() {
+
+    private val repository get() = MainActivity.cacheRepository
 
     private val _items = MutableStateFlow<List<MediaItem>>(emptyList())
     val items: StateFlow<List<MediaItem>> = _items.asStateFlow()
@@ -36,106 +39,18 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentPath = MutableStateFlow("OneDrive")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
 
-    fun loadItems(folderId: String? = null) {
+    fun loadItems(folderId: String? = null, force: Boolean = false) {
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
-
-            try {
-                val items = if (MainActivity.authManager.isAuthenticated()) {
-                    Log.d("MediaBrowserViewModel", "🔐 OneDrive認証済み、OneDriveから取得")
-                    loadOneDriveItems(folderId)
-                } else {
-                    Log.d("MediaBrowserViewModel", "🧪 未認証、テストデータ使用")
-                    loadTestItems(folderId)
-                }
-
-                // ソート適用
-                val sortedItems = applySorting(items)
+            repository.getFolderItems(folderId, force).collectLatest { list ->
+                val sortedItems = applySorting(list)
                 _items.value = sortedItems
-
-                // パス更新
-                _currentPath.value = if (folderId != null) {
-                    MainActivity.oneDriveRepository.getCurrentPath(folderId)
-                } else {
-                    "OneDrive"
-                }
-
-                Log.d("MediaBrowserViewModel", "✅ アイテム読み込み完了: ${sortedItems.size}件")
-
-            } catch (e: Exception) {
-                Log.e("MediaBrowserViewModel", "❌ アイテム読み込みエラー", e)
-
-                // フォールバック：テストデータ
-                Log.d("MediaBrowserViewModel", "🔄 フォールバック：テストデータ使用")
-                val testItems = loadTestItems(folderId)
-                _items.value = applySorting(testItems)
+                _currentPath.value = folderId?.let { MainActivity.oneDriveRepository.getCurrentPath(it) } ?: "OneDrive"
+                _isLoading.value = false
             }
-
-            _isLoading.value = false
         }
     }
 
-    private suspend fun loadOneDriveItems(folderId: String?): List<MediaItem> {
-        return try {
-            if (folderId != null) {
-                Log.d("MediaBrowserViewModel", "📂 OneDriveフォルダ取得: $folderId")
-                MainActivity.oneDriveRepository.getFolderItems(folderId)
-            } else {
-                Log.d("MediaBrowserViewModel", "🏠 OneDriveルート取得")
-                MainActivity.oneDriveRepository.getRootItems()
-            }
-        } catch (e: Exception) {
-            Log.e("MediaBrowserViewModel", "❌ OneDriveアイテム取得失敗", e)
-            emptyList()
-        }
-    }
-
-    private fun loadTestItems(folderId: String?): List<MediaItem> {
-        return try {
-            // MediaRepositoryの正しいメソッド名を使用
-            if (folderId != null) {
-                // フォルダ指定の場合（仮実装：空リスト）
-                emptyList()
-            } else {
-                // ルートの場合：テストデータ生成
-                generateTestMediaItems()
-            }
-        } catch (e: Exception) {
-            Log.e("MediaBrowserViewModel", "❌ テストデータ取得失敗", e)
-            emptyList()
-        }
-    }
-
-    // テストデータ生成
-    private fun generateTestMediaItems(): List<MediaItem> {
-        return listOf(
-            MediaItem(
-                id = "test_video_1",
-                name = "サンプル動画1.mp4",
-                size = 125829120,
-                mimeType = "video/mp4",
-                isFolder = false,
-                downloadUrl = null
-            ),
-            MediaItem(
-                id = "test_video_2",
-                name = "サンプル動画2.mp4",
-                size = 89654321,
-                mimeType = "video/mp4",
-                isFolder = false,
-                downloadUrl = null
-            ),
-            MediaItem(
-                id = "test_folder_1",
-                name = "サンプルフォルダ",
-                size = 0,
-                mimeType = null,
-                isFolder = true,
-                downloadUrl = null
-            )
-        )
-    }
 
     fun toggleViewMode() {
         _viewMode.value = when (_viewMode.value) {
@@ -169,9 +84,8 @@ class MediaBrowserViewModel : ViewModel() {
         }
     }
 
-    fun refresh() {
+    fun refresh(folderId: String? = null) {
         Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
-        val currentFolderId = if (_currentPath.value == "OneDrive") null else "current_folder_id"
-        loadItems(currentFolderId)
+        loadItems(folderId, force = true)
     }
 }
