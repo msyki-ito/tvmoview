@@ -2,8 +2,9 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
-    // ✅ kapt プラグイン追加
-    id("org.jetbrains.kotlin.kapt")
+    // ✅ KSP プラグインに移行
+    id("com.google.devtools.ksp")
+    id("androidx.room")
 }
 
 android {
@@ -92,7 +93,7 @@ dependencies {
     // ✅ Room Database（将来のキャッシュ機能用）
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1") // ✅ kapt使用
+    ksp("androidx.room:room-compiler:2.6.1") // ✅ KSP使用
 
     // HTTP通信（OneDrive API）
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -107,3 +108,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+room {
+    // Room Gradle plugin requires schemaDirectory() invocation
+    schemaDirectory(file("schemas"))
+}
+
