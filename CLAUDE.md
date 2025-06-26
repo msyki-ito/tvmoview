@@ -1,11 +1,11 @@
 # 📦 プロジェクト依存関係概要
 
-## ❌ 禁止事項
-- BOM / Version Catalog に無い依存を直接 version 指定で追加しない
-- pi で外部ライブラリを公開しない（基本は implementation）
-- Material2, AppCompat UI を新規導入しない（Compose Material3 統一）
-- 重複 Kotlin stdlib を追加しない
-- build.gradle に新依存を追加する場合は “提案 PR” のみ可
+## ❌ 禁止事項 (Dependency Policy)
+- **Version Catalog／BOM に無い依存**を implementation("group:artifact:version") のように直書きで追加しない
+- 新規依存は **implementation のみ**。pi や compileOnly は導入禁止（公開/透過させない）
+- **Material2 / AppCompat 系 UI ライブラリを新規導入しない** → **Compose Material3 に統一**
+- **Ktor / Apollo / Moshi など未採用の HTTP・JSON ライブラリは禁止**
+- uild.gradle(.kts) は **AI から直接書き換えず、提案コメントのみ** に留める（レビュー必須）
 
 
 ## ⚙ 環境
