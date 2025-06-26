@@ -11,14 +11,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.tvmoview.data.repository.MediaRepository
+import androidx.room.Room
+import com.example.tvmoview.data.local.AppDatabase
+import com.example.tvmoview.data.repository.CacheAwareMediaRepository
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
+import kotlinx.coroutines.launch
 
 // OneDrive統合のための新しいimport
 import com.example.tvmoview.data.auth.AuthenticationManager
@@ -32,6 +37,9 @@ class MainActivity : ComponentActivity() {
         // OneDrive統合のための新しい変数
         lateinit var authManager: AuthenticationManager
         lateinit var oneDriveRepository: OneDriveRepository
+
+        lateinit var database: AppDatabase
+        lateinit var cacheRepository: CacheAwareMediaRepository
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +52,17 @@ class MainActivity : ComponentActivity() {
         authManager = AuthenticationManager(this)
         oneDriveRepository = OneDriveRepository(authManager)
 
+        database = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "cache.db"
+        ).build()
+        cacheRepository = CacheAwareMediaRepository(
+            oneDriveRepository,
+            database.cachedMediaItemDao(),
+            database.folderSyncStatusDao()
+        )
+
         Log.d("MainActivity", "🎉 TV Movie Viewer 完全版起動！")
         Log.d("MainActivity", "📁 OneDrive統合準備完了")
 
@@ -55,6 +74,11 @@ class MainActivity : ComponentActivity() {
 
         // OAuth認証コールバック処理
         handleAuthRedirect(intent)
+
+        lifecycleScope.launch {
+            cacheRepository.getFolderItems(null, force = false)
+                .collect { /* preload cache */ }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
