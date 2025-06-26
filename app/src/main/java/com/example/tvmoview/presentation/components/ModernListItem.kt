@@ -6,6 +6,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import com.example.tvmoview.presentation.util.ImageLoaderProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,17 +34,26 @@ fun ModernListItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = when {
-                    item.isFolder -> Icons.Default.Folder
-                    item.isVideo -> Icons.Default.PlayArrow
-                    item.isImage -> Icons.Default.Image
-                    else -> Icons.Default.Description
-                },
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            if (item.thumbnailUrl != null) {
+                AsyncImage(
+                    model = item.thumbnailUrl,
+                    contentDescription = null,
+                    imageLoader = ImageLoaderProvider.create(LocalContext.current),
+                    modifier = Modifier.size(32.dp)
+                )
+            } else {
+                Icon(
+                    imageVector = when {
+                        item.isFolder -> Icons.Default.Folder
+                        item.isVideo -> Icons.Default.PlayArrow
+                        item.isImage -> Icons.Default.Image
+                        else -> Icons.Default.Description
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
             
             Spacer(modifier = Modifier.width(16.dp))
             
