@@ -111,5 +111,5 @@ dependencies {
 
 room {
     // Room Gradle plugin requires schemaDirectory() invocation
-    schemaDirectory(file("schemas"))
+    schemaDirectory("$projectDir/schemas")
 }

@@ -21,6 +21,7 @@ import com.example.tvmoview.data.repository.MediaRepository
 import androidx.room.Room
 import com.example.tvmoview.data.local.AppDatabase
 import com.example.tvmoview.data.repository.CacheAwareMediaRepository
+import com.example.tvmoview.data.repository.StartupSyncUseCase
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
 import kotlinx.coroutines.launch
@@ -75,10 +76,8 @@ class MainActivity : ComponentActivity() {
         // OAuth認証コールバック処理
         handleAuthRedirect(intent)
 
-        lifecycleScope.launch {
-            cacheRepository.getFolderItems(null, force = false)
-                .collect { /* preload cache */ }
-        }
+        val startupSync = StartupSyncUseCase(cacheRepository)
+        lifecycleScope.launch { startupSync() }
     }
 
     override fun onNewIntent(intent: Intent?) {

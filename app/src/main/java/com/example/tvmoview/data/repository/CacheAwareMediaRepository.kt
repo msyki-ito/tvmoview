@@ -17,6 +17,8 @@ class CacheAwareMediaRepository(
     private val statusDao: FolderSyncStatusDao
 ) {
     private val fetchIntervalMs = TimeUnit.MINUTES.toMillis(10)
+    private val maxItems = 1000
+    private val maxItemsPerFolder = 100
 
     fun getFolderItems(folderId: String?, force: Boolean): Flow<List<MediaItem>> = flow {
         val cached = itemDao.list(folderId).map { it.toDomain() }
@@ -30,6 +32,7 @@ class CacheAwareMediaRepository(
             }
             val entities = items.map { it.toEntity(folderId) }
             itemDao.replaceFolder(folderId, entities)
+            trimCache(folderId)
             statusDao.upsert(
                 com.example.tvmoview.data.local.FolderSyncStatusEntity(
                     folderId = folderId ?: "root",
@@ -49,5 +52,17 @@ class CacheAwareMediaRepository(
         val status = statusDao.get(folderId ?: "root")
         val elapsed = System.currentTimeMillis() - (status?.lastSyncAt ?: 0L)
         return elapsed > fetchIntervalMs
+    }
+
+    private suspend fun trimCache(folderId: String?) {
+        val total = itemDao.count()
+        if (total > maxItems) {
+            itemDao.deleteOldest(total - maxItems)
+        }
+
+        val folderCount = itemDao.folderCount(folderId)
+        if (folderCount > maxItemsPerFolder) {
+            itemDao.deleteOldestInFolder(folderId, folderCount - maxItemsPerFolder)
+        }
     }
 }

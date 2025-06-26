@@ -5,3 +5,4 @@
 - ViewModel observes cached data via repository Flow.
 - ImageLoader is configured with disk cache max 10MB.
 - `StartupSyncUseCase` warms the cache at launch without WorkManager.
+- Cache is trimmed to 1000 items total and 100 per folder.
