@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
     // ✅ kapt プラグイン追加
     id("org.jetbrains.kotlin.kapt")
+    id("androidx.room")
 }
 
 android {
