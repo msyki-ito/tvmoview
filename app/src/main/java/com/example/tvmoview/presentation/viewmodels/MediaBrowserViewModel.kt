@@ -36,10 +36,22 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentPath = MutableStateFlow("OneDrive")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
 
+    private val _currentFolderId = MutableStateFlow<String?>(null)
+    val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
+
     fun loadItems(folderId: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
+            _currentFolderId.value = folderId
+
+            val cached = if (MainActivity.authManager.isAuthenticated()) {
+                MainActivity.oneDriveRepository.getCachedItems(folderId)
+            } else emptyList()
+            if (cached.isNotEmpty()) {
+                Log.d("MediaBrowserViewModel", "📦 キャッシュ読み込み: ${cached.size}件")
+                _items.value = applySorting(cached)
+            }
 
             try {
                 val items = if (MainActivity.authManager.isAuthenticated()) {
@@ -50,9 +62,17 @@ class MediaBrowserViewModel : ViewModel() {
                     loadTestItems(folderId)
                 }
 
-                // ソート適用
-                val sortedItems = applySorting(items)
-                _items.value = sortedItems
+                if (items.isNotEmpty()) {
+                    val sortedItems = applySorting(items)
+                    _items.value = sortedItems
+                    Log.d("MediaBrowserViewModel", "✅ アイテム読み込み完了: ${sortedItems.size}件")
+                } else if (cached.isNotEmpty()) {
+                    Log.d("MediaBrowserViewModel", "💾 ネットワーク取得失敗、キャッシュを継続表示")
+                } else {
+                    Log.d("MediaBrowserViewModel", "🔄 フォールバック：テストデータ使用")
+                    val testItems = loadTestItems(folderId)
+                    _items.value = applySorting(testItems)
+                }
 
                 // パス更新
                 _currentPath.value = if (folderId != null) {
@@ -61,15 +81,15 @@ class MediaBrowserViewModel : ViewModel() {
                     "OneDrive"
                 }
 
-                Log.d("MediaBrowserViewModel", "✅ アイテム読み込み完了: ${sortedItems.size}件")
-
             } catch (e: Exception) {
                 Log.e("MediaBrowserViewModel", "❌ アイテム読み込みエラー", e)
-
-                // フォールバック：テストデータ
-                Log.d("MediaBrowserViewModel", "🔄 フォールバック：テストデータ使用")
-                val testItems = loadTestItems(folderId)
-                _items.value = applySorting(testItems)
+                if (cached.isNotEmpty()) {
+                    Log.d("MediaBrowserViewModel", "💾 例外発生のためキャッシュ表示: ${cached.size}件")
+                } else {
+                    Log.d("MediaBrowserViewModel", "🔄 フォールバック：テストデータ使用")
+                    val testItems = loadTestItems(folderId)
+                    _items.value = applySorting(testItems)
+                }
             }
 
             _isLoading.value = false
@@ -171,7 +191,6 @@ class MediaBrowserViewModel : ViewModel() {
 
     fun refresh() {
         Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
-        val currentFolderId = if (_currentPath.value == "OneDrive") null else "current_folder_id"
-        loadItems(currentFolderId)
+        loadItems(_currentFolderId.value)
     }
 }
