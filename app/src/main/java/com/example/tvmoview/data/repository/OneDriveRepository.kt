@@ -49,9 +49,14 @@ class OneDriveRepository(
     private val syncIntervalMs = 10 * 60 * 1000L
 
     private suspend fun shouldFetch(folderId: String, force: Boolean): Boolean {
-        if (force) return true
-        val last = folderSyncDao.lastSyncAt(folderId) ?: return true
-        return System.currentTimeMillis() - last > syncIntervalMs
+        val last = folderSyncDao.lastSyncAt(folderId)
+        val should = force || last == null ||
+            System.currentTimeMillis() - last > syncIntervalMs
+        Log.d(
+            "OneDriveRepository",
+            "🔍 shouldFetch(folder=$folderId, force=$force, last=$last) -> $should"
+        )
+        return should
     }
 
     suspend fun getCachedItems(folderId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
@@ -64,12 +69,19 @@ class OneDriveRepository(
     }
 
     fun getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>> =
-        mediaDao.observe(folderId).map { list -> list.map { it.toDomain() } }
+        mediaDao.observe(folderId)
             .onStart {
                 val key = folderId ?: ROOT_ID
                 if (shouldFetch(key, force)) {
+                    Log.d("OneDriveRepository", "🌐 sync triggered (folder=$key)")
                     sync(folderId)
+                } else {
+                    Log.d("OneDriveRepository", "✅ cache hit for folder=$key")
                 }
+            }
+            .map { list ->
+                Log.d("OneDriveRepository", "📤 emit cached ${'$'}{list.size} items (folder=${folderId ?: ROOT_ID})")
+                list.map { it.toDomain() }
             }
 
     // 動画ファイルのdownloadURL取得（新規追加）
@@ -208,13 +220,15 @@ class OneDriveRepository(
 
     private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
-        Log.d("OneDriveRepository", "💾 キャッシュ保存: ${'$'}{items.size}件 (folder=${'$'}folderId)")
+        Log.d("OneDriveRepository", "💾 saving ${'$'}{items.size} items to cache (folder=${'$'}folderId)")
         mediaDao.replaceFolder(folderId, items.take(100).map { it.toCached(folderId, now) })
         mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
         folderSyncDao.upsert(FolderSyncStatus(folderId ?: ROOT_ID, now))
+        Log.d("OneDriveRepository", "📌 lastSyncAt updated to $now for folder=${folderId ?: ROOT_ID}")
     }
 
     private suspend fun sync(folderId: String?) = mutex.withLock {
+        Log.d("OneDriveRepository", "⬆️ start sync for folder=${folderId ?: ROOT_ID}")
         val result = if (folderId == null) getRootItemsResult() else getFolderItemsResult(folderId)
         if (result is OneDriveResult.Success) {
             val itemsWithDownloadUrl = result.data.map { item ->
@@ -226,8 +240,9 @@ class OneDriveRepository(
                 }
             }
             cacheItems(folderId, itemsWithDownloadUrl)
+            Log.d("OneDriveRepository", "✅ sync success: ${'$'}{itemsWithDownloadUrl.size} items")
         } else if (result is OneDriveResult.Error) {
-            Log.e("OneDriveRepository", "❌ エラー: ${result.exception.message}")
+            Log.e("OneDriveRepository", "❌ sync error: ${'$'}{result.exception.message}")
         }
     }
 

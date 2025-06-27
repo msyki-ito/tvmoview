@@ -51,12 +51,21 @@ class MediaBrowserViewModel : ViewModel() {
             "OneDrive"
         }
 
+        Log.d(
+            "MediaBrowserViewModel",
+            "📥 loadItems(folder=${folderId ?: "root"}, force=$force)"
+        )
+
         loadJob = viewModelScope.launch {
             _isLoading.value = true
             if (MainActivity.authManager.isAuthenticated()) {
                 MainActivity.oneDriveRepository.getFolderItems(folderId, force).collect { list ->
                     _items.value = applySorting(list)
                     _isLoading.value = false
+                    Log.d(
+                        "MediaBrowserViewModel",
+                        "📊 items updated: ${'$'}{list.size} entries"
+                    )
                 }
             } else {
                 val items = loadTestItems(folderId)
