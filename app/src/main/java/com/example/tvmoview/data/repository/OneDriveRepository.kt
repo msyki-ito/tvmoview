@@ -72,6 +72,10 @@ class OneDriveRepository(
         mediaDao.observe(folderId)
             .onStart {
                 val key = folderId ?: ROOT_ID
+                Log.d(
+                    "OneDriveRepository",
+                    "🔍 getFolderItems start (folder=$key, force=$force)"
+                )
                 if (shouldFetch(key, force)) {
                     Log.d("OneDriveRepository", "🌐 sync triggered (folder=$key)")
                     sync(folderId)
@@ -80,7 +84,10 @@ class OneDriveRepository(
                 }
             }
             .map { list ->
-                Log.d("OneDriveRepository", "📤 emit cached ${'$'}{list.size} items (folder=${folderId ?: ROOT_ID})")
+                Log.d(
+                    "OneDriveRepository",
+                    "📤 emit cached ${'$'}{list.size} items (folder=${folderId ?: ROOT_ID})"
+                )
                 list.map { it.toDomain() }
             }
 
