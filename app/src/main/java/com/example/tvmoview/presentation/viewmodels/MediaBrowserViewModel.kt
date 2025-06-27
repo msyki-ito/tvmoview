@@ -39,7 +39,9 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentFolderId = MutableStateFlow<String?>(null)
     val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
 
+
     fun loadItems(folderId: String? = null, force: Boolean = false) {
+
         viewModelScope.launch {
             _isLoading.value = true
             Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
@@ -56,7 +58,9 @@ class MediaBrowserViewModel : ViewModel() {
             try {
                 val items = if (MainActivity.authManager.isAuthenticated()) {
                     Log.d("MediaBrowserViewModel", "🔐 OneDrive認証済み、OneDriveから取得")
+
                     loadOneDriveItems(folderId, force)
+
                 } else {
                     Log.d("MediaBrowserViewModel", "🧪 未認証、テストデータ使用")
                     loadTestItems(folderId)
@@ -191,6 +195,8 @@ class MediaBrowserViewModel : ViewModel() {
 
     fun refresh() {
         Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
+
         loadItems(_currentFolderId.value, force = true)
     }
 }
+

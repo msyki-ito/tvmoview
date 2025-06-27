@@ -60,6 +60,7 @@ class OneDriveRepository(
             val cached = getCachedItems(null)
             if (cached.isNotEmpty()) return cached
         }
+
         return when (val result = getRootItemsResult()) {
             is OneDriveResult.Success -> {
                 Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
@@ -255,11 +256,14 @@ class OneDriveRepository(
     private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         Log.d("OneDriveRepository", "💾 キャッシュ保存: ${'$'}{items.size}件 (folder=${'$'}folderId)")
+
         mediaDao.clearFolder(folderId)
         val entities = items.take(100).map { it.toCached(folderId, now) }
         mediaDao.insertItems(entities)
         mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
+
         lastSyncTimes[folderId] = now
+
     }
 
     private fun OneDriveItem.toMediaItem(): MediaItem {
