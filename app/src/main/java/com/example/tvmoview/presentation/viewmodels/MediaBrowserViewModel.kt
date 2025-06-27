@@ -36,24 +36,12 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentPath = MutableStateFlow("OneDrive")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
 
-    private val _currentFolderId = MutableStateFlow<String?>(null)
-    val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
-
     fun loadItems(folderId: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
-            _currentFolderId.value = folderId
 
             try {
-                val cached = if (MainActivity.authManager.isAuthenticated()) {
-                    MainActivity.oneDriveRepository.getCachedItems(folderId)
-                } else emptyList()
-
-                if (cached.isNotEmpty()) {
-                    _items.value = applySorting(cached)
-                }
-
                 val items = if (MainActivity.authManager.isAuthenticated()) {
                     Log.d("MediaBrowserViewModel", "🔐 OneDrive認証済み、OneDriveから取得")
                     loadOneDriveItems(folderId)
@@ -183,6 +171,7 @@ class MediaBrowserViewModel : ViewModel() {
 
     fun refresh() {
         Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
-        loadItems(_currentFolderId.value)
+        val currentFolderId = if (_currentPath.value == "OneDrive") null else "current_folder_id"
+        loadItems(currentFolderId)
     }
 }
