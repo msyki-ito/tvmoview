@@ -23,6 +23,10 @@ import com.example.tvmoview.presentation.theme.TVMovieTheme
 // OneDrive統合のための新しいimport
 import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.repository.OneDriveRepository
+import com.example.tvmoview.data.db.MediaDatabaseProvider
+import coil.ImageLoader
+import coil.Coil
+import coil.disk.DiskCache
 
 class MainActivity : ComponentActivity() {
 
@@ -42,7 +46,19 @@ class MainActivity : ComponentActivity() {
 
         // OneDrive統合の初期化（新規追加）
         authManager = AuthenticationManager(this)
-        oneDriveRepository = OneDriveRepository(authManager)
+        MediaDatabaseProvider.init(this)
+        oneDriveRepository = OneDriveRepository(authManager, MediaDatabaseProvider.database.mediaDao())
+
+        val imageLoader = ImageLoader.Builder(this)
+            .diskCache(
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(10L * 1024 * 1024)
+                    .build()
+            )
+            .memoryCache(null)
+            .build()
+        Coil.setImageLoader(imageLoader)
 
         Log.d("MainActivity", "🎉 TV Movie Viewer 完全版起動！")
         Log.d("MainActivity", "📁 OneDrive統合準備完了")

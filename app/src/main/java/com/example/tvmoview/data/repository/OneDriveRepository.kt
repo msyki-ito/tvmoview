@@ -6,6 +6,9 @@ import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.model.OneDriveItem
 import com.example.tvmoview.data.model.OneDriveResult
 import com.example.tvmoview.domain.model.MediaItem
+import com.example.tvmoview.data.db.MediaDao
+import com.example.tvmoview.data.db.toCached
+import com.example.tvmoview.data.db.toDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
@@ -17,7 +20,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class OneDriveRepository(
-    private val authManager: AuthenticationManager
+    private val authManager: AuthenticationManager,
+    private val mediaDao: MediaDao
 ) {
 
     private val apiService: OneDriveApiService by lazy {
@@ -30,6 +34,14 @@ class OneDriveRepository(
 
     private val okHttpClient = OkHttpClient()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+
+    suspend fun getCachedItems(folderId: String?): List<MediaItem> {
+        val cached = mediaDao.getItems(folderId)
+        if (cached.isNotEmpty()) {
+            mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
+        }
+        return cached.map { it.toDomain() }
+    }
 
     suspend fun getRootItems(): List<MediaItem> {
         Log.d("OneDriveRepository", "🔍 getRootItems() 開始")
@@ -49,6 +61,7 @@ class OneDriveRepository(
                 }
 
                 Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
+                cacheItems(null, itemsWithDownloadUrl)
                 itemsWithDownloadUrl
             }
             is OneDriveResult.Error -> {
@@ -76,6 +89,7 @@ class OneDriveRepository(
                 }
 
                 Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
+                cacheItems(folderId, itemsWithDownloadUrl)
                 itemsWithDownloadUrl
             }
             is OneDriveResult.Error -> {
@@ -217,6 +231,14 @@ class OneDriveRepository(
 
     fun getCurrentPath(folderId: String?): String {
         return folderId?.let { "OneDriveフォルダ" } ?: "OneDrive"
+    }
+
+    private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) {
+        val now = System.currentTimeMillis()
+        mediaDao.clearFolder(folderId)
+        val entities = items.take(100).map { it.toCached(folderId, now) }
+        mediaDao.insertItems(entities)
+        mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
     }
 
     private fun OneDriveItem.toMediaItem(): MediaItem {
