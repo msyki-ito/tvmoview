@@ -20,6 +20,7 @@ fun ModernTopBar(
     viewMode: ViewMode,
     onViewModeChange: () -> Unit,
     onSortClick: () -> Unit,
+    onRefreshClick: () -> Unit,
     onSettingsClick: (() -> Unit)? = null,
     onBackClick: (() -> Unit)? = null
 ) {
@@ -63,6 +64,13 @@ fun ModernTopBar(
                         ViewMode.LIST -> Icons.Default.ViewModule
                     },
                     contentDescription = "表示モード切り替え"
+                )
+            }
+
+            IconButton(onClick = onRefreshClick) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "更新"
                 )
             }
 

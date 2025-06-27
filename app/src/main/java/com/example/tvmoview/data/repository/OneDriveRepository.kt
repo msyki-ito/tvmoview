@@ -6,6 +6,9 @@ import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.model.OneDriveItem
 import com.example.tvmoview.data.model.OneDriveResult
 import com.example.tvmoview.domain.model.MediaItem
+import com.example.tvmoview.data.db.MediaDao
+import com.example.tvmoview.data.db.toCached
+import com.example.tvmoview.data.db.toDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
@@ -17,7 +20,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class OneDriveRepository(
-    private val authManager: AuthenticationManager
+    private val authManager: AuthenticationManager,
+    private val mediaDao: MediaDao
 ) {
 
     private val apiService: OneDriveApiService by lazy {
@@ -31,8 +35,31 @@ class OneDriveRepository(
     private val okHttpClient = OkHttpClient()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 
-    suspend fun getRootItems(): List<MediaItem> {
+    private val lastSyncTimes = mutableMapOf<String?, Long>()
+    private val syncIntervalMs = 10 * 60 * 1000L
+
+    private fun shouldFetch(folderId: String?, force: Boolean): Boolean {
+        if (force) return true
+        val last = lastSyncTimes[folderId] ?: return true
+        return System.currentTimeMillis() - last > syncIntervalMs
+    }
+
+    suspend fun getCachedItems(folderId: String?): List<MediaItem> =
+        withContext(Dispatchers.IO) {
+            val cached = mediaDao.getItems(folderId)
+            if (cached.isNotEmpty()) {
+                Log.d("OneDriveRepository", "💾 キャッシュ取得: ${'$'}{cached.size}件")
+                mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
+            }
+            cached.map { it.toDomain() }
+        }
+
+    suspend fun getRootItems(force: Boolean = false): List<MediaItem> {
         Log.d("OneDriveRepository", "🔍 getRootItems() 開始")
+        if (!shouldFetch(null, force)) {
+            val cached = getCachedItems(null)
+            if (cached.isNotEmpty()) return cached
+        }
         return when (val result = getRootItemsResult()) {
             is OneDriveResult.Success -> {
                 Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
@@ -49,6 +76,7 @@ class OneDriveRepository(
                 }
 
                 Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
+                cacheItems(null, itemsWithDownloadUrl)
                 itemsWithDownloadUrl
             }
             is OneDriveResult.Error -> {
@@ -58,8 +86,12 @@ class OneDriveRepository(
         }
     }
 
-    suspend fun getFolderItems(folderId: String): List<MediaItem> {
+    suspend fun getFolderItems(folderId: String, force: Boolean = false): List<MediaItem> {
         Log.d("OneDriveRepository", "🔍 getFolderItems($folderId) 開始")
+        if (!shouldFetch(folderId, force)) {
+            val cached = getCachedItems(folderId)
+            if (cached.isNotEmpty()) return cached
+        }
         return when (val result = getFolderItemsResult(folderId)) {
             is OneDriveResult.Success -> {
                 Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
@@ -76,6 +108,7 @@ class OneDriveRepository(
                 }
 
                 Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
+                cacheItems(folderId, itemsWithDownloadUrl)
                 itemsWithDownloadUrl
             }
             is OneDriveResult.Error -> {
@@ -217,6 +250,16 @@ class OneDriveRepository(
 
     fun getCurrentPath(folderId: String?): String {
         return folderId?.let { "OneDriveフォルダ" } ?: "OneDrive"
+    }
+
+    private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        Log.d("OneDriveRepository", "💾 キャッシュ保存: ${'$'}{items.size}件 (folder=${'$'}folderId)")
+        mediaDao.clearFolder(folderId)
+        val entities = items.take(100).map { it.toCached(folderId, now) }
+        mediaDao.insertItems(entities)
+        mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
+        lastSyncTimes[folderId] = now
     }
 
     private fun OneDriveItem.toMediaItem(): MediaItem {
