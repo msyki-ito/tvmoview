@@ -38,6 +38,7 @@ class OneDriveRepository(
     suspend fun getCachedItems(folderId: String?): List<MediaItem> {
         val cached = mediaDao.getItems(folderId)
         if (cached.isNotEmpty()) {
+            Log.d("OneDriveRepository", "💾 キャッシュ取得: ${cached.size}件")
             mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
         }
         return cached.map { it.toDomain() }
@@ -235,6 +236,7 @@ class OneDriveRepository(
 
     private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) {
         val now = System.currentTimeMillis()
+        Log.d("OneDriveRepository", "💾 キャッシュ保存: ${items.size}件 (folder=$folderId)")
         mediaDao.clearFolder(folderId)
         val entities = items.take(100).map { it.toCached(folderId, now) }
         mediaDao.insertItems(entities)

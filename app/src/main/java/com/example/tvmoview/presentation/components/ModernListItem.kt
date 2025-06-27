@@ -40,6 +40,7 @@ fun ModernListItem(
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.thumbnailUrl)
+                        .diskCacheKey(item.id)
                         .diskCachePolicy(CachePolicy.ENABLED)
                         .memoryCachePolicy(CachePolicy.DISABLED)
                         .build(),
