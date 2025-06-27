@@ -39,9 +39,7 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentFolderId = MutableStateFlow<String?>(null)
     val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
 
-
-    fun loadItems(folderId: String? = null, force: Boolean = false) {
-
+    fun loadItems(folderId: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
@@ -58,9 +56,7 @@ class MediaBrowserViewModel : ViewModel() {
             try {
                 val items = if (MainActivity.authManager.isAuthenticated()) {
                     Log.d("MediaBrowserViewModel", "🔐 OneDrive認証済み、OneDriveから取得")
-
-                    loadOneDriveItems(folderId, force)
-
+                    loadOneDriveItems(folderId)
                 } else {
                     Log.d("MediaBrowserViewModel", "🧪 未認証、テストデータ使用")
                     loadTestItems(folderId)
@@ -100,14 +96,14 @@ class MediaBrowserViewModel : ViewModel() {
         }
     }
 
-    private suspend fun loadOneDriveItems(folderId: String?, force: Boolean): List<MediaItem> {
+    private suspend fun loadOneDriveItems(folderId: String?): List<MediaItem> {
         return try {
             if (folderId != null) {
                 Log.d("MediaBrowserViewModel", "📂 OneDriveフォルダ取得: $folderId")
-                MainActivity.oneDriveRepository.getFolderItems(folderId, force)
+                MainActivity.oneDriveRepository.getFolderItems(folderId)
             } else {
                 Log.d("MediaBrowserViewModel", "🏠 OneDriveルート取得")
-                MainActivity.oneDriveRepository.getRootItems(force)
+                MainActivity.oneDriveRepository.getRootItems()
             }
         } catch (e: Exception) {
             Log.e("MediaBrowserViewModel", "❌ OneDriveアイテム取得失敗", e)
@@ -195,8 +191,6 @@ class MediaBrowserViewModel : ViewModel() {
 
     fun refresh() {
         Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
-
-        loadItems(_currentFolderId.value, force = true)
+        loadItems(_currentFolderId.value)
     }
 }
-
