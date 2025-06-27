@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.MainActivity
@@ -19,71 +20,26 @@ enum class SortBy {
     NAME, DATE, SIZE, TYPE
 }
 
-class MediaBrowserViewModel : ViewModel() {
-
-    private val _items = MutableStateFlow<List<MediaItem>>(emptyList())
-    val items: StateFlow<List<MediaItem>> = _items.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _viewMode = MutableStateFlow(ViewMode.TILE)
-    val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
-
-    private val _sortBy = MutableStateFlow(SortBy.NAME)
-    val sortBy: StateFlow<SortBy> = _sortBy.asStateFlow()
-
-    private val _currentPath = MutableStateFlow("OneDrive")
-    val currentPath: StateFlow<String> = _currentPath.asStateFlow()
-
-    private val _currentFolderId = MutableStateFlow<String?>(null)
-    val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
-
-
+    private var loadJob: Job? = null
     fun loadItems(folderId: String? = null, force: Boolean = false) {
-
-        viewModelScope.launch {
+        loadJob?.cancel()
+        _currentFolderId.value = folderId
+        _currentPath.value = if (folderId != null) {
+            MainActivity.oneDriveRepository.getCurrentPath(folderId)
+        } else {
+            "OneDrive"
+        }
+        loadJob = viewModelScope.launch {
             _isLoading.value = true
-            Log.d("MediaBrowserViewModel", "📁 アイテム読み込み開始: folderId=$folderId")
-            _currentFolderId.value = folderId
-
-            val cached = if (MainActivity.authManager.isAuthenticated()) {
-                MainActivity.oneDriveRepository.getCachedItems(folderId)
-            } else emptyList()
-            if (cached.isNotEmpty()) {
-                Log.d("MediaBrowserViewModel", "📦 キャッシュ読み込み: ${cached.size}件")
-                _items.value = applySorting(cached)
-            }
-
-            try {
-                val items = if (MainActivity.authManager.isAuthenticated()) {
-                    Log.d("MediaBrowserViewModel", "🔐 OneDrive認証済み、OneDriveから取得")
-
-                    loadOneDriveItems(folderId, force)
-
-                } else {
-                    Log.d("MediaBrowserViewModel", "🧪 未認証、テストデータ使用")
-                    loadTestItems(folderId)
-                }
-
-                if (items.isNotEmpty()) {
-                    val sortedItems = applySorting(items)
-                    _items.value = sortedItems
-                    Log.d("MediaBrowserViewModel", "✅ アイテム読み込み完了: ${sortedItems.size}件")
-                } else if (cached.isNotEmpty()) {
-                    Log.d("MediaBrowserViewModel", "💾 ネットワーク取得失敗、キャッシュを継続表示")
-                } else {
-                    Log.d("MediaBrowserViewModel", "🔄 フォールバック：テストデータ使用")
-                    val testItems = loadTestItems(folderId)
-                    _items.value = applySorting(testItems)
-                }
-
-                // パス更新
-                _currentPath.value = if (folderId != null) {
-                    MainActivity.oneDriveRepository.getCurrentPath(folderId)
-                } else {
-                    "OneDrive"
-                }
+            if (MainActivity.authManager.isAuthenticated()) {
+                MainActivity.oneDriveRepository.getFolderItems(folderId, force).collect { list ->
+                    _items.value = applySorting(list)
+                    _isLoading.value = false
+            } else {
+                val items = loadTestItems(folderId)
+                _items.value = applySorting(items)
+                _isLoading.value = false
+    }
 
             } catch (e: Exception) {
                 Log.e("MediaBrowserViewModel", "❌ アイテム読み込みエラー", e)

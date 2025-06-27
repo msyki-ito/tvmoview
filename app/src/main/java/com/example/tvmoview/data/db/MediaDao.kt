@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MediaDao {
     @Query("SELECT * FROM media_items WHERE (:folderId IS NULL AND parentId IS NULL) OR parentId = :folderId ORDER BY name")
+    fun observe(folderId: String?): Flow<List<CachedMediaItem>>
+
+    @Query("SELECT * FROM media_items WHERE (:folderId IS NULL AND parentId IS NULL) OR parentId = :folderId ORDER BY name")
     suspend fun getItems(folderId: String?): List<CachedMediaItem>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -19,4 +22,10 @@ interface MediaDao {
 
     @Query("DELETE FROM media_items WHERE lastAccessedAt < :threshold")
     suspend fun deleteOlderThan(threshold: Long)
+
+    @Transaction
+    suspend fun replaceFolder(folderId: String?, items: List<CachedMediaItem>) {
+        clearFolder(folderId)
+        insertItems(items)
+    }
 }

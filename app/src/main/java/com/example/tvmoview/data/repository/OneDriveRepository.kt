@@ -5,84 +5,38 @@ import com.example.tvmoview.data.api.OneDriveApiService
 import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.model.OneDriveItem
 import com.example.tvmoview.data.model.OneDriveResult
-import com.example.tvmoview.domain.model.MediaItem
-import com.example.tvmoview.data.db.MediaDao
-import com.example.tvmoview.data.db.toCached
-import com.example.tvmoview.data.db.toDomain
+import com.example.tvmoview.data.db.FolderSyncDao
+import com.example.tvmoview.data.db.FolderSyncStatus
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.*
+    private val mediaDao: MediaDao,
+    private val folderSyncDao: FolderSyncDao
+    private val ROOT_ID = "root"
+    private val mutex = Mutex()
 
-class OneDriveRepository(
-    private val authManager: AuthenticationManager,
-    private val mediaDao: MediaDao
-) {
-
-    private val apiService: OneDriveApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://graph.microsoft.com/v1.0/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(OneDriveApiService::class.java)
+    private suspend fun shouldFetch(folderId: String, force: Boolean): Boolean {
+        val last = folderSyncDao.lastSyncAt(folderId) ?: return true
+    suspend fun getCachedItems(folderId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
+        val cached = mediaDao.getItems(folderId)
+        if (cached.isNotEmpty()) {
+            Log.d("OneDriveRepository", "💾 キャッシュ取得: ${'$'}{cached.size}件")
+            mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
+        cached.map { it.toDomain() }
     }
 
-    private val okHttpClient = OkHttpClient()
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-
-    private val lastSyncTimes = mutableMapOf<String?, Long>()
-    private val syncIntervalMs = 10 * 60 * 1000L
-
-    private fun shouldFetch(folderId: String?, force: Boolean): Boolean {
-        if (force) return true
-        val last = lastSyncTimes[folderId] ?: return true
-        return System.currentTimeMillis() - last > syncIntervalMs
-    }
-
-    suspend fun getCachedItems(folderId: String?): List<MediaItem> =
-        withContext(Dispatchers.IO) {
-            val cached = mediaDao.getItems(folderId)
-            if (cached.isNotEmpty()) {
-                Log.d("OneDriveRepository", "💾 キャッシュ取得: ${'$'}{cached.size}件")
-                mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
-            }
-            cached.map { it.toDomain() }
-        }
-
-    suspend fun getRootItems(force: Boolean = false): List<MediaItem> {
-        Log.d("OneDriveRepository", "🔍 getRootItems() 開始")
-        if (!shouldFetch(null, force)) {
-            val cached = getCachedItems(null)
-            if (cached.isNotEmpty()) return cached
-        }
-
-        return when (val result = getRootItemsResult()) {
-            is OneDriveResult.Success -> {
-                Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
-
-                // 動画ファイルのdownloadURL取得
-                val itemsWithDownloadUrl = result.data.map { item ->
-                    if (item.isVideo) {
-                        Log.d("OneDriveRepository", "🎬 動画downloadURL取得: ${item.name}")
-                        val downloadUrl = getDownloadUrl(item.id)
-                        item.copy(downloadUrl = downloadUrl)
-                    } else {
-                        item
-                    }
+    fun getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>> =
+        mediaDao.observe(folderId).map { list -> list.map { it.toDomain() } }
+            .onStart {
+                val key = folderId ?: ROOT_ID
+                if (shouldFetch(key, force)) {
+                    sync(folderId)
                 }
-
-                Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
-                cacheItems(null, itemsWithDownloadUrl)
-                itemsWithDownloadUrl
             }
-            is OneDriveResult.Error -> {
-                Log.e("OneDriveRepository", "❌ エラー: ${result.exception.message}")
-                emptyList()
             }
         }
     }
@@ -230,10 +184,25 @@ class OneDriveRepository(
 
     private suspend fun getFolderItemsResult(folderId: String): OneDriveResult<List<MediaItem>> {
         return withContext(Dispatchers.IO) {
-            try {
-                val token = authManager.getSavedToken()
-                if (token == null || token.isExpired) {
-                    return@withContext OneDriveResult.Error(Exception("認証が必要です"))
+        mediaDao.replaceFolder(folderId, items.take(100).map { it.toCached(folderId, now) })
+        folderSyncDao.upsert(FolderSyncStatus(folderId ?: ROOT_ID, now))
+    }
+
+    private suspend fun sync(folderId: String?) = mutex.withLock {
+        val result = if (folderId == null) getRootItemsResult() else getFolderItemsResult(folderId)
+        if (result is OneDriveResult.Success) {
+            val itemsWithDownloadUrl = result.data.map { item ->
+                if (item.isVideo) {
+                    val downloadUrl = getDownloadUrl(item.id)
+                    item.copy(downloadUrl = downloadUrl)
+                } else {
+                    item
+                }
+            }
+            cacheItems(folderId, itemsWithDownloadUrl)
+        } else if (result is OneDriveResult.Error) {
+            Log.e("OneDriveRepository", "❌ エラー: ${result.exception.message}")
+        }
                 }
 
                 val response = apiService.getFolderItems("Bearer ${token.accessToken}", folderId)

@@ -47,7 +47,11 @@ class MainActivity : ComponentActivity() {
         // OneDrive統合の初期化（新規追加）
         authManager = AuthenticationManager(this)
         MediaDatabaseProvider.init(this)
-        oneDriveRepository = OneDriveRepository(authManager, MediaDatabaseProvider.database.mediaDao())
+        oneDriveRepository = OneDriveRepository(
+            authManager,
+            MediaDatabaseProvider.database.mediaDao(),
+            MediaDatabaseProvider.database.folderSyncDao()
+        )
 
         val imageLoader = ImageLoader.Builder(this)
             .diskCache(
