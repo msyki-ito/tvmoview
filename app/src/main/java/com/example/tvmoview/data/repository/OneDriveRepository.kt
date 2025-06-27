@@ -45,6 +45,7 @@ class OneDriveRepository(
             cached.map { it.toDomain() }
         }
 
+
     suspend fun getRootItems(): List<MediaItem> {
         Log.d("OneDriveRepository", "🔍 getRootItems() 開始")
         return when (val result = getRootItemsResult()) {
