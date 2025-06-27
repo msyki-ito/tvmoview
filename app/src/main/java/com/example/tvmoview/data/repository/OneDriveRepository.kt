@@ -6,7 +6,17 @@ import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.model.OneDriveItem
 import com.example.tvmoview.data.model.OneDriveResult
 import com.example.tvmoview.domain.model.MediaItem
+import com.example.tvmoview.data.db.MediaDao
+import com.example.tvmoview.data.db.FolderSyncDao
+import com.example.tvmoview.data.db.FolderSyncStatus
+import com.example.tvmoview.data.db.toCached
+import com.example.tvmoview.data.db.toDomain
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -17,7 +27,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class OneDriveRepository(
-    private val authManager: AuthenticationManager
+    private val authManager: AuthenticationManager,
+    private val mediaDao: MediaDao,
+    private val folderSyncDao: FolderSyncDao
 ) {
 
     private val apiService: OneDriveApiService by lazy {
@@ -31,59 +43,53 @@ class OneDriveRepository(
     private val okHttpClient = OkHttpClient()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 
-    suspend fun getRootItems(): List<MediaItem> {
-        Log.d("OneDriveRepository", "🔍 getRootItems() 開始")
-        return when (val result = getRootItemsResult()) {
-            is OneDriveResult.Success -> {
-                Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
+    private val ROOT_ID = "root"
+    private val mutex = Mutex()
 
-                // 動画ファイルのdownloadURL取得
-                val itemsWithDownloadUrl = result.data.map { item ->
-                    if (item.isVideo) {
-                        Log.d("OneDriveRepository", "🎬 動画downloadURL取得: ${item.name}")
-                        val downloadUrl = getDownloadUrl(item.id)
-                        item.copy(downloadUrl = downloadUrl)
-                    } else {
-                        item
-                    }
-                }
+    private val syncIntervalMs = 10 * 60 * 1000L
 
-                Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
-                itemsWithDownloadUrl
-            }
-            is OneDriveResult.Error -> {
-                Log.e("OneDriveRepository", "❌ エラー: ${result.exception.message}")
-                emptyList()
-            }
-        }
+    private suspend fun shouldFetch(folderId: String, force: Boolean): Boolean {
+        val last = folderSyncDao.lastSyncAt(folderId)
+        val should = force || last == null ||
+            System.currentTimeMillis() - last > syncIntervalMs
+        Log.d(
+            "OneDriveRepository",
+            "🔍 shouldFetch(folder=$folderId, force=$force, last=$last) -> $should"
+        )
+        return should
     }
 
-    suspend fun getFolderItems(folderId: String): List<MediaItem> {
-        Log.d("OneDriveRepository", "🔍 getFolderItems($folderId) 開始")
-        return when (val result = getFolderItemsResult(folderId)) {
-            is OneDriveResult.Success -> {
-                Log.d("OneDriveRepository", "✅ 成功: ${result.data.size}個のアイテム取得")
-
-                // 動画ファイルのdownloadURL取得
-                val itemsWithDownloadUrl = result.data.map { item ->
-                    if (item.isVideo) {
-                        Log.d("OneDriveRepository", "🎬 動画downloadURL取得: ${item.name}")
-                        val downloadUrl = getDownloadUrl(item.id)
-                        item.copy(downloadUrl = downloadUrl)
-                    } else {
-                        item
-                    }
-                }
-
-                Log.d("OneDriveRepository", "🎉 downloadURL設定完了: ${itemsWithDownloadUrl.count { it.downloadUrl != null }}件の動画")
-                itemsWithDownloadUrl
-            }
-            is OneDriveResult.Error -> {
-                Log.e("OneDriveRepository", "❌ エラー: ${result.exception.message}")
-                emptyList()
-            }
+    suspend fun getCachedItems(folderId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
+        val cached = mediaDao.getItems(folderId)
+        if (cached.isNotEmpty()) {
+            Log.d("OneDriveRepository", "💾 キャッシュ取得: ${'$'}{cached.size}件")
+            mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
         }
+        cached.map { it.toDomain() }
     }
+
+    fun getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>> =
+        mediaDao.observe(folderId)
+            .onStart {
+                val key = folderId ?: ROOT_ID
+                Log.d(
+                    "OneDriveRepository",
+                    "🔍 getFolderItems start (folder=$key, force=$force)"
+                )
+                if (shouldFetch(key, force)) {
+                    Log.d("OneDriveRepository", "🌐 sync triggered (folder=$key)")
+                    sync(folderId)
+                } else {
+                    Log.d("OneDriveRepository", "✅ cache hit for folder=$key")
+                }
+            }
+            .map { list ->
+                Log.d(
+                    "OneDriveRepository",
+                    "📤 emit cached ${'$'}{list.size} items (folder=${folderId ?: ROOT_ID})"
+                )
+                list.map { it.toDomain() }
+            }
 
     // 動画ファイルのdownloadURL取得（新規追加）
     suspend fun getDownloadUrl(itemId: String): String? {
@@ -217,6 +223,34 @@ class OneDriveRepository(
 
     fun getCurrentPath(folderId: String?): String {
         return folderId?.let { "OneDriveフォルダ" } ?: "OneDrive"
+    }
+
+    private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        Log.d("OneDriveRepository", "💾 saving ${'$'}{items.size} items to cache (folder=${'$'}folderId)")
+        mediaDao.replaceFolder(folderId, items.take(100).map { it.toCached(folderId, now) })
+        mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
+        folderSyncDao.upsert(FolderSyncStatus(folderId ?: ROOT_ID, now))
+        Log.d("OneDriveRepository", "📌 lastSyncAt updated to $now for folder=${folderId ?: ROOT_ID}")
+    }
+
+    private suspend fun sync(folderId: String?) = mutex.withLock {
+        Log.d("OneDriveRepository", "⬆️ start sync for folder=${folderId ?: ROOT_ID}")
+        val result = if (folderId == null) getRootItemsResult() else getFolderItemsResult(folderId)
+        if (result is OneDriveResult.Success) {
+            val itemsWithDownloadUrl = result.data.map { item ->
+                if (item.isVideo) {
+                    val downloadUrl = getDownloadUrl(item.id)
+                    item.copy(downloadUrl = downloadUrl)
+                } else {
+                    item
+                }
+            }
+            cacheItems(folderId, itemsWithDownloadUrl)
+            Log.d("OneDriveRepository", "✅ sync success: ${'$'}{itemsWithDownloadUrl.size} items")
+        } else if (result is OneDriveResult.Error) {
+            Log.e("OneDriveRepository", "❌ sync error: ${'$'}{result.exception.message}")
+        }
     }
 
     private fun OneDriveItem.toMediaItem(): MediaItem {
