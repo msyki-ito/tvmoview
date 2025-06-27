@@ -62,7 +62,6 @@ fun ModernMediaBrowser(
                 viewMode = viewMode,
                 onViewModeChange = { viewModel.toggleViewMode() },
                 onSortClick = { showSortDialog = true },
-                onRefreshClick = { viewModel.refresh() },
                 onSettingsClick = onSettingsClick,
                 onBackClick = onBackClick
             )
