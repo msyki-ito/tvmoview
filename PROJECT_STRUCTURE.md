@@ -1,9 +1,10 @@
-# PROJECT_STRUCTURE.md – 高レベル設計
+﻿# PROJECT_STRUCTURE.md – 高レベル設計
 
 ## 📁 ディレクトリ構成
 └── data/
 │   └── api/
 │   └── auth/
+│   └── db/
 │   └── model/
 │   └── repository/
 └── domain/

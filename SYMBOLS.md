@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-06-27)
+﻿# 祷 SYMBOLS.md (generated 2025-06-28)
 
 ## 
 - AuthenticationManager
@@ -49,37 +49,26 @@
   - [P] userCode
   - [P] verificationUri
 
-## com.example.tvmoview
-- Authenticated
-
-## com.example.tvmoview
-- Checking
-
-## com.example.tvmoview
-- ExampleInstrumentedTest
-  - [F] useAppContext()
-  - [P] appContext
-
-## com.example.tvmoview
-- ExampleUnitTest
-  - [F] addition_isCorrect()
-
-## com.example.tvmoview
-- MainActivity
-  - [F] AuthenticationWrapper()
-  - [P] authState
-  - [P] code
-  - [P] data
-
-## com.example.tvmoview
-- NotAuthenticated
-  - [F] AppNavigation()
+## com.example.tvmoview.data.db
+- CachedMediaItem
   - [P] downloadUrl
-  - [P] encodedDownloadUrl
-  - [P] encodedUrl
-  - [P] folderId
-  - [P] itemId
-  - [P] navController
+  - [P] isFolder
+  - [P] lastAccessedAt
+  - [P] lastModified
+  - [P] mimeType
+  - [P] name
+  - [P] parentId
+  - [P] size
+  - [P] thumbnailUrl
+
+## com.example.tvmoview.data.db
+- FolderSyncStatus
+  - [P] lastSyncAt
+
+## com.example.tvmoview.data.db
+- MediaDatabaseProvider
+  - [F] init()
+  - [P] path
 
 ## com.example.tvmoview.data.model
 - AuthToken
@@ -114,20 +103,26 @@
 
 ## com.example.tvmoview.data.repository
 - OneDriveRepository
+  - [F] getCachedItems()
   - [F] getCurrentPath()
   - [F] getDownloadUrl()
   - [F] getFolderItems()
-  - [F] getRootItems()
+  - [P] cached
   - [P] downloadUrl
   - [P] isFolder
   - [P] items
   - [P] itemsWithDownloadUrl
   - [P] json
+  - [P] key
+  - [P] last
   - [P] lastModified
   - [P] mimeType
+  - [P] now
   - [P] request
   - [P] response
   - [P] responseBody
+  - [P] result
+  - [P] should
   - [P] size
   - [P] token
   - [P] url
@@ -184,11 +179,43 @@
   - [P] items
   - [P] sortBy
   - [P] sortedItems
-  - [P] testItems
   - [P] viewMode
 
 ## com.example.tvmoview.tv
 - FireTVOptimizations
   - [F] initializeForFireTV()
+
+## com.example.tvmoview
+- Authenticated
+
+## com.example.tvmoview
+- Checking
+
+## com.example.tvmoview
+- ExampleInstrumentedTest
+  - [F] useAppContext()
+  - [P] appContext
+
+## com.example.tvmoview
+- ExampleUnitTest
+  - [F] addition_isCorrect()
+
+## com.example.tvmoview
+- MainActivity
+  - [F] AuthenticationWrapper()
+  - [P] authState
+  - [P] code
+  - [P] data
+  - [P] imageLoader
+
+## com.example.tvmoview
+- NotAuthenticated
+  - [F] AppNavigation()
+  - [P] downloadUrl
+  - [P] encodedDownloadUrl
+  - [P] encodedUrl
+  - [P] folderId
+  - [P] itemId
+  - [P] navController
 
 
