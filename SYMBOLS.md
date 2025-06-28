@@ -1,81 +1,61 @@
-﻿# 祷 SYMBOLS.md (generated 2025-06-28)
+﻿# 📘 SYMBOLS.md (generated 2025-06-28)
 
 ## 
 - AuthenticationManager
 
 ## 
 - AuthToken
-  - [P] accessToken
-  - [P] expiresAt
-  - [P] isExpired
-  - [P] refreshToken
+  - [P] accessToken: String,
+  - [P] expiresAt: Long
+  - [P] isExpired: Boolean
+  - [P] refreshToken: String?,
 
 ## 
 - DeviceCodeResponse
-  - [P] deviceCode
-  - [P] expiresIn
-  - [P] interval
-  - [P] userCode
-  - [P] verificationUri
+  - [P] deviceCode: String,
+  - [P] expiresIn: Int,
+  - [P] interval: Int
+  - [P] userCode: String,
+  - [P] verificationUri: String,
 
 ## 
 - TokenResponse
   - [F] clearAuthentication()
-  - [F] getSavedToken()
-  - [F] isAuthenticated()
-  - [F] pollForToken()
-  - [F] startAuthentication()
-  - [F] startDeviceCodeFlow()
-  - [P] accessToken
-  - [P] attempts
-  - [P] deviceCode
-  - [P] error
-  - [P] errorDescription
-  - [P] errorJson
-  - [P] expirationTime
-  - [P] expiresAt
-  - [P] expiresIn
-  - [P] interval
-  - [P] json
-  - [P] maxAttempts
-  - [P] refreshToken
-  - [P] request
-  - [P] requestBody
-  - [P] requestUrl
-  - [P] response
-  - [P] responseBody
-  - [P] token
-  - [P] tokenResult
-  - [P] userCode
-  - [P] verificationUri
+  - [F] getSavedToken(): AuthToken?
+  - [F] isAuthenticated(): Boolean
+  - [F] pollForToken(deviceCode: String, interval: Int): TokenResponse
+  - [F] startAuthentication(): android.content.Intent
+  - [F] startDeviceCodeFlow(): DeviceCodeResponse
+  - [P] accessToken: String,
+  - [P] expiresIn: Int
+  - [P] refreshToken: String?,
 
 ## com.example.tvmoview.data.db
 - CachedMediaItem
-  - [P] downloadUrl
-  - [P] isFolder
-  - [P] lastAccessedAt
-  - [P] lastModified
-  - [P] mimeType
-  - [P] name
-  - [P] parentId
-  - [P] size
-  - [P] thumbnailUrl
+  - [P] downloadUrl: String?,
+  - [P] isFolder: Boolean,
+  - [P] lastAccessedAt: Long
+  - [P] lastModified: Long,
+  - [P] mimeType: String?,
+  - [P] name: String,
+  - [P] parentId: String?,
+  - [P] size: Long,
+  - [P] thumbnailUrl: String?,
 
 ## com.example.tvmoview.data.db
 - FolderSyncStatus
-  - [P] lastSyncAt
+  - [P] lastSyncAt: Long
 
 ## com.example.tvmoview.data.db
 - MediaDatabaseProvider
-  - [F] init()
-  - [P] path
+  - [F] init(context: Context)
 
 ## com.example.tvmoview.data.model
 - AuthToken
-  - [P] accessToken
-  - [P] expiresAt
-  - [P] isExpired
-  - [P] refreshToken
+  - [P] accessToken: String,
+  - [P] expiresAt: Long
+  - [P] isExpired: Boolean
+  - [P] refreshToken: String?
 
 ## com.example.tvmoview.data.model
 - Error
@@ -97,50 +77,31 @@
 
 ## com.example.tvmoview.data.repository
 - MediaRepository
-  - [F] getCurrentPath()
-  - [F] getFolderItems()
-  - [F] getRootItems()
+  - [F] getCurrentPath(folderId: String?): String
+  - [F] getFolderItems(folderId: String): List<MediaItem>
+  - [F] getRootItems(): List<MediaItem>
 
 ## com.example.tvmoview.data.repository
 - OneDriveRepository
-  - [F] getCachedItems()
-  - [F] getCurrentPath()
-  - [F] getDownloadUrl()
-  - [F] getFolderItems()
-  - [P] cached
-  - [P] downloadUrl
-  - [P] isFolder
-  - [P] items
-  - [P] itemsWithDownloadUrl
-  - [P] json
-  - [P] key
-  - [P] last
-  - [P] lastModified
-  - [P] mimeType
-  - [P] now
-  - [P] request
-  - [P] response
-  - [P] responseBody
-  - [P] result
-  - [P] should
-  - [P] size
-  - [P] token
-  - [P] url
+  - [F] getCachedItems(folderId: String?): List<MediaItem>
+  - [F] getCurrentPath(folderId: String?): String
+  - [F] getDownloadUrl(itemId: String): String?
+  - [F] getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>>
 
 ## com.example.tvmoview.domain.model
 - MediaItem
-  - [P] downloadUrl
-  - [P] fileExtension
-  - [P] formattedSize
-  - [P] id
-  - [P] isFolder
-  - [P] isImage
-  - [P] isVideo
-  - [P] lastModified
-  - [P] mimeType
-  - [P] name
-  - [P] size
-  - [P] thumbnailUrl
+  - [P] downloadUrl: String?
+  - [P] fileExtension: String
+  - [P] formattedSize: String
+  - [P] id: String,
+  - [P] isFolder: Boolean
+  - [P] isImage: Boolean
+  - [P] isVideo: Boolean
+  - [P] lastModified: Date
+  - [P] mimeType: String?
+  - [P] name: String,
+  - [P] size: Long
+  - [P] thumbnailUrl: String?
 
 ## com.example.tvmoview.presentation.screens
 - Authenticated
@@ -168,22 +129,20 @@
 
 ## com.example.tvmoview.presentation.viewmodels
 - MediaBrowserViewModel
-  - [F] loadItems()
+  - [F] loadItems(folderId: String? = null, force: Boolean = false)
   - [F] refresh()
-  - [F] setSortBy()
+  - [F] setSortBy(sortBy: SortBy)
   - [F] toggleViewMode()
-  - [P] currentFolderId
-  - [P] currentItems
-  - [P] currentPath
-  - [P] isLoading
-  - [P] items
-  - [P] sortBy
-  - [P] sortedItems
-  - [P] viewMode
+  - [P] currentFolderId: StateFlow<String?>
+  - [P] currentPath: StateFlow<String>
+  - [P] isLoading: StateFlow<Boolean>
+  - [P] items: StateFlow<List<MediaItem>>
+  - [P] sortBy: StateFlow<SortBy>
+  - [P] viewMode: StateFlow<ViewMode>
 
 ## com.example.tvmoview.tv
 - FireTVOptimizations
-  - [F] initializeForFireTV()
+  - [F] initializeForFireTV(activity: Activity)
 
 ## com.example.tvmoview
 - Authenticated
@@ -194,7 +153,6 @@
 ## com.example.tvmoview
 - ExampleInstrumentedTest
   - [F] useAppContext()
-  - [P] appContext
 
 ## com.example.tvmoview
 - ExampleUnitTest
@@ -203,19 +161,9 @@
 ## com.example.tvmoview
 - MainActivity
   - [F] AuthenticationWrapper()
-  - [P] authState
-  - [P] code
-  - [P] data
-  - [P] imageLoader
 
 ## com.example.tvmoview
 - NotAuthenticated
   - [F] AppNavigation()
-  - [P] downloadUrl
-  - [P] encodedDownloadUrl
-  - [P] encodedUrl
-  - [P] folderId
-  - [P] itemId
-  - [P] navController
 
 
