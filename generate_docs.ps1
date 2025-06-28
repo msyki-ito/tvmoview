@@ -20,11 +20,11 @@ $projDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $cmdDir = Join-Path $projDir "..\command"
 
 # --- 1) 共通ライブラリ（dot source で読み込み） --------------------
-. (Join-Path $cmdDir "library_code.ps1")
+#. (Join-Path $cmdDir "library_code.ps1")
 
 # --- 2) 個別ドキュメント生成スクリプトを実行 -----------------------
 & (Join-Path $cmdDir "SYMBOLS_code.ps1")       -root $Root
 & (Join-Path $cmdDir "USAGE_MAP_code.ps1")     -root $Root
-& (Join-Path $cmdDir "PROJECT_STRUCTURE.ps1")  -root $Root
+& (Join-Path $cmdDir "PROJECT_STRUCTURE.ps1")     -root $Root
 
 Write-Host "🎉 All docs generated successfully." -ForegroundColor Green
