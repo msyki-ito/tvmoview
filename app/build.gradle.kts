@@ -54,6 +54,7 @@ android {
 }
 
 dependencies {
+    // TODO: replace hardcoded versions with version catalog references
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
