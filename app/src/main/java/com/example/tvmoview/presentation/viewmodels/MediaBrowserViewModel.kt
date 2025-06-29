@@ -53,28 +53,40 @@ class MediaBrowserViewModel : ViewModel() {
 
         Log.d(
             "MediaBrowserViewModel",
-            "📥 loadItems(folder=${folderId ?: "root"}, force=$force)"
+            "loadItems(folder=${folderId ?: "root"}, force=$force)"
         )
 
         loadJob = viewModelScope.launch {
-            _isLoading.value = true
+            // まずキャッシュを即座に表示
+            val cachedItems = MainActivity.oneDriveRepository.getCachedItems(folderId)
+            if (cachedItems.isNotEmpty()) {
+                _items.value = applySorting(cachedItems)
+                _isLoading.value = false
+                Log.d("MediaBrowserViewModel", "Showing ${cachedItems.size} cached items immediately")
+            } else {
+                _isLoading.value = true
+            }
+
+            // OneDrive統合の場合
             if (MainActivity.authManager.isAuthenticated()) {
                 MainActivity.oneDriveRepository.getFolderItems(folderId, force).collect { list ->
                     _items.value = applySorting(list)
-                    _isLoading.value = false
+                    if (_isLoading.value) {
+                        _isLoading.value = false
+                    }
                     Log.d(
                         "MediaBrowserViewModel",
-                        "📊 items updated: ${'$'}{list.size} entries"
+                        "items updated: ${list.size} entries"
                     )
                 }
             } else {
+                // テストデータの場合
                 val items = loadTestItems(folderId)
                 _items.value = applySorting(items)
                 _isLoading.value = false
             }
         }
     }
-
 
     private fun loadTestItems(folderId: String?): List<MediaItem> {
         return try {
@@ -155,7 +167,40 @@ class MediaBrowserViewModel : ViewModel() {
     }
 
     fun refresh() {
-        Log.d("MediaBrowserViewModel", "🔄 リフレッシュ実行")
-        loadItems(_currentFolderId.value, force = true)
+        Log.d("MediaBrowserViewModel", "🔄 バックグラウンド更新開始")
+
+        // TOPバーのローディング表示のみ開始（画面表示は維持）
+        _isLoading.value = true
+
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            try {
+                Log.d("MediaBrowserViewModel", "🌐 バックグラウンド処理開始")
+
+                // OneDrive統合の場合
+                if (MainActivity.authManager.isAuthenticated()) {
+                    // force=true でバックグラウンド更新
+                    MainActivity.oneDriveRepository.getFolderItems(_currentFolderId.value, force = true).collect { newList ->
+                        // 新しいデータが取得できた時のみ画面更新
+                        if (newList.isNotEmpty() || _items.value.isEmpty()) {
+                            _items.value = applySorting(newList)
+                            Log.d("MediaBrowserViewModel", "✅ バックグラウンド更新完了: ${newList.size} entries")
+                        }
+
+                        // ローディング状態終了
+                        _isLoading.value = false
+                    }
+                } else {
+                    // テストデータの場合
+                    val items = loadTestItems(_currentFolderId.value)
+                    _items.value = applySorting(items)
+                    _isLoading.value = false
+                    Log.d("MediaBrowserViewModel", "✅ テストデータ更新完了")
+                }
+            } catch (e: Exception) {
+                Log.e("MediaBrowserViewModel", "❌ バックグラウンド更新エラー", e)
+                _isLoading.value = false
+            }
+        }
     }
 }

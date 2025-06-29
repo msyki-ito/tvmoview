@@ -1,5 +1,6 @@
 ﻿package com.example.tvmoview.presentation.components
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -7,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -22,8 +24,23 @@ fun ModernTopBar(
     onSortClick: () -> Unit,
     onRefreshClick: () -> Unit,
     onSettingsClick: (() -> Unit)? = null,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    isLoading: Boolean = false
 ) {
+    // 回転アニメーション
+    val rotation by animateFloatAsState(
+        targetValue = if (isLoading) 360f else 0f,
+        animationSpec = if (isLoading) {
+            infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        } else {
+            tween(200)
+        },
+        label = "refresh_rotation"
+    )
+
     TopAppBar(
         title = {
             Row(
@@ -42,11 +59,23 @@ fun ModernTopBar(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = "TV Movie Viewer",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "TV Movie Viewer",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        // 更新中表示
+                        if (isLoading) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "更新中...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     Text(
                         text = currentPath,
                         style = MaterialTheme.typography.bodySmall,
@@ -67,10 +96,17 @@ fun ModernTopBar(
                 )
             }
 
-            IconButton(onClick = onRefreshClick) {
+            // 更新ボタン（回転アニメーション付き）
+            IconButton(
+                onClick = { if (!isLoading) onRefreshClick() },
+                enabled = !isLoading
+            ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "更新"
+                    contentDescription = if (isLoading) "更新中" else "更新",
+                    modifier = Modifier.graphicsLayer {
+                        rotationZ = rotation
+                    }
                 )
             }
 

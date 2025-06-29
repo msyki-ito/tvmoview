@@ -88,6 +88,7 @@ dependencies {
 
     // ✅ Image Loading（将来の画像ビューア用）
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil:2.5.0")
 
     // ✅ Room Database（将来のキャッシュ機能用）
     implementation("androidx.room:room-runtime:2.6.1")

@@ -27,6 +27,8 @@ import com.example.tvmoview.data.db.MediaDatabaseProvider
 import coil.ImageLoader
 import coil.Coil
 import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import okhttp3.OkHttpClient
 
 class MainActivity : ComponentActivity() {
 
@@ -57,10 +59,40 @@ class MainActivity : ComponentActivity() {
             .diskCache(
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(10L * 1024 * 1024)
+                    .maxSizeBytes(50L * 1024 * 1024) // 50MB
                     .build()
             )
-            .memoryCache(null)
+            .memoryCache(
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.15)
+                    .build()
+            )
+            .okHttpClient {
+                OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        val request = chain.request()
+                        val url = request.url.toString()
+                        val newRequest = if (url.contains("graph.microsoft.com") ||
+                            url.contains("onedrive")) {
+                            val token = authManager.getSavedToken()
+                            if (token != null && !token.isExpired) {
+                                Log.d("Coil", "Adding auth header for: ${url.take(50)}...")
+                                request.newBuilder()
+                                    .addHeader("Authorization", "Bearer ${token.accessToken}")
+                                    .build()
+                            } else {
+                                Log.w("Coil", "No valid token for: ${url.take(50)}...")
+                                request
+                            }
+                        } else {
+                            request
+                        }
+                        chain.proceed(newRequest)
+                    }
+                    .build()
+            }
+            .respectCacheHeaders(false)
+            .crossfade(true)
             .build()
         Coil.setImageLoader(imageLoader)
 
@@ -156,6 +188,7 @@ fun AppNavigation() {
                         Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
                         navController.navigate("player/${mediaItem.id}/$encodedUrl")
                     } else if (mediaItem.isImage) {
+                        Log.d("MainActivity", "🖼️ 画像選択: ${mediaItem.name}")
                         navController.navigate("image/${mediaItem.id}")
                     }
                 },
@@ -184,6 +217,7 @@ fun AppNavigation() {
                         Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
                         navController.navigate("player/${mediaItem.id}/$encodedUrl")
                     } else if (mediaItem.isImage) {
+                        Log.d("MainActivity", "🖼️ フォルダ内画像選択: ${mediaItem.name}")
                         navController.navigate("image/${mediaItem.id}")
                     }
                 },
@@ -225,20 +259,21 @@ fun AppNavigation() {
             )
         }
 
-        // 画像ビューア（追加）
+        // 画像ビューア
         composable(
             "image/{itemId}",
             arguments = listOf(navArgument("itemId") { type = NavType.StringType })
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
+            val parentFolderId = navController.previousBackStackEntry?.arguments?.getString("folderId")
 
-            // 画像ビューア（後で実装）
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("画像ビューア（未実装）\nitemId: $itemId")
-            }
+            Log.d("MainActivity", "🖼️ 画像ビューワー起動: itemId=$itemId, parentFolder=$parentFolderId")
+
+            ImageViewerScreen(
+                currentImageId = itemId,
+                folderId = parentFolderId,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         // 設定画面

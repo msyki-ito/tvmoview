@@ -64,13 +64,19 @@ fun ModernMediaBrowser(
                 onSortClick = { showSortDialog = true },
                 onRefreshClick = { viewModel.refresh() },
                 onSettingsClick = onSettingsClick,
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                isLoading = isLoading
             )
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
-                    isLoading -> LoadingAnimation()
-                    items.isEmpty() -> EmptyStateView()
+                    // 初回読み込み時のみローディング表示（データがない + 読み込み中）
+                    isLoading && items.isEmpty() -> LoadingAnimation()
+
+                    // データが空でローディング中でない場合
+                    items.isEmpty() && !isLoading -> EmptyStateView()
+
+                    // データがある場合は常にコンテンツ表示（手動更新中でも表示継続）
                     else -> {
                         when (viewMode) {
                             ViewMode.TILE -> {
@@ -81,7 +87,6 @@ fun ModernMediaBrowser(
                                             Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
                                             onFolderSelected(item.id)
                                         } else {
-                                            // OneDrive統合：downloadURL付きでMediaItemを渡す
                                             Log.d("ModernMediaBrowser", "🎬 メディア選択: ${item.name}")
                                             Log.d("ModernMediaBrowser", "📊 downloadUrl: ${item.downloadUrl}")
                                             onMediaSelected(item)
@@ -97,7 +102,6 @@ fun ModernMediaBrowser(
                                             Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
                                             onFolderSelected(item.id)
                                         } else {
-                                            // OneDrive統合：downloadURL付きでMediaItemを渡す
                                             Log.d("ModernMediaBrowser", "🎬 メディア選択: ${item.name}")
                                             Log.d("ModernMediaBrowser", "📊 downloadUrl: ${item.downloadUrl}")
                                             onMediaSelected(item)

@@ -48,21 +48,33 @@ class OneDriveRepository(
 
     private val syncIntervalMs = 10 * 60 * 1000L
 
+// OneDriveRepository.kt の shouldFetch メソッド修正
+
     private suspend fun shouldFetch(folderId: String, force: Boolean): Boolean {
-        val last = folderSyncDao.lastSyncAt(folderId)
-        val should = force || last == null ||
-            System.currentTimeMillis() - last > syncIntervalMs
+        // 手動更新の場合は常に実行
+        if (force) {
+            Log.d("OneDriveRepository", "shouldFetch: force=true -> true (手動更新)")
+            return true
+        }
+
+        // キャッシュ確認
+        val cachedItems = mediaDao.getItems(folderId)
+        val hasCache = cachedItems.isNotEmpty()
+
+        // キャッシュがない場合（初回読み込み）は実行
+        val should = !hasCache
+
         Log.d(
             "OneDriveRepository",
-            "🔍 shouldFetch(folder=$folderId, force=$force, last=$last) -> $should"
+            "shouldFetch(folder=$folderId, force=$force, hasCache=$hasCache) -> $should"
         )
+
         return should
     }
-
     suspend fun getCachedItems(folderId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
         val cached = mediaDao.getItems(folderId)
         if (cached.isNotEmpty()) {
-            Log.d("OneDriveRepository", "💾 キャッシュ取得: ${'$'}{cached.size}件")
+            Log.d("OneDriveRepository", "キャッシュ取得: ${cached.size}件")
             mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
         }
         cached.map { it.toDomain() }
@@ -74,127 +86,102 @@ class OneDriveRepository(
                 val key = folderId ?: ROOT_ID
                 Log.d(
                     "OneDriveRepository",
-                    "🔍 getFolderItems start (folder=$key, force=$force)"
+                    "getFolderItems start (folder=$key, force=$force)"
                 )
                 if (shouldFetch(key, force)) {
-                    Log.d("OneDriveRepository", "🌐 sync triggered (folder=$key)")
+                    Log.d("OneDriveRepository", "sync triggered (folder=$key)")
                     sync(folderId)
                 } else {
-                    Log.d("OneDriveRepository", "✅ cache hit for folder=$key")
+                    Log.d("OneDriveRepository", "cache hit for folder=$key")
                 }
             }
             .map { list ->
                 Log.d(
                     "OneDriveRepository",
-                    "📤 emit cached ${'$'}{list.size} items (folder=${folderId ?: ROOT_ID})"
+                    "emit cached ${list.size} items (folder=${folderId ?: ROOT_ID})"
                 )
                 list.map { it.toDomain() }
             }
 
-    // 動画ファイルのdownloadURL取得（新規追加）
     suspend fun getDownloadUrl(itemId: String): String? {
         return withContext(Dispatchers.IO) {
             try {
                 val token = authManager.getSavedToken()
                 if (token == null || token.isExpired) {
-                    Log.w("OneDriveRepo", "❌ アクセストークンなし/期限切れ")
+                    Log.w("OneDriveRepo", "トークンなし/期限切れ")
                     return@withContext null
                 }
 
-                Log.d("OneDriveRepo", "🔗 downloadURL API呼び出し: $itemId")
+                Log.d("OneDriveRepo", "downloadURL取得開始: $itemId")
 
-                // OneDrive APIでファイル詳細取得
-                val url = "https://graph.microsoft.com/v1.0/drives/me/items/$itemId"
+                val url = "https://graph.microsoft.com/v1.0/me/drive/items/$itemId?select=id,@microsoft.graph.downloadUrl"
+
                 val request = Request.Builder()
                     .url(url)
                     .addHeader("Authorization", "Bearer ${token.accessToken}")
-                    .addHeader("Content-Type", "application/json")
                     .build()
 
                 val response = okHttpClient.newCall(request).execute()
                 val responseBody = response.body?.string()
 
-                if (response.isSuccessful && responseBody != null) {
-                    Log.d("OneDriveRepo", "✅ API レスポンス取得")
-
-                    // JSONからdownloadURL抽出
-                    val downloadUrl = parseDownloadUrlFromResponse(responseBody)
-
-                    if (downloadUrl != null) {
-                        Log.d("OneDriveRepo", "🎬 downloadURL抽出成功: ${downloadUrl.take(50)}...")
-                    } else {
-                        Log.w("OneDriveRepo", "⚠️ downloadURL見つからず")
-                    }
-
-                    downloadUrl
-                } else {
-                    Log.e("OneDriveRepo", "❌ API エラー: ${response.code} - $responseBody")
-                    null
+                Log.d("OneDriveRepo", "Response Code: ${response.code}")
+                if (responseBody != null) {
+                    Log.d("OneDriveRepo", "Response Body: ${responseBody.take(200)}")
                 }
 
+                if (response.isSuccessful && responseBody != null) {
+                    val json = JSONObject(responseBody)
+                    val downloadUrl = json.optString("@microsoft.graph.downloadUrl")
+
+                    if (downloadUrl.isNotEmpty()) {
+                        Log.d("OneDriveRepo", "URL取得成功: ${downloadUrl.take(50)}...")
+                        return@withContext downloadUrl
+                    }
+                }
+
+                Log.e("OneDriveRepo", "URL取得失敗")
+                null
             } catch (e: Exception) {
-                Log.e("OneDriveRepo", "❌ downloadURL取得例外", e)
+                Log.e("OneDriveRepo", "例外発生", e)
                 null
             }
-        }
-    }
-
-    // JSONレスポンスからdownloadURL抽出
-    private fun parseDownloadUrlFromResponse(jsonResponse: String): String? {
-        return try {
-            val json = JSONObject(jsonResponse)
-
-            // @microsoft.graph.downloadUrl プロパティ取得
-            val downloadUrl = json.optString("@microsoft.graph.downloadUrl")
-
-            if (downloadUrl.isNotEmpty()) {
-                Log.d("OneDriveRepo", "📥 downloadURL発見: ${downloadUrl.take(50)}...")
-                downloadUrl
-            } else {
-                Log.w("OneDriveRepo", "⚠️ @microsoft.graph.downloadUrl プロパティなし")
-                null
-            }
-
-        } catch (e: Exception) {
-            Log.e("OneDriveRepo", "❌ JSON解析エラー", e)
-            null
         }
     }
 
     private suspend fun getRootItemsResult(): OneDriveResult<List<MediaItem>> {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d("OneDriveRepository", "🔐 認証状態確認中...")
+                Log.d("OneDriveRepository", "認証状態確認中...")
                 val token = authManager.getSavedToken()
 
                 if (token == null) {
-                    Log.w("OneDriveRepository", "⚠️ 認証トークンが見つかりません")
+                    Log.w("OneDriveRepository", "認証トークンが見つかりません")
                     return@withContext OneDriveResult.Error(Exception("認証が必要です"))
                 }
 
                 if (token.isExpired) {
-                    Log.w("OneDriveRepository", "⚠️ 認証トークンが期限切れです")
+                    Log.w("OneDriveRepository", "認証トークンが期限切れです")
                     return@withContext OneDriveResult.Error(Exception("認証が期限切れです"))
                 }
 
-                Log.d("OneDriveRepository", "✅ 認証OK - API呼び出し中...")
+                Log.d("OneDriveRepository", "認証OK - API呼び出し中...")
                 val response = apiService.getRootItems("Bearer ${token.accessToken}")
 
-                Log.d("OneDriveRepository", "📡 APIレスポンス: code=${response.code()}")
+                Log.d("OneDriveRepository", "APIレスポンス: code=${response.code()}")
 
                 if (response.isSuccessful) {
                     val items = response.body()?.items?.map { it.toMediaItem() } ?: emptyList()
-                    Log.d("OneDriveRepository", "📁 OneDriveアイテム数: ${items.size}")
+                    Log.d("OneDriveRepository", "OneDriveアイテム数: ${items.size}")
                     items.forEach { item ->
-                        Log.d("OneDriveRepository", "  📄 ${item.name} (${if(item.isFolder) "フォルダ" else "ファイル"})")
+                        Log.d("OneDriveRepository", "${item.name} (${if(item.isFolder) "フォルダ" else "ファイル"})")
                     }
                     OneDriveResult.Success(items)
                 } else {
-                    Log.e("OneDriveRepository", "🚨 API呼び出し失敗: ${response.code()} - ${response.message()}")
+                    Log.e("OneDriveRepository", "API呼び出し失敗: ${response.code()} - ${response.message()}")
                     OneDriveResult.Error(Exception("API呼び出しに失敗: ${response.code()}"))
                 }
             } catch (e: Exception) {
-                Log.e("OneDriveRepository", "💥 例外発生: ${e.message}", e)
+                Log.e("OneDriveRepository", "例外発生: ${e.message}", e)
                 OneDriveResult.Error(e)
             }
         }
@@ -227,29 +214,41 @@ class OneDriveRepository(
 
     private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
-        Log.d("OneDriveRepository", "💾 saving ${'$'}{items.size} items to cache (folder=${'$'}folderId)")
+        Log.d("OneDriveRepository", "saving ${items.size} items to cache (folder=$folderId)")
         mediaDao.replaceFolder(folderId, items.take(100).map { it.toCached(folderId, now) })
         mediaDao.deleteOlderThan(now - 14L * 24 * 60 * 60 * 1000)
         folderSyncDao.upsert(FolderSyncStatus(folderId ?: ROOT_ID, now))
-        Log.d("OneDriveRepository", "📌 lastSyncAt updated to $now for folder=${folderId ?: ROOT_ID}")
+        Log.d("OneDriveRepository", "lastSyncAt updated to $now for folder=${folderId ?: ROOT_ID}")
     }
 
     private suspend fun sync(folderId: String?) = mutex.withLock {
-        Log.d("OneDriveRepository", "⬆️ start sync for folder=${folderId ?: ROOT_ID}")
+        Log.d("OneDriveRepository", "start sync for folder=${folderId ?: ROOT_ID}")
         val result = if (folderId == null) getRootItemsResult() else getFolderItemsResult(folderId)
         if (result is OneDriveResult.Success) {
-            val itemsWithDownloadUrl = result.data.map { item ->
-                if (item.isVideo) {
-                    val downloadUrl = getDownloadUrl(item.id)
-                    item.copy(downloadUrl = downloadUrl)
-                } else {
-                    item
+            val itemsWithUrls = result.data.map { item ->
+                when {
+                    item.isVideo || item.isImage -> {
+                        val downloadUrl = getDownloadUrl(item.id)
+                        item.copy(
+                            downloadUrl = downloadUrl,
+                            thumbnailUrl = generateThumbnailUrl(item)
+                        )
+                    }
+                    else -> item
                 }
             }
-            cacheItems(folderId, itemsWithDownloadUrl)
-            Log.d("OneDriveRepository", "✅ sync success: ${'$'}{itemsWithDownloadUrl.size} items")
+            cacheItems(folderId, itemsWithUrls)
+            Log.d("OneDriveRepository", "sync success: ${itemsWithUrls.size} items")
         } else if (result is OneDriveResult.Error) {
-            Log.e("OneDriveRepository", "❌ sync error: ${'$'}{result.exception.message}")
+            Log.e("OneDriveRepository", "sync error: ${result.exception.message}")
+        }
+    }
+
+    private fun generateThumbnailUrl(item: MediaItem): String? {
+        return if (!item.isFolder && (item.isImage || item.isVideo)) {
+            "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/medium/content"
+        } else {
+            null
         }
     }
 
@@ -263,6 +262,14 @@ class OneDriveRepository(
             Date()
         }
 
+        // サムネイルURLを生成
+        val thumbnailUrl = if (!isFolder && (mimeType?.startsWith("image/") == true ||
+                    mimeType?.startsWith("video/") == true)) {
+            "https://graph.microsoft.com/v1.0/me/drive/items/$id/thumbnails/0/medium/content"
+        } else {
+            null
+        }
+
         return MediaItem(
             id = id,
             name = name,
@@ -270,8 +277,8 @@ class OneDriveRepository(
             lastModified = lastModified,
             mimeType = mimeType,
             isFolder = isFolder,
-            thumbnailUrl = null,
-            downloadUrl = null  // ここでは空でOK、後でgetDownloadUrl()で設定
+            thumbnailUrl = thumbnailUrl,
+            downloadUrl = downloadUrl
         )
     }
 }
