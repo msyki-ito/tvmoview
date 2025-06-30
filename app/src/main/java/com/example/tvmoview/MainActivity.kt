@@ -74,8 +74,8 @@ class MainActivity : ComponentActivity() {
                         val url = request.url.toString()
                         val newRequest = if (url.contains("graph.microsoft.com") ||
                             url.contains("onedrive")) {
-                            val token = authManager.getSavedToken()
-                            if (token != null && !token.isExpired) {
+                            val token = kotlinx.coroutines.runBlocking { authManager.getValidToken() }
+                            if (token != null) {
                                 Log.d("Coil", "Adding auth header for: ${url.take(50)}...")
                                 request.newBuilder()
                                     .addHeader("Authorization", "Bearer ${token.accessToken}")

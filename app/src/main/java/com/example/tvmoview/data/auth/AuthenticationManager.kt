@@ -1,7 +1,9 @@
 ﻿                                    package com.example.tvmoview.data.auth
 
                                     import android.content.Context
-                                    import android.content.SharedPreferences
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
                                     import android.util.Log
                                     import kotlinx.coroutines.*
                                     import okhttp3.*
@@ -11,13 +13,28 @@
                                     import java.io.IOException
                                     import java.util.*
 
-                                    class AuthenticationManager(private val context: Context) {
+class AuthenticationManager(private val context: Context) {
+
+    companion object {
+        private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L
+    }
 
                                         private val clientId = "c7981c06-6cf2-4c9c-b98e-c51c83073972"
                                         private val tenantId = "consumers"
                                         private val scope = "https://graph.microsoft.com/Files.Read offline_access"
 
-                                        private val prefs: SharedPreferences = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context,
+            "auth_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
                                         private val httpClient = OkHttpClient()
 
                                         // Device Code Flow用のデータクラス
@@ -213,32 +230,75 @@
                                             }
                                         }
 
-                                        private fun saveTokenResponse(tokenResponse: TokenResponse) {
-                                            val expirationTime = System.currentTimeMillis() + (tokenResponse.expiresIn * 1000L)
+    private fun saveTokenResponse(tokenResponse: TokenResponse) {
+        val expirationTime = System.currentTimeMillis() + (tokenResponse.expiresIn * 1000L)
 
-                                            prefs.edit()
-                                                .putString("access_token", tokenResponse.accessToken)
-                                                .putString("refresh_token", tokenResponse.refreshToken)
-                                                .putLong("expires_at", expirationTime)
-                                                .apply()
-                                        }
+        prefs.edit()
+            .putString("access_token", tokenResponse.accessToken)
+            .putString("refresh_token", tokenResponse.refreshToken)
+            .putLong("expires_at", expirationTime)
+            .apply()
+    }
 
-                                        fun getSavedToken(): AuthToken? {
-                                            val accessToken = prefs.getString("access_token", null) ?: return null
-                                            val refreshToken = prefs.getString("refresh_token", null)
-                                            val expiresAt = prefs.getLong("expires_at", 0)
+    private suspend fun refreshAccessToken(refreshToken: String): TokenResponse? = withContext(Dispatchers.IO) {
+        val body = FormBody.Builder()
+            .add("grant_type", "refresh_token")
+            .add("client_id", clientId)
+            .add("scope", scope)
+            .add("refresh_token", refreshToken)
+            .build()
 
-                                            return AuthToken(
-                                                accessToken = accessToken,
-                                                refreshToken = refreshToken,
-                                                expiresAt = expiresAt
-                                            )
-                                        }
+        val request = Request.Builder()
+            .url("https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token")
+            .post(body)
+            .build()
 
-                                        fun isAuthenticated(): Boolean {
-                                            val token = getSavedToken()
-                                            return token != null && !token.isExpired
-                                        }
+        try {
+            val response = httpClient.newCall(request).execute()
+            val responseBody = response.body?.string()
+            if (response.isSuccessful && responseBody != null) {
+                val json = JSONObject(responseBody)
+                return@withContext TokenResponse(
+                    accessToken = json.getString("access_token"),
+                    refreshToken = json.optString("refresh_token"),
+                    expiresIn = json.getInt("expires_in")
+                )
+            } else {
+                Log.e("AuthenticationManager", "refresh failed: ${response.code}")
+            }
+        } catch (e: Exception) {
+            Log.e("AuthenticationManager", "refresh error", e)
+        }
+        null
+    }
+
+    fun getSavedToken(): AuthToken? {
+        val accessToken = prefs.getString("access_token", null) ?: return null
+        val refreshToken = prefs.getString("refresh_token", null)
+        val expiresAt = prefs.getLong("expires_at", 0)
+
+        return AuthToken(
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            expiresAt = expiresAt
+        )
+    }
+
+    suspend fun getValidToken(): AuthToken? {
+        val token = getSavedToken() ?: return null
+        if (token.shouldRefresh && token.refreshToken != null) {
+            val refreshed = refreshAccessToken(token.refreshToken)
+            if (refreshed != null) {
+                saveTokenResponse(refreshed)
+                return getSavedToken()
+            }
+        }
+        return if (token.isExpired) null else token
+    }
+
+    fun isAuthenticated(): Boolean {
+        return runBlocking { getValidToken() } != null
+    }
 
                                         fun clearAuthentication() {
                                             prefs.edit().clear().apply()
@@ -251,11 +311,13 @@
                                         }
                                     }
 
-                                    data class AuthToken(
-                                        val accessToken: String,
-                                        val refreshToken: String?,
-                                        val expiresAt: Long
-                                    ) {
-                                        val isExpired: Boolean
-                                            get() = System.currentTimeMillis() >= expiresAt
-                                    }
+data class AuthToken(
+    val accessToken: String,
+    val refreshToken: String?,
+    val expiresAt: Long
+) {
+    val isExpired: Boolean
+        get() = System.currentTimeMillis() >= expiresAt
+    val shouldRefresh: Boolean
+        get() = System.currentTimeMillis() >= expiresAt - REFRESH_THRESHOLD_MS
+}
