@@ -21,9 +21,11 @@ import androidx.security.crypto.MasterKey
 
                                         private val prefs: SharedPreferences =
                                             EncryptedSharedPreferences.create(
-                                                "auth_prefs",
-                                                MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
                                                 context,
+                                                "auth_prefs",
+                                                MasterKey.Builder(context)
+                                                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                                                    .build(),
                                                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                                                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                                             )
@@ -219,6 +221,8 @@ import androidx.security.crypto.MasterKey
                                                 // タイムアウト
                                                 Log.e("AuthenticationManager", "⏰ 認証タイムアウト")
                                             throw Exception("認証がタイムアウトしました。再度お試しください。")
+                                        }
+
                                         }
 
                                         private suspend fun refreshAccessToken(refresh: String): TokenResponse = withContext(Dispatchers.IO) {
