@@ -59,11 +59,9 @@ fun ImageViewerScreen(
                 val currentItem = items[currentIndex]
                 Log.d("ImageViewer", "Loading image: ${currentItem.name}")
 
-                val url = if (!currentItem.downloadUrl.isNullOrEmpty()) {
-                    currentItem.downloadUrl
-                } else {
-                    MainActivity.oneDriveRepository.getDownloadUrl(currentItem.id)
-                }
+                val url = MainActivity.oneDriveRepository
+                    .getDownloadUrl(currentItem.id)
+                    ?: currentItem.downloadUrl
                 imageUrl = url
                 Log.d("ImageViewer", "Image URL: $url")
             }
@@ -80,11 +78,9 @@ fun ImageViewerScreen(
                 val currentItem = imageItems[currentIndex]
                 Log.d("ImageViewer", "Switching to image: ${currentItem.name}")
 
-                val url = if (!currentItem.downloadUrl.isNullOrEmpty()) {
-                    currentItem.downloadUrl
-                } else {
-                    MainActivity.oneDriveRepository.getDownloadUrl(currentItem.id)
-                }
+                val url = MainActivity.oneDriveRepository
+                    .getDownloadUrl(currentItem.id)
+                    ?: currentItem.downloadUrl
                 imageUrl = url
             }
         }
