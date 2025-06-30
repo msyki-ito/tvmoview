@@ -9,6 +9,7 @@
   - [P] expiresAt: Long
   - [P] isExpired: Boolean
   - [P] refreshToken: String?,
+  - [P] shouldRefresh: Boolean
 
 ## 
 - DeviceCodeResponse
@@ -22,6 +23,7 @@
 - TokenResponse
   - [F] clearAuthentication()
   - [F] getSavedToken(): AuthToken?
+  - [F] getValidToken(): AuthToken?
   - [F] isAuthenticated(): Boolean
   - [F] pollForToken(deviceCode: String, interval: Int): TokenResponse
   - [F] startAuthentication(): android.content.Intent
