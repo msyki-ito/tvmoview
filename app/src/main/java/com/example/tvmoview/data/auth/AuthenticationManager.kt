@@ -13,11 +13,9 @@ import androidx.security.crypto.MasterKey
                                     import java.io.IOException
                                     import java.util.*
 
-class AuthenticationManager(private val context: Context) {
+private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L
 
-    companion object {
-        private const val REFRESH_THRESHOLD_MS = 5 * 60 * 1000L
-    }
+class AuthenticationManager(private val context: Context) {
 
                                         private val clientId = "c7981c06-6cf2-4c9c-b98e-c51c83073972"
                                         private val tenantId = "consumers"
