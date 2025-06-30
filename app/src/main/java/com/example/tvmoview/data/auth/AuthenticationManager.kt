@@ -1,7 +1,9 @@
-﻿                                    package com.example.tvmoview.data.auth
+                                    package com.example.tvmoview.data.auth
 
                                     import android.content.Context
-                                    import android.content.SharedPreferences
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
                                     import android.util.Log
                                     import kotlinx.coroutines.*
                                     import okhttp3.*
@@ -17,7 +19,16 @@
                                         private val tenantId = "consumers"
                                         private val scope = "https://graph.microsoft.com/Files.Read offline_access"
 
-                                        private val prefs: SharedPreferences = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+                                        private val prefs: SharedPreferences =
+                                            EncryptedSharedPreferences.create(
+                                                context,
+                                                "auth_prefs",
+                                                MasterKey.Builder(context)
+                                                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                                                    .build(),
+                                                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                                                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                                            )
                                         private val httpClient = OkHttpClient()
 
                                         // Device Code Flow用のデータクラス
@@ -209,8 +220,38 @@
 
                                                 // タイムアウト
                                                 Log.e("AuthenticationManager", "⏰ 認証タイムアウト")
-                                                throw Exception("認証がタイムアウトしました。再度お試しください。")
-                                            }
+                                            throw Exception("認証がタイムアウトしました。再度お試しください。")
+                                        }
+
+                                        }
+
+                                        private suspend fun refreshAccessToken(refresh: String): TokenResponse = withContext(Dispatchers.IO) {
+                                            val body = FormBody.Builder()
+                                                .add("grant_type", "refresh_token")
+                                                .add("client_id", clientId)
+                                                .add("refresh_token", refresh)
+                                                .build()
+                                            val req = Request.Builder()
+                                                .url("https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token")
+                                                .post(body)
+                                                .build()
+                                            val res = httpClient.newCall(req).execute()
+                                            val text = res.body?.string() ?: throw IOException("empty body")
+                                            val json = JSONObject(text)
+                                            if (!res.isSuccessful) throw IOException("refresh failed: " + json.optString("error"))
+                                            return@withContext TokenResponse(
+                                                json.getString("access_token"),
+                                                json.optString("refresh_token"),
+                                                json.getInt("expires_in")
+                                            ).also { saveTokenResponse(it) }
+                                        }
+
+                                        suspend fun getValidToken(): AuthToken? = withContext(Dispatchers.IO) {
+                                            val token = getSavedToken() ?: return@withContext null
+                                            if (!token.willExpireSoon) return@withContext token
+                                            val ref = token.refreshToken ?: return@withContext token
+                                            runCatching { refreshAccessToken(ref) }
+                                            return@withContext getSavedToken() ?: token
                                         }
 
                                         private fun saveTokenResponse(tokenResponse: TokenResponse) {
@@ -258,4 +299,6 @@
                                     ) {
                                         val isExpired: Boolean
                                             get() = System.currentTimeMillis() >= expiresAt
+                                        val willExpireSoon: Boolean
+                                            get() = System.currentTimeMillis() > expiresAt - 5 * 60 * 1000
                                     }
