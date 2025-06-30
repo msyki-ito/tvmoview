@@ -1,4 +1,4 @@
-﻿                                    package com.example.tvmoview.data.auth
+                                    package com.example.tvmoview.data.auth
 
                                     import android.content.Context
 import android.content.SharedPreferences
