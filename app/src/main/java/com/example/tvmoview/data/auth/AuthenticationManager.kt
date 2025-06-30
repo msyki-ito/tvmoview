@@ -253,7 +253,6 @@ import androidx.security.crypto.MasterKey
                                             runCatching { refreshAccessToken(ref) }
                                             return@withContext getSavedToken() ?: token
                                         }
-                                        }
 
                                         private fun saveTokenResponse(tokenResponse: TokenResponse) {
                                             val expirationTime = System.currentTimeMillis() + (tokenResponse.expiresIn * 1000L)
