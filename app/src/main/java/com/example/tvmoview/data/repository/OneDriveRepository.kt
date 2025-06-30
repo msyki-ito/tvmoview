@@ -106,8 +106,8 @@ class OneDriveRepository(
     suspend fun getDownloadUrl(itemId: String): String? {
         return withContext(Dispatchers.IO) {
             try {
-                val token = authManager.getSavedToken()
-                if (token == null || token.isExpired) {
+                val token = authManager.getValidToken()
+                if (token == null) {
                     Log.w("OneDriveRepo", "トークンなし/期限切れ")
                     return@withContext null
                 }
@@ -152,16 +152,10 @@ class OneDriveRepository(
         return withContext(Dispatchers.IO) {
             try {
                 Log.d("OneDriveRepository", "認証状態確認中...")
-                val token = authManager.getSavedToken()
-
+                val token = authManager.getValidToken()
                 if (token == null) {
                     Log.w("OneDriveRepository", "認証トークンが見つかりません")
                     return@withContext OneDriveResult.Error(Exception("認証が必要です"))
-                }
-
-                if (token.isExpired) {
-                    Log.w("OneDriveRepository", "認証トークンが期限切れです")
-                    return@withContext OneDriveResult.Error(Exception("認証が期限切れです"))
                 }
 
                 Log.d("OneDriveRepository", "認証OK - API呼び出し中...")
@@ -190,8 +184,8 @@ class OneDriveRepository(
     private suspend fun getFolderItemsResult(folderId: String): OneDriveResult<List<MediaItem>> {
         return withContext(Dispatchers.IO) {
             try {
-                val token = authManager.getSavedToken()
-                if (token == null || token.isExpired) {
+                val token = authManager.getValidToken()
+                if (token == null) {
                     return@withContext OneDriveResult.Error(Exception("認証が必要です"))
                 }
 
