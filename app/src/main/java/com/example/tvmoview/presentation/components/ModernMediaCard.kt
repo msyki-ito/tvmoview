@@ -28,7 +28,8 @@ import java.util.*
 fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
-    loadPriority: Float = 0.5f
+    loadPriority: Float = 0.5f,
+    showName: Boolean = true
 ) {
     Card(
         modifier = Modifier
@@ -109,17 +110,20 @@ fun ModernMediaCard(
             }
 
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (showName) {
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 if (!item.isFolder) {
                     val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                    val info = if (showName) "${formatFileSize(item.size)} • ${dateFormat.format(item.lastModified)}" else dateFormat.format(item.lastModified)
                     Text(
-                        text = "${formatFileSize(item.size)} • ${dateFormat.format(item.lastModified)}",
+                        text = info,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -10,10 +10,11 @@ import com.example.tvmoview.domain.model.MediaItem
 @Composable
 fun ModernTileView(
     items: List<MediaItem>,
+    columnCount: Int,
     onItemClick: (MediaItem) -> Unit
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 200.dp),
+        columns = GridCells.Fixed(columnCount),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -29,7 +30,8 @@ fun ModernTileView(
             ModernMediaCard(
                 item = item,
                 onClick = { onItemClick(item) },
-                loadPriority = priority
+                loadPriority = priority,
+                showName = false
             )
         }
     }

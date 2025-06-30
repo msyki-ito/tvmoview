@@ -14,14 +14,19 @@ import androidx.compose.ui.unit.dp
 
 // ViewMode import追加
 import com.example.tvmoview.presentation.viewmodels.ViewMode
+import com.example.tvmoview.presentation.viewmodels.SortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernTopBar(
     currentPath: String,
     viewMode: ViewMode,
+    sortOrder: SortOrder,
+    tileColumns: Int,
     onViewModeChange: () -> Unit,
+    onTileColumnsChange: () -> Unit,
     onSortClick: () -> Unit,
+    onOrderToggle: () -> Unit,
     onRefreshClick: () -> Unit,
     onSettingsClick: (() -> Unit)? = null,
     onBackClick: (() -> Unit)? = null,
@@ -93,6 +98,19 @@ fun ModernTopBar(
                         ViewMode.LIST -> Icons.Default.ViewModule
                     },
                     contentDescription = "表示モード切り替え"
+                )
+            }
+
+            if (viewMode == ViewMode.TILE) {
+                IconButton(onClick = onTileColumnsChange) {
+                    Text(tileColumns.toString())
+                }
+            }
+
+            IconButton(onClick = onOrderToggle) {
+                Icon(
+                    imageVector = if (sortOrder == SortOrder.ASC) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                    contentDescription = "並び順方向"
                 )
             }
 

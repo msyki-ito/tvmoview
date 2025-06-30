@@ -19,6 +19,7 @@ import com.example.tvmoview.presentation.components.*
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
+import com.example.tvmoview.presentation.viewmodels.SortOrder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +35,8 @@ fun ModernMediaBrowser(
     val isLoading by viewModel.isLoading.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
+    val tileColumns by viewModel.tileColumns.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
@@ -60,8 +63,12 @@ fun ModernMediaBrowser(
             ModernTopBar(
                 currentPath = currentPath,
                 viewMode = viewMode,
+                sortOrder = sortOrder,
+                tileColumns = tileColumns,
                 onViewModeChange = { viewModel.toggleViewMode() },
+                onTileColumnsChange = { viewModel.cycleTileColumns() },
                 onSortClick = { showSortDialog = true },
+                onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
                 onRefreshClick = { viewModel.refresh() },
                 onSettingsClick = onSettingsClick,
                 onBackClick = onBackClick,
@@ -82,6 +89,7 @@ fun ModernMediaBrowser(
                             ViewMode.TILE -> {
                                 ModernTileView(
                                     items = items,
+                                    columnCount = tileColumns,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
                                             Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
@@ -137,10 +145,12 @@ fun ModernMediaBrowser(
         if (showSortDialog) {
             SortDialog(
                 currentSort = sortBy,
+                currentOrder = sortOrder,
                 onSortSelected = { sort ->
                     viewModel.setSortBy(sort)
                     showSortDialog = false
                 },
+                onOrderSelected = { order -> viewModel.setSortOrder(order) },
                 onDismiss = { showSortDialog = false }
             )
         }
