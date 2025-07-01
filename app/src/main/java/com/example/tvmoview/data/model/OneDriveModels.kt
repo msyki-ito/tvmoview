@@ -13,7 +13,12 @@ data class OneDriveItem(
     @SerializedName("lastModifiedDateTime") val lastModifiedDateTime: String,
     @SerializedName("file") val file: OneDriveFile? = null,
     @SerializedName("folder") val folder: OneDriveFolder? = null,
-    @SerializedName("@microsoft.graph.downloadUrl") val downloadUrl: String? = null
+    @SerializedName("@microsoft.graph.downloadUrl") val downloadUrl: String? = null,
+    @SerializedName("video") val video: OneDriveVideoInfo? = null
+)
+
+data class OneDriveVideoInfo(
+    @SerializedName("duration") val duration: Long? = null
 )
 
 data class OneDriveFile(
