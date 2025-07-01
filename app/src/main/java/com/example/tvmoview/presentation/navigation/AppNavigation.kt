@@ -26,8 +26,9 @@ fun AppNavigation() {
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         // 既存のHighQualityPlayerScreenを使用
+                        val encodedId = safeUrlEncode(mediaItem.id)
                         val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/$encodedId/$encodedUrl")
                     }
                 },
                 onFolderSelected = { folderId ->
@@ -52,8 +53,9 @@ fun AppNavigation() {
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
+                        val encodedId = safeUrlEncode(mediaItem.id)
                         val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/$encodedId/$encodedUrl")
                     }
                 },
                 onFolderSelected = { childFolderId ->
@@ -76,9 +78,10 @@ fun AppNavigation() {
                 navArgument("downloadUrl") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
+            val encodedItemId = backStackEntry.arguments?.getString("itemId") ?: ""
             val encodedDownloadUrl = backStackEntry.arguments?.getString("downloadUrl") ?: ""
 
+            val itemId = safeUrlDecode(encodedItemId)
             val downloadUrl = safeUrlDecode(encodedDownloadUrl)
 
             HighQualityPlayerScreen(
