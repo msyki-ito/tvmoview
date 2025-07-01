@@ -10,12 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import com.example.tvmoview.presentation.navigation.AppNavigation
 import com.example.tvmoview.data.repository.MediaRepository
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
@@ -166,124 +161,9 @@ fun AuthenticationWrapper() {
     }
 }
 
+
 sealed class AuthState {
     object Checking : AuthState()
     object Authenticated : AuthState()
     object NotAuthenticated : AuthState()
-}
-
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = "home"
-    ) {
-        // ホーム画面（メディア一覧）
-        composable("home") {
-            ModernMediaBrowser(
-                onMediaSelected = { mediaItem ->
-                    if (mediaItem.isVideo) {
-                        // OneDriveのdownloadUrlを含めて渡す（URL安全エンコード）
-                        val encodedUrl = java.net.URLEncoder.encode(mediaItem.downloadUrl ?: "", "UTF-8")
-                        Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
-                        Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
-                    } else if (mediaItem.isImage) {
-                        Log.d("MainActivity", "🖼️ 画像選択: ${mediaItem.name}")
-                        navController.navigate("image/${mediaItem.id}")
-                    }
-                },
-                onFolderSelected = { folderId ->
-                    navController.navigate("folder/$folderId")
-                },
-                onSettingsClick = {
-                    navController.navigate("settings")
-                }
-            )
-        }
-
-        // フォルダ内表示
-        composable(
-            "folder/{folderId}",
-            arguments = listOf(navArgument("folderId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val folderId = backStackEntry.arguments?.getString("folderId") ?: ""
-            ModernMediaBrowser(
-                folderId = folderId,
-                onMediaSelected = { mediaItem ->
-                    if (mediaItem.isVideo) {
-                        // OneDriveのdownloadUrlを含めて渡す（URL安全エンコード）
-                        val encodedUrl = java.net.URLEncoder.encode(mediaItem.downloadUrl ?: "", "UTF-8")
-                        Log.d("MainActivity", "🎬 フォルダ内動画選択: ${mediaItem.name}")
-                        Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
-                    } else if (mediaItem.isImage) {
-                        Log.d("MainActivity", "🖼️ フォルダ内画像選択: ${mediaItem.name}")
-                        navController.navigate("image/${mediaItem.id}")
-                    }
-                },
-                onFolderSelected = { childFolderId ->
-                    navController.navigate("folder/$childFolderId")
-                },
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        // 動画プレイヤー（OneDrive downloadURL対応版）
-        composable(
-            "player/{itemId}/{downloadUrl}",
-            arguments = listOf(
-                navArgument("itemId") { type = NavType.StringType },
-                navArgument("downloadUrl") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            val encodedDownloadUrl = backStackEntry.arguments?.getString("downloadUrl") ?: ""
-
-            // URLデコード（安全処理）
-            val downloadUrl = try {
-                java.net.URLDecoder.decode(encodedDownloadUrl, "UTF-8")
-            } catch (e: Exception) {
-                Log.w("MainActivity", "URL デコード失敗: $encodedDownloadUrl", e)
-                ""
-            }
-
-            Log.d("MainActivity", "🎥 プレイヤー起動: itemId=$itemId")
-            Log.d("MainActivity", "📺 downloadUrl=$downloadUrl")
-
-            HighQualityPlayerScreen(
-                itemId = itemId,
-                downloadUrl = downloadUrl,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // 画像ビューア
-        composable(
-            "image/{itemId}",
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            val parentFolderId = navController.previousBackStackEntry?.arguments?.getString("folderId")
-
-            Log.d("MainActivity", "🖼️ 画像ビューワー起動: itemId=$itemId, parentFolder=$parentFolderId")
-
-            ImageViewerScreen(
-                currentImageId = itemId,
-                folderId = parentFolderId,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // 設定画面
-        composable("settings") {
-            SettingsScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
-    }
 }

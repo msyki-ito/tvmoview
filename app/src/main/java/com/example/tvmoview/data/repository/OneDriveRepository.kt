@@ -265,6 +265,8 @@ class OneDriveRepository(
             null
         }
 
+        val durationMs = video?.duration ?: 0L
+
         return MediaItem(
             id = id,
             name = name,
@@ -273,7 +275,8 @@ class OneDriveRepository(
             mimeType = mimeType,
             isFolder = isFolder,
             thumbnailUrl = thumbnailUrl,
-            downloadUrl = downloadUrl
+            downloadUrl = downloadUrl,
+            duration = durationMs
         )
     }
 }
