@@ -38,78 +38,79 @@ fun ModernMediaCard(
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                val context = LocalContext.current
+        Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
+            // サムネイル/アイコン表示部分
+            val context = LocalContext.current
 
-                when {
-                    item.thumbnailUrl != null || (item.isVideo || item.isImage) -> {
-                        SubcomposeAsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(item.thumbnailUrl ?: generateVideoThumbnail(item))
-                                .diskCacheKey("thumb_${item.id}")
-                                .crossfade(300)
-                                .size(400, 300)
-                                .memoryCachePolicy(CachePolicy.ENABLED)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .build(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                            loading = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            shimmerBrush(
-                                                targetValue = 1300f,
-                                                showShimmer = true
-                                            )
+            when {
+                item.thumbnailUrl != null || (item.isVideo || item.isImage) -> {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(item.thumbnailUrl ?: generateVideoThumbnail(item))
+                            .diskCacheKey("thumb_${item.id}")
+                            .crossfade(300)
+                            .size(400, 300)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        shimmerBrush(
+                                            targetValue = 1300f,
+                                            showShimmer = true
                                         )
-                                )
-                            },
-                            error = {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = when {
-                                            item.isVideo -> Icons.Default.PlayArrow
-                                            item.isImage -> Icons.Default.Image
-                                            else -> Icons.Default.Description
-                                        },
-                                        contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.primary
                                     )
-                                }
+                            )
+                        },
+                        error = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = when {
+                                        item.isVideo -> Icons.Default.PlayArrow
+                                        item.isImage -> Icons.Default.Image
+                                        else -> Icons.Default.Description
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
-                        )
-                        if (item.isVideo) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .size(48.dp)
-                            )
-                            Text(
-                                text = formatTime(item.duration),
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .background(Color.Black.copy(alpha = 0.6f))
-                                    .padding(4.dp)
-                            )
                         }
+                    )
+                    if (item.isVideo) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(48.dp)
+                        )
+                        Text(
+                            text = formatTime(item.duration),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .background(Color.Black.copy(alpha = 0.6f))
+                                .padding(4.dp)
+                        )
                     }
-                    item.isFolder -> {
+                }
+                item.isFolder -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Folder,
                             contentDescription = null,
@@ -117,7 +118,12 @@ fun ModernMediaCard(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    else -> {
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Description,
                             contentDescription = null,
@@ -128,22 +134,32 @@ fun ModernMediaCard(
                 }
             }
 
-            Column(modifier = Modifier.padding(12.dp)) {
-                if (showName) {
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    if (!item.isFolder) {
-                        val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
-                        Text(
-                            text = "${formatFileSize(item.size)} • ${dateFormat.format(item.lastModified)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            // ファイル名表示（フォルダとドキュメントのみ）
+            if (showName) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(
+                            Color.Black.copy(alpha = 0.7f)  // 半透明の黒背景
                         )
+                        .padding(8.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = item.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!item.isFolder && !item.isVideo && !item.isImage) {
+                            Text(
+                                text = formatFileSize(item.size),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
             }

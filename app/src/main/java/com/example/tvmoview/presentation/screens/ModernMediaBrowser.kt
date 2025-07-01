@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +24,8 @@ import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,21 +110,65 @@ fun ModernMediaBrowser(
                                         }
                                     }
                                 )
-                                if (sortBy == SortBy.SHOOT) {
-                                    Slider(
+
+                                // 細いシークバー（撮影日順の場合のみ表示）
+                                if (sortBy == SortBy.SHOOT && items.isNotEmpty()) {
+                                    // 現在表示中アイテムの日付を監視
+                                    val currentVisibleDate = remember(gridState.firstVisibleItemIndex) {
+                                        if (gridState.firstVisibleItemIndex < items.size) {
+                                            val item = items[gridState.firstVisibleItemIndex]
+                                            SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
+                                        } else ""
+                                    }
+
+                                    // 細いシークバー
+                                    Box(
                                         modifier = Modifier
                                             .align(Alignment.CenterEnd)
-                                            .height(200.dp)
-                                            .rotate(90f),
-                                        value = gridState.firstVisibleItemIndex.toFloat(),
-                                        onValueChange = {
-                                            coroutineScope.launch {
-                                                gridState.scrollToItem(it.toInt())
-                                            }
-                                        },
-                                        valueRange = 0f..(items.size - 1).coerceAtLeast(0).toFloat(),
-                                        steps = (items.size - 2).coerceAtLeast(0)
-                                    )
+                                            .fillMaxHeight()
+                                            .width(24.dp)  // 80dp → 24dpに縮小
+                                            .padding(vertical = 48.dp, horizontal = 4.dp)
+                                    ) {
+                                        // 背景バー（細い）
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.Center)
+                                                .width(4.dp)  // 40dp → 4dpに細く
+                                                .fillMaxHeight()
+                                                .background(
+                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                                    shape = RoundedCornerShape(2.dp)
+                                                )
+                                        ) {
+                                            // プログレス表示
+                                            val progress = if (items.isNotEmpty()) {
+                                                gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
+                                            } else 0f
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopStart)
+                                                    .width(4.dp)
+                                                    .fillMaxHeight(progress)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                                                        shape = RoundedCornerShape(2.dp)
+                                                    )
+                                            )
+                                        }
+
+                                        // 日付表示（上部）
+                                        if (currentVisibleDate.isNotEmpty()) {
+                                            Text(
+                                                text = currentVisibleDate,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier
+                                                    .align(Alignment.TopCenter)
+                                                    .offset(y = (-24).dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             ViewMode.LIST -> {
@@ -228,7 +275,9 @@ fun EmptyStateView() {
 @Composable
 fun SortDialog(
     currentSort: SortBy,
+    currentOrder: SortOrder,
     onSortSelected: (SortBy) -> Unit,
+    onOrderSelected: (SortOrder) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -250,11 +299,11 @@ fun SortDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = when (sortOption) {
-                                SortBy.NAME -> "名前順"
+                                SortBy.SHOOT -> "撮影日順"
                                 SortBy.DATE -> "更新日時順"
                                 SortBy.SIZE -> "サイズ順"
+                                SortBy.NAME -> "名前順"
                                 SortBy.TYPE -> "種類順"
-                                SortBy.SHOOT -> "撮影日順"
                             }
                         )
                     }

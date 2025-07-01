@@ -33,23 +33,9 @@ fun ModernTileView(
                 item = item,
                 onClick = { onItemClick(item) },
                 loadPriority = priority,
-                showName = item.isFolder
+                // showName の条件は変更なし（既に正しい）
+                showName = item.isFolder || (!item.isVideo && !item.isImage)
             )
         }
     }
 }
-
-//    // プリフェッチ設定
-//    LaunchedEffect(gridState) {
-//        snapshotFlow { gridState.firstVisibleItemIndex }
-//            .collect { firstVisible ->
-//                // 見える範囲の前後をプリフェッチ
-//                val prefetchRange = 10
-//                val start = (firstVisible - prefetchRange).coerceAtLeast(0)
-//                val end = (firstVisible + prefetchRange).coerceAtMost(items.size - 1)
-//
-//                // ここでプリフェッチ処理を実行
-//                Log.d("ModernTileView", "Prefetch range: $start to $end")
-//            }
-//    }
-//}
