@@ -114,11 +114,13 @@ fun ModernMediaBrowser(
                                 // 細いシークバー（撮影日順の場合のみ表示）
                                 if (sortBy == SortBy.SHOOT && items.isNotEmpty()) {
                                     // 現在表示中アイテムの日付を監視
-                                    val currentVisibleDate = remember(gridState.firstVisibleItemIndex) {
-                                        if (gridState.firstVisibleItemIndex < items.size) {
-                                            val item = items[gridState.firstVisibleItemIndex]
-                                            SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
-                                        } else ""
+                                    val currentVisibleDate by remember {
+                                        derivedStateOf {
+                                            if (gridState.firstVisibleItemIndex < items.size) {
+                                                val item = items[gridState.firstVisibleItemIndex]
+                                                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
+                                            } else ""
+                                        }
                                     }
 
                                     // 細いシークバー
@@ -144,6 +146,8 @@ fun ModernMediaBrowser(
                                             val progress = if (items.isNotEmpty()) {
                                                 gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
                                             } else 0f
+                                            val viewport = with(LocalDensity.current) { gridState.layoutInfo.viewportSize.height.toDp() }
+                                            val dateOffset = viewport * progress - 24.dp
 
                                             Box(
                                                 modifier = Modifier
@@ -165,7 +169,8 @@ fun ModernMediaBrowser(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
-                                                    .offset(y = (-24).dp)
+                                                    .offset(y = dateOffset)
+                                                    .alpha(0.6f)
                                             )
                                         }
                                     }

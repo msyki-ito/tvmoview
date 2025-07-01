@@ -14,6 +14,7 @@ fun MediaItem.toCached(parentId: String?, accessTime: Long = System.currentTimeM
         isFolder = isFolder,
         thumbnailUrl = thumbnailUrl,
         downloadUrl = downloadUrl,
+        duration = duration,
         lastAccessedAt = accessTime
     )
 
@@ -26,5 +27,6 @@ fun CachedMediaItem.toDomain(): MediaItem =
         mimeType = mimeType,
         isFolder = isFolder,
         thumbnailUrl = thumbnailUrl,
-        downloadUrl = downloadUrl
+        downloadUrl = downloadUrl,
+        duration = duration
     )

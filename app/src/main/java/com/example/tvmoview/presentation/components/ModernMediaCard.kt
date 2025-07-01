@@ -49,7 +49,7 @@ fun ModernMediaCard(
                             .data(item.thumbnailUrl ?: generateVideoThumbnail(item))
                             .diskCacheKey("thumb_${item.id}")
                             .crossfade(300)
-                            .size(400, 300)
+                            .size(480, 360)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build(),

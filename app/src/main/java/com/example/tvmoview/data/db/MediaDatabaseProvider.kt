@@ -12,7 +12,9 @@ object MediaDatabaseProvider {
             context,
             MediaDatabase::class.java,
             "media_cache.db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
         val path = context.getDatabasePath("media_cache.db").absolutePath
         android.util.Log.d("MediaDatabase", "📂 cache DB initialized at $path")
     }

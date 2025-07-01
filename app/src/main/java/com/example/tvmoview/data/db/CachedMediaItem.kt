@@ -14,5 +14,6 @@ data class CachedMediaItem(
     val isFolder: Boolean,
     val thumbnailUrl: String?,
     val downloadUrl: String?,
+    val duration: Long = 0L,
     val lastAccessedAt: Long = System.currentTimeMillis()
 )
