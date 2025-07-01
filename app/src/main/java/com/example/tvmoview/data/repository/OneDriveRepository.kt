@@ -148,6 +148,21 @@ class OneDriveRepository(
         }
     }
 
+    suspend fun getItemName(itemId: String): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val token = authManager.getValidToken() ?: return@withContext null
+                val response = apiService.getItem("Bearer ${token.accessToken}", itemId)
+                if (response.isSuccessful) {
+                    response.body()?.name
+                } else null
+            } catch (e: Exception) {
+                Log.w("OneDriveRepo", "item name fetch failed", e)
+                null
+            }
+        }
+    }
+
     private suspend fun getRootItemsResult(): OneDriveResult<List<MediaItem>> {
         return withContext(Dispatchers.IO) {
             try {
@@ -265,6 +280,8 @@ class OneDriveRepository(
             null
         }
 
+        val durationMs = video?.duration ?: 0L
+
         return MediaItem(
             id = id,
             name = name,
@@ -273,7 +290,8 @@ class OneDriveRepository(
             mimeType = mimeType,
             isFolder = isFolder,
             thumbnailUrl = thumbnailUrl,
-            downloadUrl = downloadUrl
+            downloadUrl = downloadUrl,
+            duration = durationMs
         )
     }
 }
