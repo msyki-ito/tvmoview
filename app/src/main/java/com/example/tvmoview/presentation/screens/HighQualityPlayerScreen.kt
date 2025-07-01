@@ -31,6 +31,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HighQualityPlayerScreen(
     itemId: String,
+    itemName: String = "",
     onBack: () -> Unit,
     downloadUrl: String = ""
 ) {
@@ -44,6 +45,13 @@ fun HighQualityPlayerScreen(
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
     val showInfo = remember { mutableStateOf(true) }
+    var title by remember { mutableStateOf(itemName) }
+
+    LaunchedEffect(itemId) {
+        if (title.isEmpty()) {
+            title = MainActivity.oneDriveRepository.getItemName(itemId) ?: itemId
+        }
+    }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -212,7 +220,7 @@ fun HighQualityPlayerScreen(
                     .background(Color.Black.copy(alpha = 0.6f))
                     .padding(8.dp)
             ) {
-                Text(itemId, color = Color.White)
+                Text(title, color = Color.White)
             }
         }
 
