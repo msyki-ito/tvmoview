@@ -10,7 +10,8 @@ data class MediaItem(
     val mimeType: String? = null,
     val isFolder: Boolean = false,
     val thumbnailUrl: String? = null,
-    val downloadUrl: String? = null  // OneDrive用ダウンロードURL追加
+    val downloadUrl: String? = null,  // OneDrive用ダウンロードURL追加
+    val duration: Long = 0L
 ) {
     val isVideo: Boolean
         get() = mimeType?.startsWith("video/") == true

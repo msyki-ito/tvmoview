@@ -28,12 +28,13 @@ import java.util.*
 fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
-    loadPriority: Float = 0.5f
+    loadPriority: Float = 0.5f,
+    showName: Boolean = true
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .aspectRatio(1f)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -88,6 +89,25 @@ fun ModernMediaCard(
                                 }
                             }
                         )
+                        if (item.isVideo) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(48.dp)
+                            )
+                            Text(
+                                text = formatTime(item.duration),
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                                    .padding(4.dp)
+                            )
+                        }
                     }
                     item.isFolder -> {
                         Icon(
@@ -109,20 +129,22 @@ fun ModernMediaCard(
             }
 
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                if (!item.isFolder) {
-                    val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                if (showName) {
                     Text(
-                        text = "${formatFileSize(item.size)} • ${dateFormat.format(item.lastModified)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = item.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
+
+                    if (!item.isFolder) {
+                        val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                        Text(
+                            text = "${formatFileSize(item.size)} • ${dateFormat.format(item.lastModified)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -183,4 +205,11 @@ private fun formatFileSize(size: Long): String {
         size >= kb -> String.format("%.1f KB", size.toDouble() / kb)
         else -> "$size B"
     }
+}
+
+private fun formatTime(ms: Long): String {
+    val totalSec = ms / 1000
+    val min = totalSec / 60
+    val sec = totalSec % 60
+    return "%d:%02d".format(min, sec)
 }

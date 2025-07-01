@@ -10,11 +10,14 @@ import androidx.compose.ui.unit.dp
 
 // SortBy import追加
 import com.example.tvmoview.presentation.viewmodels.SortBy
+import com.example.tvmoview.presentation.viewmodels.SortOrder
 
 @Composable
 fun SortDialog(
     currentSort: SortBy,
+    currentOrder: SortOrder,
     onSortSelected: (SortBy) -> Unit,
+    onOrderSelected: (SortOrder) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -46,10 +49,46 @@ fun SortDialog(
                                 SortBy.DATE -> "更新日時順"
                                 SortBy.SIZE -> "サイズ順"
                                 SortBy.TYPE -> "種類順"
+                                SortBy.SHOOT -> "撮影日順"
                             },
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = currentOrder == SortOrder.ASC,
+                            onClick = { onOrderSelected(SortOrder.ASC) }
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = currentOrder == SortOrder.ASC,
+                        onClick = { onOrderSelected(SortOrder.ASC) }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("昇順")
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = currentOrder == SortOrder.DESC,
+                            onClick = { onOrderSelected(SortOrder.DESC) }
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = currentOrder == SortOrder.DESC,
+                        onClick = { onOrderSelected(SortOrder.DESC) }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("降順")
                 }
             }
         },

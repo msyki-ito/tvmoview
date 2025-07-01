@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -19,6 +21,8 @@ import com.example.tvmoview.presentation.components.*
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
+import com.example.tvmoview.presentation.viewmodels.SortOrder
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,9 +38,13 @@ fun ModernMediaBrowser(
     val isLoading by viewModel.isLoading.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
+    val tileColumns by viewModel.tileColumns.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
 
     // OneDrive統合：データ取得処理
     LaunchedEffect(folderId) {
@@ -60,8 +68,12 @@ fun ModernMediaBrowser(
             ModernTopBar(
                 currentPath = currentPath,
                 viewMode = viewMode,
+                sortOrder = sortOrder,
+                tileColumns = tileColumns,
                 onViewModeChange = { viewModel.toggleViewMode() },
+                onTileColumnsChange = { viewModel.cycleTileColumns() },
                 onSortClick = { showSortDialog = true },
+                onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
                 onRefreshClick = { viewModel.refresh() },
                 onSettingsClick = onSettingsClick,
                 onBackClick = onBackClick,
@@ -82,6 +94,8 @@ fun ModernMediaBrowser(
                             ViewMode.TILE -> {
                                 ModernTileView(
                                     items = items,
+                                    columnCount = tileColumns,
+                                    state = gridState,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
                                             Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
@@ -93,6 +107,22 @@ fun ModernMediaBrowser(
                                         }
                                     }
                                 )
+                                if (sortBy == SortBy.SHOOT) {
+                                    Slider(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .height(200.dp)
+                                            .rotate(90f),
+                                        value = gridState.firstVisibleItemIndex.toFloat(),
+                                        onValueChange = {
+                                            coroutineScope.launch {
+                                                gridState.scrollToItem(it.toInt())
+                                            }
+                                        },
+                                        valueRange = 0f..(items.size - 1).coerceAtLeast(0).toFloat(),
+                                        steps = (items.size - 2).coerceAtLeast(0)
+                                    )
+                                }
                             }
                             ViewMode.LIST -> {
                                 ModernListView(
@@ -137,10 +167,12 @@ fun ModernMediaBrowser(
         if (showSortDialog) {
             SortDialog(
                 currentSort = sortBy,
+                currentOrder = sortOrder,
                 onSortSelected = { sort ->
                     viewModel.setSortBy(sort)
                     showSortDialog = false
                 },
+                onOrderSelected = { order -> viewModel.setSortOrder(order) },
                 onDismiss = { showSortDialog = false }
             )
         }
@@ -222,6 +254,7 @@ fun SortDialog(
                                 SortBy.DATE -> "更新日時順"
                                 SortBy.SIZE -> "サイズ順"
                                 SortBy.TYPE -> "種類順"
+                                SortBy.SHOOT -> "撮影日順"
                             }
                         )
                     }

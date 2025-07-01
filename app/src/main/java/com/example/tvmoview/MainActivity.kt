@@ -24,6 +24,7 @@ import com.example.tvmoview.presentation.theme.TVMovieTheme
 import com.example.tvmoview.data.auth.AuthenticationManager
 import com.example.tvmoview.data.repository.OneDriveRepository
 import com.example.tvmoview.data.db.MediaDatabaseProvider
+import com.example.tvmoview.data.prefs.UserPreferences
 import coil.ImageLoader
 import coil.Coil
 import coil.disk.DiskCache
@@ -45,6 +46,8 @@ class MainActivity : ComponentActivity() {
 
         // 既存のテストデータ用（そのまま残す）
         mediaRepository = MediaRepository(this)
+
+        UserPreferences.init(this)
 
         // OneDrive統合の初期化（新規追加）
         authManager = AuthenticationManager(this)

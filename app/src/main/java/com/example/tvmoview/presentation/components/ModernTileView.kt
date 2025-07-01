@@ -10,13 +10,16 @@ import com.example.tvmoview.domain.model.MediaItem
 @Composable
 fun ModernTileView(
     items: List<MediaItem>,
+    columnCount: Int,
+    state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 200.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        columns = GridCells.Fixed(columnCount),
+        state = state,
+        contentPadding = PaddingValues(0.dp),
+        horizontalArrangement = Arrangement.spacedBy(0.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         itemsIndexed(items) { index, item ->
             // 表示優先度を設定
@@ -29,7 +32,8 @@ fun ModernTileView(
             ModernMediaCard(
                 item = item,
                 onClick = { onItemClick(item) },
-                loadPriority = priority
+                loadPriority = priority,
+                showName = item.isFolder
             )
         }
     }

@@ -8,6 +8,8 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -41,6 +43,7 @@ fun HighQualityPlayerScreen(
     var currentPosition by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
+    val showInfo = remember { mutableStateOf(true) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -86,6 +89,8 @@ fun HighQualityPlayerScreen(
     // フォーカス設定
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        kotlinx.coroutines.delay(3000)
+        showInfo.value = false
     }
 
     // 戻るボタン制御（ダブルプレス方式）
@@ -199,6 +204,17 @@ fun HighQualityPlayerScreen(
             },
             modifier = Modifier.fillMaxSize()
         )
+
+        if (showInfo.value) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(8.dp)
+            ) {
+                Text(itemId, color = Color.White)
+            }
+        }
 
         // カスタムシークバー（一時表示）
         if (showCustomSeek && duration > 0) {

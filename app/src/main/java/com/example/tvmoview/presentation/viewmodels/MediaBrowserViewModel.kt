@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.MainActivity
+import com.example.tvmoview.data.prefs.UserPreferences
 import java.util.Date
 
 enum class ViewMode {
@@ -17,7 +18,11 @@ enum class ViewMode {
 }
 
 enum class SortBy {
-    NAME, DATE, SIZE, TYPE
+    NAME, DATE, SIZE, TYPE, SHOOT
+}
+
+enum class SortOrder {
+    ASC, DESC
 }
 
 class MediaBrowserViewModel : ViewModel() {
@@ -31,8 +36,14 @@ class MediaBrowserViewModel : ViewModel() {
     private val _viewMode = MutableStateFlow(ViewMode.TILE)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
-    private val _sortBy = MutableStateFlow(SortBy.NAME)
+    private val _sortBy = MutableStateFlow(SortBy.valueOf(UserPreferences.sortBy))
     val sortBy: StateFlow<SortBy> = _sortBy.asStateFlow()
+
+    private val _sortOrder = MutableStateFlow(SortOrder.valueOf(UserPreferences.sortOrder))
+    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+
+    private val _tileColumns = MutableStateFlow(UserPreferences.tileColumns)
+    val tileColumns: StateFlow<Int> = _tileColumns.asStateFlow()
 
     private val _currentPath = MutableStateFlow("OneDrive")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
@@ -57,11 +68,13 @@ class MediaBrowserViewModel : ViewModel() {
         )
 
         loadJob = viewModelScope.launch {
-            // まずキャッシュを即座に表示
+            val limit = 30
             val cachedItems = MainActivity.oneDriveRepository.getCachedItems(folderId)
             if (cachedItems.isNotEmpty()) {
-                _items.value = applySorting(cachedItems)
+                val sorted = applySorting(cachedItems)
+                _items.value = sorted.take(limit)
                 _isLoading.value = false
+                launch { _items.value = sorted }
                 Log.d("MediaBrowserViewModel", "Showing ${cachedItems.size} cached items immediately")
             } else {
                 _isLoading.value = true
@@ -70,7 +83,9 @@ class MediaBrowserViewModel : ViewModel() {
             // OneDrive統合の場合
             if (MainActivity.authManager.isAuthenticated()) {
                 MainActivity.oneDriveRepository.getFolderItems(folderId, force).collect { list ->
-                    _items.value = applySorting(list)
+                    val sorted = applySorting(list)
+                    _items.value = sorted.take(limit)
+                    launch { _items.value = sorted }
                     if (_isLoading.value) {
                         _isLoading.value = false
                     }
@@ -142,8 +157,19 @@ class MediaBrowserViewModel : ViewModel() {
         Log.d("MediaBrowserViewModel", "🎨 表示モード変更: ${_viewMode.value}")
     }
 
+    fun cycleTileColumns() {
+        val next = when (_tileColumns.value) {
+            4 -> 6
+            6 -> 8
+            else -> 4
+        }
+        _tileColumns.value = next
+        UserPreferences.tileColumns = next
+    }
+
     fun setSortBy(sortBy: SortBy) {
         _sortBy.value = sortBy
+        UserPreferences.sortBy = sortBy.name
 
         // 現在のアイテムに新しいソートを適用
         val currentItems = _items.value
@@ -153,17 +179,38 @@ class MediaBrowserViewModel : ViewModel() {
         Log.d("MediaBrowserViewModel", "🔀 ソート変更: $sortBy")
     }
 
+    fun setSortOrder(order: SortOrder) {
+        _sortOrder.value = order
+        UserPreferences.sortOrder = order.name
+        val currentItems = _items.value
+        _items.value = applySorting(currentItems)
+    }
+
     private fun applySorting(items: List<MediaItem>): List<MediaItem> {
-        return when (_sortBy.value) {
-            SortBy.NAME -> items.sortedBy { it.name.lowercase() }
-            SortBy.DATE -> items.sortedByDescending { it.lastModified }
-            SortBy.SIZE -> items.sortedByDescending { it.size }
+        val sorted = when (_sortBy.value) {
+            SortBy.NAME -> items.sortedWith(
+                compareBy<MediaItem> { !it.isFolder }
+                    .thenBy { it.name.lowercase() }
+            )
+            SortBy.DATE -> items.sortedWith(
+                compareBy<MediaItem> { !it.isFolder }
+                    .thenBy { it.lastModified }
+            )
+            SortBy.SIZE -> items.sortedWith(
+                compareBy<MediaItem> { !it.isFolder }
+                    .thenBy { it.size }
+            )
             SortBy.TYPE -> items.sortedWith(
                 compareBy<MediaItem> { !it.isFolder }
                     .thenBy { it.mimeType ?: "" }
                     .thenBy { it.name.lowercase() }
             )
+            SortBy.SHOOT -> items.sortedWith(
+                compareBy<MediaItem> { !it.isFolder }
+                    .thenBy { it.lastModified }
+            )
         }
+        return if (_sortOrder.value == SortOrder.DESC) sorted.reversed() else sorted
     }
 
     fun refresh() {
@@ -179,21 +226,21 @@ class MediaBrowserViewModel : ViewModel() {
 
                 // OneDrive統合の場合
                 if (MainActivity.authManager.isAuthenticated()) {
-                    // force=true でバックグラウンド更新
                     MainActivity.oneDriveRepository.getFolderItems(_currentFolderId.value, force = true).collect { newList ->
-                        // 新しいデータが取得できた時のみ画面更新
+                        val sorted = applySorting(newList)
                         if (newList.isNotEmpty() || _items.value.isEmpty()) {
-                            _items.value = applySorting(newList)
+                            _items.value = sorted.take(30)
+                            launch { _items.value = sorted }
                             Log.d("MediaBrowserViewModel", "✅ バックグラウンド更新完了: ${newList.size} entries")
                         }
 
-                        // ローディング状態終了
                         _isLoading.value = false
                     }
                 } else {
-                    // テストデータの場合
                     val items = loadTestItems(_currentFolderId.value)
-                    _items.value = applySorting(items)
+                    val sorted = applySorting(items)
+                    _items.value = sorted.take(30)
+                    launch { _items.value = sorted }
                     _isLoading.value = false
                     Log.d("MediaBrowserViewModel", "✅ テストデータ更新完了")
                 }

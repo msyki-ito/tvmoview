@@ -37,14 +37,16 @@ class MediaRepository(private val context: Context) {
                 name = "🎬 家族の思い出.mp4",
                 size = 52428800,
                 lastModified = Date(System.currentTimeMillis() - 86400000),
-                mimeType = "video/mp4"
+                mimeType = "video/mp4",
+                duration = 120000
             ),
             MediaItem(
                 id = "video2",
                 name = "🎬 旅行記録.mp4",
                 size = 85214800,
                 lastModified = Date(System.currentTimeMillis() - 172800000),
-                mimeType = "video/mp4"
+                mimeType = "video/mp4",
+                duration = 180000
             ),
             MediaItem(
                 id = "image1",
@@ -87,7 +89,8 @@ class MediaRepository(private val context: Context) {
                         name = "🎥 動画$i.mp4",
                         size = (50000000..200000000).random().toLong(),
                         lastModified = Date(System.currentTimeMillis() - i * 86400000),
-                        mimeType = "video/mp4"
+                        mimeType = "video/mp4",
+                        duration = (60_000L * (1 + i))
                     )
                 }
             }

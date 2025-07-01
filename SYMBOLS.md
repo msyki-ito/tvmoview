@@ -1,4 +1,4 @@
-﻿# 祷 SYMBOLS.md (generated 2025-06-30)
+# 📘 SYMBOLS.md (generated 2025-07-01)
 
 ## 
 - AuthenticationManager
@@ -31,6 +31,28 @@
   - [P] accessToken: String,
   - [P] expiresIn: Int
   - [P] refreshToken: String?,
+
+## com.example.tvmoview
+- Authenticated
+
+## com.example.tvmoview
+- Checking
+
+## com.example.tvmoview
+- ExampleInstrumentedTest
+  - [F] useAppContext()
+
+## com.example.tvmoview
+- ExampleUnitTest
+  - [F] addition_isCorrect()
+
+## com.example.tvmoview
+- MainActivity
+  - [F] AuthenticationWrapper()
+
+## com.example.tvmoview
+- NotAuthenticated
+  - [F] AppNavigation()
 
 ## com.example.tvmoview.data.db
 - CachedMediaItem
@@ -77,6 +99,13 @@
 ## com.example.tvmoview.data.model
 - Success
 
+## com.example.tvmoview.data.prefs
+- UserPreferences
+  - [F] init(context: Context)
+  - [P] sortBy: String
+  - [P] sortOrder: String
+  - [P] tileColumns: Int
+
 ## com.example.tvmoview.data.repository
 - MediaRepository
   - [F] getCurrentPath(folderId: String?): String
@@ -93,6 +122,7 @@
 ## com.example.tvmoview.domain.model
 - MediaItem
   - [P] downloadUrl: String?
+  - [P] duration: Long
   - [P] fileExtension: String
   - [P] formattedSize: String
   - [P] id: String,
@@ -131,41 +161,23 @@
 
 ## com.example.tvmoview.presentation.viewmodels
 - MediaBrowserViewModel
+  - [F] cycleTileColumns()
   - [F] loadItems(folderId: String? = null, force: Boolean = false)
   - [F] refresh()
   - [F] setSortBy(sortBy: SortBy)
+  - [F] setSortOrder(order: SortOrder)
   - [F] toggleViewMode()
   - [P] currentFolderId: StateFlow<String?>
   - [P] currentPath: StateFlow<String>
   - [P] isLoading: StateFlow<Boolean>
   - [P] items: StateFlow<List<MediaItem>>
   - [P] sortBy: StateFlow<SortBy>
+  - [P] sortOrder: StateFlow<SortOrder>
+  - [P] tileColumns: StateFlow<Int>
   - [P] viewMode: StateFlow<ViewMode>
 
 ## com.example.tvmoview.tv
 - FireTVOptimizations
   - [F] initializeForFireTV(activity: Activity)
-
-## com.example.tvmoview
-- Authenticated
-
-## com.example.tvmoview
-- Checking
-
-## com.example.tvmoview
-- ExampleInstrumentedTest
-  - [F] useAppContext()
-
-## com.example.tvmoview
-- ExampleUnitTest
-  - [F] addition_isCorrect()
-
-## com.example.tvmoview
-- MainActivity
-  - [F] AuthenticationWrapper()
-
-## com.example.tvmoview
-- NotAuthenticated
-  - [F] AppNavigation()
 
 

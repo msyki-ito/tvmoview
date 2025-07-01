@@ -22,6 +22,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.domain.model.MediaItem
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,6 +39,7 @@ fun ImageViewerScreen(
     var currentIndex by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
     var imageUrl by remember { mutableStateOf<String?>(null) }
+    val showInfo = remember { mutableStateOf(true) }
 
     Log.d("ImageViewer", "Screen started with imageId: $currentImageId, folderId: $folderId")
 
@@ -84,6 +86,12 @@ fun ImageViewerScreen(
                 imageUrl = url
             }
         }
+    }
+
+    LaunchedEffect(imageUrl) {
+        showInfo.value = true
+        delay(3000)
+        showInfo.value = false
     }
 
     LaunchedEffect(Unit) {
@@ -175,6 +183,20 @@ fun ImageViewerScreen(
                         }
                     }
                 )
+
+                if (showInfo.value && imageItems.isNotEmpty() && currentIndex < imageItems.size) {
+                    val item = imageItems[currentIndex]
+                    val dateFormat = java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault())
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .padding(8.dp)
+                    ) {
+                        Text(item.name, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                        Text(dateFormat.format(item.lastModified), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
 
                 if (imageItems.size > 1) {
                     Row(

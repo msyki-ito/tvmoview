@@ -1,5 +1,5 @@
 diff a/gradle/libs.versions.toml b/gradle/libs.versions.toml	(rejected hunks)
-@@ -1,32 +1,59 @@
+@@ -1,32 +1,60 @@
  [versions]
 -agp = "8.10.1"
 -kotlin = "2.0.21"
@@ -50,6 +50,7 @@ diff a/gradle/libs.versions.toml b/gradle/libs.versions.toml	(rejected hunks)
 +androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 +androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 +coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
++coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 +androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 +androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 +androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
@@ -63,5 +64,5 @@ diff a/gradle/libs.versions.toml b/gradle/libs.versions.toml	(rejected hunks)
  android-application = { id = "com.android.application", version.ref = "agp" }
  kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
  kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
++ksp = { id = "com.google.devtools.ksp", version = "2.0.20-1.0.21" }
  
