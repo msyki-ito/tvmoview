@@ -9,12 +9,16 @@ import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.data.db.MediaDao
 import com.example.tvmoview.data.db.FolderSyncDao
 import com.example.tvmoview.data.db.FolderSyncStatus
+import com.example.tvmoview.data.db.CachedMediaItem
 import com.example.tvmoview.data.db.toCached
 import com.example.tvmoview.data.db.toDomain
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -45,6 +49,7 @@ class OneDriveRepository(
 
     private val ROOT_ID = "root"
     private val mutex = Mutex()
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val syncIntervalMs = 10 * 60 * 1000L
 
@@ -83,23 +88,12 @@ class OneDriveRepository(
     fun getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>> =
         mediaDao.observe(folderId)
             .onStart {
-                val key = folderId ?: ROOT_ID
-                Log.d(
-                    "OneDriveRepository",
-                    "getFolderItems start (folder=$key, force=$force)"
-                )
-                if (shouldFetch(key, force)) {
-                    Log.d("OneDriveRepository", "sync triggered (folder=$key)")
-                    sync(folderId)
-                } else {
-                    Log.d("OneDriveRepository", "cache hit for folder=$key")
+                val hasCache = mediaDao.getItems(folderId).isNotEmpty()
+                if (!hasCache || force) {
+                    repoScope.launch { fetchAndCacheItems(folderId) }
                 }
             }
             .map { list ->
-                Log.d(
-                    "OneDriveRepository",
-                    "emit cached ${list.size} items (folder=${folderId ?: ROOT_ID})"
-                )
                 list.map { it.toDomain() }
             }
 
@@ -145,6 +139,93 @@ class OneDriveRepository(
                 Log.e("OneDriveRepo", "例外発生", e)
                 null
             }
+        }
+    }
+
+    private suspend fun fetchAndCacheItems(folderId: String?) {
+        try {
+            val items = fetchAllItems(folderId)
+            val mediaItems = items.map { oneDriveItem ->
+                MediaItem(
+                    id = oneDriveItem.id,
+                    name = oneDriveItem.name,
+                    size = oneDriveItem.size ?: 0,
+                    lastModified = parseDate(oneDriveItem.lastModifiedDateTime),
+                    mimeType = oneDriveItem.file?.mimeType,
+                    isFolder = oneDriveItem.folder != null,
+                    thumbnailUrl = generateThumbnailUrl(oneDriveItem),
+                    downloadUrl = null,
+                    duration = oneDriveItem.video?.duration ?: 0L
+                )
+            }
+            saveToCache(folderId, mediaItems)
+        } catch (e: Exception) {
+            Log.e("OneDriveRepo", "API取得エラー", e)
+        }
+    }
+
+    private suspend fun fetchAllItems(folderId: String?): List<OneDriveItem> {
+        val token = authManager.getValidToken() ?: return emptyList()
+        val auth = "Bearer ${token.accessToken}"
+        val select = "id,name,size,lastModifiedDateTime,file,folder,video"
+        val items = mutableListOf<OneDriveItem>()
+
+        var response = if (folderId == null) {
+            apiService.getRootItems(auth, select)
+        } else {
+            apiService.getFolderItems(auth, folderId, select)
+        }
+
+        while (response.isSuccessful) {
+            val body = response.body() ?: break
+            items.addAll(body.items)
+            val next = body.nextLink
+            response = if (next != null) {
+                apiService.getByUrl(next, auth)
+            } else break
+        }
+
+        return items
+    }
+
+    private suspend fun saveToCache(folderId: String?, items: List<MediaItem>) {
+        val cached = items.map { item ->
+            CachedMediaItem(
+                id = item.id,
+                parentId = folderId,
+                name = item.name,
+                size = item.size,
+                lastModified = item.lastModified.time,
+                mimeType = item.mimeType,
+                isFolder = item.isFolder,
+                thumbnailUrl = item.thumbnailUrl,
+                downloadUrl = null,
+                duration = item.duration,
+                lastAccessedAt = System.currentTimeMillis()
+            )
+        }
+        mediaDao.replaceFolder(folderId, cached)
+        folderSyncDao.upsert(
+            FolderSyncStatus(
+                folderId = folderId ?: "root",
+                lastSyncAt = System.currentTimeMillis()
+            )
+        )
+    }
+
+    private fun generateThumbnailUrl(item: OneDriveItem): String? {
+        val isMedia = item.file?.mimeType?.let {
+            it.startsWith("image/") || it.startsWith("video/")
+        } ?: false
+        return if (!isMedia || item.folder != null) null
+        else "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/medium/content"
+    }
+
+    private fun parseDate(text: String?): Date {
+        return try {
+            dateFormat.parse(text ?: "") ?: Date()
+        } catch (e: Exception) {
+            Date()
         }
     }
 

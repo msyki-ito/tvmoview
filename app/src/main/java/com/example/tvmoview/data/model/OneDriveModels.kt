@@ -3,7 +3,8 @@
 import com.google.gson.annotations.SerializedName
 
 data class OneDriveResponse(
-    @SerializedName("value") val items: List<OneDriveItem>
+    @SerializedName("value") val items: List<OneDriveItem>,
+    @SerializedName("@odata.nextLink") val nextLink: String? = null
 )
 
 data class OneDriveItem(
@@ -13,7 +14,12 @@ data class OneDriveItem(
     @SerializedName("lastModifiedDateTime") val lastModifiedDateTime: String,
     @SerializedName("file") val file: OneDriveFile? = null,
     @SerializedName("folder") val folder: OneDriveFolder? = null,
+    @SerializedName("video") val video: OneDriveVideo? = null,
     @SerializedName("@microsoft.graph.downloadUrl") val downloadUrl: String? = null
+)
+
+data class OneDriveVideo(
+    @SerializedName("duration") val duration: Long? = null
 )
 
 data class OneDriveFile(

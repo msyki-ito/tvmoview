@@ -185,11 +185,8 @@ fun AppNavigation() {
             ModernMediaBrowser(
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
-                        // OneDriveのdownloadUrlを含めて渡す（URL安全エンコード）
-                        val encodedUrl = java.net.URLEncoder.encode(mediaItem.downloadUrl ?: "", "UTF-8")
                         Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
-                        Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/${mediaItem.id}")
                     } else if (mediaItem.isImage) {
                         Log.d("MainActivity", "🖼️ 画像選択: ${mediaItem.name}")
                         navController.navigate("image/${mediaItem.id}")
@@ -214,11 +211,8 @@ fun AppNavigation() {
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
-                        // OneDriveのdownloadUrlを含めて渡す（URL安全エンコード）
-                        val encodedUrl = java.net.URLEncoder.encode(mediaItem.downloadUrl ?: "", "UTF-8")
                         Log.d("MainActivity", "🎬 フォルダ内動画選択: ${mediaItem.name}")
-                        Log.d("MainActivity", "📊 downloadUrl: ${mediaItem.downloadUrl}")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/${mediaItem.id}")
                     } else if (mediaItem.isImage) {
                         Log.d("MainActivity", "🖼️ フォルダ内画像選択: ${mediaItem.name}")
                         navController.navigate("image/${mediaItem.id}")
@@ -233,31 +227,18 @@ fun AppNavigation() {
             )
         }
 
-        // 動画プレイヤー（OneDrive downloadURL対応版）
+        // 動画プレイヤー（downloadURLは再生時に取得）
         composable(
-            "player/{itemId}/{downloadUrl}",
+            "player/{itemId}",
             arguments = listOf(
-                navArgument("itemId") { type = NavType.StringType },
-                navArgument("downloadUrl") { type = NavType.StringType }
+                navArgument("itemId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            val encodedDownloadUrl = backStackEntry.arguments?.getString("downloadUrl") ?: ""
-
-            // URLデコード（安全処理）
-            val downloadUrl = try {
-                java.net.URLDecoder.decode(encodedDownloadUrl, "UTF-8")
-            } catch (e: Exception) {
-                Log.w("MainActivity", "URL デコード失敗: $encodedDownloadUrl", e)
-                ""
-            }
-
             Log.d("MainActivity", "🎥 プレイヤー起動: itemId=$itemId")
-            Log.d("MainActivity", "📺 downloadUrl=$downloadUrl")
 
             HighQualityPlayerScreen(
                 itemId = itemId,
-                downloadUrl = downloadUrl,
                 onBack = { navController.popBackStack() }
             )
         }

@@ -1,15 +1,12 @@
 package com.example.tvmoview.presentation.navigation
 
 import androidx.compose.runtime.*
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.tvmoview.presentation.screens.*
-import java.net.URLDecoder
-import java.net.URLEncoder
 
 @Composable
 fun AppNavigation() {
@@ -25,9 +22,7 @@ fun AppNavigation() {
                 folderId = null,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
-                        // 既存のHighQualityPlayerScreenを使用
-                        val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/${mediaItem.id}")
                     }
                 },
                 onFolderSelected = { folderId ->
@@ -52,8 +47,7 @@ fun AppNavigation() {
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
-                        val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/${mediaItem.id}/$encodedUrl")
+                        navController.navigate("player/${mediaItem.id}")
                     }
                 },
                 onFolderSelected = { childFolderId ->
@@ -70,20 +64,14 @@ fun AppNavigation() {
 
         // ✅ 既存のHighQualityPlayerScreenを使用
         composable(
-            "player/{itemId}/{downloadUrl}",
+            "player/{itemId}",
             arguments = listOf(
-                navArgument("itemId") { type = NavType.StringType },
-                navArgument("downloadUrl") { type = NavType.StringType }
+                navArgument("itemId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            val encodedDownloadUrl = backStackEntry.arguments?.getString("downloadUrl") ?: ""
-
-            val downloadUrl = safeUrlDecode(encodedDownloadUrl)
-
             HighQualityPlayerScreen(
                 itemId = itemId,
-                downloadUrl = downloadUrl,
                 onBack = {
                     navController.popBackStack()
                 }
@@ -98,22 +86,5 @@ fun AppNavigation() {
                 }
             )
         }
-    }
-}
-
-// URL安全エンコード/デコード
-private fun safeUrlEncode(input: String): String {
-    return try {
-        URLEncoder.encode(input, "UTF-8")
-    } catch (e: Exception) {
-        input.replace("/", "%2F")
-    }
-}
-
-private fun safeUrlDecode(encoded: String): String {
-    return try {
-        URLDecoder.decode(encoded, "UTF-8")
-    } catch (e: Exception) {
-        encoded.replace("%2F", "/")
     }
 }
