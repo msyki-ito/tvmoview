@@ -3,7 +3,8 @@
 import com.google.gson.annotations.SerializedName
 
 data class OneDriveResponse(
-    @SerializedName("value") val items: List<OneDriveItem>
+    @SerializedName("value") val items: List<OneDriveItem>,
+    @SerializedName("@odata.nextLink") val nextLink: String? = null
 )
 
 data class OneDriveItem(

@@ -68,36 +68,22 @@ class MediaBrowserViewModel : ViewModel() {
         )
 
         loadJob = viewModelScope.launch {
-            val limit = 30
             val cachedItems = MainActivity.oneDriveRepository.getCachedItems(folderId)
             if (cachedItems.isNotEmpty()) {
-                val sorted = applySorting(cachedItems)
-                _items.value = sorted.take(limit)
+                displayItemsProgressive(cachedItems)
                 _isLoading.value = false
-                launch { _items.value = sorted }
-                Log.d("MediaBrowserViewModel", "Showing ${cachedItems.size} cached items immediately")
             } else {
                 _isLoading.value = true
             }
 
-            // OneDrive統合の場合
             if (MainActivity.authManager.isAuthenticated()) {
                 MainActivity.oneDriveRepository.getFolderItems(folderId, force).collect { list ->
-                    val sorted = applySorting(list)
-                    _items.value = sorted.take(limit)
-                    launch { _items.value = sorted }
-                    if (_isLoading.value) {
-                        _isLoading.value = false
-                    }
-                    Log.d(
-                        "MediaBrowserViewModel",
-                        "items updated: ${list.size} entries"
-                    )
+                    displayItemsProgressive(list)
+                    _isLoading.value = false
                 }
             } else {
-                // テストデータの場合
                 val items = loadTestItems(folderId)
-                _items.value = applySorting(items)
+                displayItemsProgressive(items)
                 _isLoading.value = false
             }
         }
@@ -213,6 +199,31 @@ class MediaBrowserViewModel : ViewModel() {
         return if (_sortOrder.value == SortOrder.DESC) sorted.reversed() else sorted
     }
 
+    private fun displayItemsProgressive(allItems: List<MediaItem>) {
+        val sorted = applySorting(allItems)
+        when {
+            sorted.size <= 10 -> {
+                _items.value = sorted
+            }
+            sorted.size <= 30 -> {
+                _items.value = sorted.take(10)
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(100)
+                    _items.value = sorted
+                }
+            }
+            else -> {
+                _items.value = sorted.take(10)
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(100)
+                    _items.value = sorted.take(30)
+                    kotlinx.coroutines.delay(300)
+                    _items.value = sorted
+                }
+            }
+        }
+    }
+
     fun refresh() {
         Log.d("MediaBrowserViewModel", "🔄 バックグラウンド更新開始")
 
@@ -224,23 +235,17 @@ class MediaBrowserViewModel : ViewModel() {
             try {
                 Log.d("MediaBrowserViewModel", "🌐 バックグラウンド処理開始")
 
-                // OneDrive統合の場合
                 if (MainActivity.authManager.isAuthenticated()) {
                     MainActivity.oneDriveRepository.getFolderItems(_currentFolderId.value, force = true).collect { newList ->
-                        val sorted = applySorting(newList)
                         if (newList.isNotEmpty() || _items.value.isEmpty()) {
-                            _items.value = sorted.take(30)
-                            launch { _items.value = sorted }
+                            displayItemsProgressive(newList)
                             Log.d("MediaBrowserViewModel", "✅ バックグラウンド更新完了: ${newList.size} entries")
                         }
-
                         _isLoading.value = false
                     }
                 } else {
                     val items = loadTestItems(_currentFolderId.value)
-                    val sorted = applySorting(items)
-                    _items.value = sorted.take(30)
-                    launch { _items.value = sorted }
+                    displayItemsProgressive(items)
                     _isLoading.value = false
                     Log.d("MediaBrowserViewModel", "✅ テストデータ更新完了")
                 }
