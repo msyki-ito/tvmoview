@@ -31,6 +31,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HighQualityPlayerScreen(
     itemId: String,
+    itemName: String = "",
     onBack: () -> Unit,
     downloadUrl: String = ""
 ) {
@@ -212,7 +213,7 @@ fun HighQualityPlayerScreen(
                     .background(Color.Black.copy(alpha = 0.6f))
                     .padding(8.dp)
             ) {
-                Text(itemId, color = Color.White)
+                Text(itemName.ifEmpty { itemId }, color = Color.White)
             }
         }
 

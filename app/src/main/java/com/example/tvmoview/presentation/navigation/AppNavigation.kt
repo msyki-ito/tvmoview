@@ -25,10 +25,10 @@ fun AppNavigation() {
                 folderId = null,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
-                        // 既存のHighQualityPlayerScreenを使用
                         val encodedId = safeUrlEncode(mediaItem.id)
                         val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/$encodedId/$encodedUrl")
+                        val encodedName = safeUrlEncode(mediaItem.name)
+                        navController.navigate("player/$encodedId/$encodedUrl?name=$encodedName")
                     }
                 },
                 onFolderSelected = { folderId ->
@@ -55,7 +55,8 @@ fun AppNavigation() {
                     if (mediaItem.isVideo) {
                         val encodedId = safeUrlEncode(mediaItem.id)
                         val encodedUrl = safeUrlEncode(mediaItem.downloadUrl ?: "")
-                        navController.navigate("player/$encodedId/$encodedUrl")
+                        val encodedName = safeUrlEncode(mediaItem.name)
+                        navController.navigate("player/$encodedId/$encodedUrl?name=$encodedName")
                     }
                 },
                 onFolderSelected = { childFolderId ->
@@ -72,24 +73,26 @@ fun AppNavigation() {
 
         // ✅ 既存のHighQualityPlayerScreenを使用
         composable(
-            "player/{itemId}/{downloadUrl}",
+            "player/{itemId}/{downloadUrl}?name={name}",
             arguments = listOf(
                 navArgument("itemId") { type = NavType.StringType },
-                navArgument("downloadUrl") { type = NavType.StringType }
+                navArgument("downloadUrl") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
             val encodedItemId = backStackEntry.arguments?.getString("itemId") ?: ""
             val encodedDownloadUrl = backStackEntry.arguments?.getString("downloadUrl") ?: ""
+            val encodedName = backStackEntry.arguments?.getString("name") ?: ""
 
             val itemId = safeUrlDecode(encodedItemId)
             val downloadUrl = safeUrlDecode(encodedDownloadUrl)
+            val itemName = safeUrlDecode(encodedName)
 
             HighQualityPlayerScreen(
                 itemId = itemId,
+                itemName = itemName,
                 downloadUrl = downloadUrl,
-                onBack = {
-                    navController.popBackStack()
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
