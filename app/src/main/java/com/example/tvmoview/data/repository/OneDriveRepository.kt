@@ -154,7 +154,8 @@ class OneDriveRepository(
                     mimeType = oneDriveItem.file?.mimeType,
                     isFolder = oneDriveItem.folder != null,
                     thumbnailUrl = generateThumbnailUrl(oneDriveItem),
-                    downloadUrl = null
+                    downloadUrl = null,
+                    duration = oneDriveItem.video?.duration ?: 0L
                 )
             }
             saveToCache(folderId, mediaItems)
@@ -166,7 +167,7 @@ class OneDriveRepository(
     private suspend fun fetchAllItems(folderId: String?): List<OneDriveItem> {
         val token = authManager.getValidToken() ?: return emptyList()
         val auth = "Bearer ${token.accessToken}"
-        val select = "id,name,size,lastModifiedDateTime,file,folder"
+        val select = "id,name,size,lastModifiedDateTime,file,folder,video"
         val items = mutableListOf<OneDriveItem>()
 
         var response = if (folderId == null) {
@@ -199,6 +200,7 @@ class OneDriveRepository(
                 isFolder = item.isFolder,
                 thumbnailUrl = item.thumbnailUrl,
                 downloadUrl = null,
+                duration = item.duration,
                 lastAccessedAt = System.currentTimeMillis()
             )
         }
