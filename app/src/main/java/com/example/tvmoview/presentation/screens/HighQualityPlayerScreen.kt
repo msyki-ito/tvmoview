@@ -288,12 +288,21 @@ private fun formatTime(timeMs: Long): String {
 // 動画URL取得（OneDrive統合版）
 
 private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String {
-    return if (downloadUrl.isNotEmpty()) {
-        Log.d("VideoPlayer", "✅ downloadURL使用: $itemId")
-        downloadUrl
-    } else {
-        Log.d("VideoPlayer", "⚠️ downloadURL null、OneDriveから取得試行: $itemId")
-        MainActivity.oneDriveRepository.getDownloadUrl(itemId) ?: getTestVideoUrl(itemId)
+    // 再生直前で常に最新のURLを取得する
+    val freshUrl = MainActivity.oneDriveRepository.getDownloadUrl(itemId)
+    return when {
+        freshUrl != null -> {
+            Log.d("VideoPlayer", "✅ downloadURL取得成功: $itemId")
+            freshUrl
+        }
+        downloadUrl.isNotEmpty() -> {
+            Log.d("VideoPlayer", "⚠️ 新規URL取得失敗、既存downloadURL使用: $itemId")
+            downloadUrl
+        }
+        else -> {
+            Log.d("VideoPlayer", "⚠️ downloadURL未取得、テストURL使用: $itemId")
+            getTestVideoUrl(itemId)
+        }
     }
 }
 
