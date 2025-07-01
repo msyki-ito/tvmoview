@@ -224,9 +224,13 @@ class OneDriveRepository(
                 when {
                     item.isVideo || item.isImage -> {
                         val downloadUrl = getDownloadUrl(item.id)
+                        val duration = if (item.isVideo && downloadUrl != null) {
+                            fetchDuration(downloadUrl)
+                        } else 0L
                         item.copy(
                             downloadUrl = downloadUrl,
-                            thumbnailUrl = generateThumbnailUrl(item)
+                            thumbnailUrl = generateThumbnailUrl(item),
+                            duration = duration
                         )
                     }
                     else -> item
@@ -244,6 +248,18 @@ class OneDriveRepository(
             "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/medium/content"
         } else {
             null
+        }
+    }
+
+    private fun fetchDuration(url: String): Long {
+        return try {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(url, HashMap())
+            val duration = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            retriever.release()
+            duration
+        } catch (e: Exception) {
+            0L
         }
     }
 

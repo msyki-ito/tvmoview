@@ -36,14 +36,17 @@ fun HighQualityPlayerScreen(
 ) {
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
-    val coroutineScope = rememberCoroutineScope() // 追加
+    val coroutineScope = rememberCoroutineScope()
+
+    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
+        value = resolveVideoUrl(itemId, downloadUrl)
+    }
 
     // カスタムシークバー表示制御
     var showCustomSeek by remember { mutableStateOf(false) }
     var currentPosition by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
-    val showInfo = remember { mutableStateOf(true) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -52,22 +55,24 @@ fun HighQualityPlayerScreen(
     Log.d("VideoPlayer", "🎬 プレイヤー起動: itemId=$itemId")
 
     // ExoPlayer初期化
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().also { player ->
-            val videoUrl = getVideoUrlSafely(itemId, downloadUrl, context)
-            Log.d("VideoPlayer", "📺 動画URL設定: $videoUrl")
-
-            val mediaItem = MediaItem.fromUri(videoUrl)
-            player.setMediaItem(mediaItem)
-            player.prepare()
-            player.playWhenReady = true
+    val exoPlayer = remember(resolvedUrl) {
+        resolvedUrl?.let { url ->
+            ExoPlayer.Builder(context).build().also { player ->
+                Log.d("VideoPlayer", "📺 動画URL設定: $url")
+                val mediaItem = MediaItem.fromUri(url)
+                player.setMediaItem(mediaItem)
+                player.prepare()
+                player.playWhenReady = true
+            }
         }
     }
 
     // カスタムシークバー表示コルーチン
     fun showSeekBarTemporarily(message: String) {
-        currentPosition = exoPlayer.currentPosition
-        duration = exoPlayer.duration
+        exoPlayer?.let {
+            currentPosition = it.currentPosition
+            duration = it.duration
+        }
         seekMessage = message
         showCustomSeek = true
 
@@ -82,15 +87,13 @@ fun HighQualityPlayerScreen(
     DisposableEffect(Unit) {
         onDispose {
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
-            exoPlayer.release()
+            exoPlayer?.release()
         }
     }
 
     // フォーカス設定
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-        kotlinx.coroutines.delay(3000)
-        showInfo.value = false
     }
 
     // 戻るボタン制御（ダブルプレス方式）
@@ -119,43 +122,43 @@ fun HighQualityPlayerScreen(
                     when (keyEvent.key) {
                         // 📺 TVリモコン：右ボタン（15秒進む）
                         Key.DirectionRight -> {
-                            val newPosition = exoPlayer.currentPosition + 15000
-                            exoPlayer.seekTo(newPosition)
+                            val newPosition = exoPlayer?.currentPosition?.plus(15000) ?: 0
+                            exoPlayer?.seekTo(newPosition)
                             showSeekBarTemporarily("⏩ +15秒")
                             Log.d("VideoPlayer", "⏩ 15秒進む: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：左ボタン（15秒戻る）
                         Key.DirectionLeft -> {
-                            val newPosition = maxOf(0, exoPlayer.currentPosition - 15000)
-                            exoPlayer.seekTo(newPosition)
+                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 15000)
+                            exoPlayer?.seekTo(newPosition)
                             showSeekBarTemporarily("⏪ -15秒")
                             Log.d("VideoPlayer", "⏪ 15秒戻る: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：上ボタン（音量上げる）
                         Key.DirectionUp -> {
-                            val currentVolume = exoPlayer.volume
+                            val currentVolume = exoPlayer?.volume ?: 0f
                             val newVolume = minOf(1.0f, currentVolume + 0.1f)
-                            exoPlayer.volume = newVolume
+                            exoPlayer?.volume = newVolume
                             Log.d("VideoPlayer", "🔊 音量上げる: $newVolume")
                             true
                         }
                         // 📺 TVリモコン：下ボタン（音量下げる）
                         Key.DirectionDown -> {
-                            val currentVolume = exoPlayer.volume
+                            val currentVolume = exoPlayer?.volume ?: 0f
                             val newVolume = maxOf(0.0f, currentVolume - 0.1f)
-                            exoPlayer.volume = newVolume
+                            exoPlayer?.volume = newVolume
                             Log.d("VideoPlayer", "🔉 音量下げる: $newVolume")
                             true
                         }
                         // 📺 TVリモコン：決定ボタン/再生停止ボタン
                         Key.DirectionCenter, Key.Enter, Key.MediaPlayPause -> {
-                            if (exoPlayer.isPlaying) {
-                                exoPlayer.pause()
-                                Log.d("VideoPlayer", "⏸️ 一時停止")
+                            if (exoPlayer?.isPlaying == true) {
+                                exoPlayer?.pause()
+                            Log.d("VideoPlayer", "⏸️ 一時停止")
                             } else {
-                                exoPlayer.play()
+                                exoPlayer?.play()
                                 Log.d("VideoPlayer", "▶️ 再生開始")
                             }
                             true
@@ -177,10 +180,10 @@ fun HighQualityPlayerScreen(
                         }
                         // キーボード用（開発時）
                         Key.Spacebar -> {
-                            if (exoPlayer.isPlaying) {
-                                exoPlayer.pause()
+                            if (exoPlayer?.isPlaying == true) {
+                                exoPlayer?.pause()
                             } else {
-                                exoPlayer.play()
+                                exoPlayer?.play()
                             }
                             true
                         }
@@ -192,29 +195,22 @@ fun HighQualityPlayerScreen(
             }
     ) {
         // ExoPlayer表示
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = true
-                    setShowSubtitleButton(true)
-                    setShowVrButton(false)
-                    playerView = this // 参照を保存
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        if (showInfo.value) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(8.dp)
-            ) {
-                Text(itemId, color = Color.White)
-            }
+        resolvedUrl?.let {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = exoPlayer
+                        useController = true
+                        setShowSubtitleButton(true)
+                        setShowVrButton(false)
+                        playerView = this
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
+
+
 
         // カスタムシークバー（一時表示）
         if (showCustomSeek && duration > 0) {
@@ -290,39 +286,14 @@ private fun formatTime(timeMs: Long): String {
 }
 
 // 動画URL取得（OneDrive統合版）
-private fun getVideoUrlSafely(itemId: String, downloadUrl: String, context: Context): String {
+
+private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String {
     return if (downloadUrl.isNotEmpty()) {
-        // downloadURLが設定済みの場合
         Log.d("VideoPlayer", "✅ downloadURL使用: $itemId")
         downloadUrl
     } else {
-        // downloadUrlがnullの場合：OneDriveから直接取得を試行
         Log.d("VideoPlayer", "⚠️ downloadURL null、OneDriveから取得試行: $itemId")
-        getOneDriveVideoUrl(itemId) ?: getTestVideoUrl(itemId)
-    }
-}
-
-// OneDriveから動画URL取得（新規追加）
-private fun getOneDriveVideoUrl(itemId: String): String? {
-    return try {
-        // OneDriveRepositoryから直接URL取得を試行
-        val repository = MainActivity.oneDriveRepository
-
-        // itemIdがOneDriveのファイルIDの場合、downloadURLを取得
-        if (itemId.length > 10 && !itemId.contains("test")) {
-            Log.d("VideoPlayer", "🔄 OneDrive API呼び出し: $itemId")
-
-            // 簡易的なOneDrive URL構築（実際のAPIを使う場合は要修正）
-            val oneDriveUrl = "https://api.onedrive.com/v1.0/drives/me/items/$itemId/content"
-            Log.d("VideoPlayer", "🌐 OneDrive URL構築: $oneDriveUrl")
-
-            oneDriveUrl
-        } else {
-            null
-        }
-    } catch (e: Exception) {
-        Log.w("VideoPlayer", "OneDrive URL取得失敗: $itemId", e)
-        null
+        MainActivity.oneDriveRepository.getDownloadUrl(itemId) ?: getTestVideoUrl(itemId)
     }
 }
 
