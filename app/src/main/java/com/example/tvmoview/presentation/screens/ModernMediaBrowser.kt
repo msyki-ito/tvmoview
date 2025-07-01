@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -132,6 +133,12 @@ fun ModernMediaBrowser(
                                             .width(24.dp)  // 80dp → 24dpに縮小
                                             .padding(vertical = 48.dp, horizontal = 4.dp)
                                     ) {
+                                        val progress = if (items.isNotEmpty()) {
+                                            gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
+                                        } else 0f
+                                        val viewport = with(LocalDensity.current) { gridState.layoutInfo.viewportSize.height.toDp() }
+                                        val dateOffset = viewport * progress - 24.dp
+
                                         // 背景バー（細い）
                                         Box(
                                             modifier = Modifier
@@ -143,13 +150,6 @@ fun ModernMediaBrowser(
                                                     shape = RoundedCornerShape(2.dp)
                                                 )
                                         ) {
-                                            // プログレス表示
-                                            val progress = if (items.isNotEmpty()) {
-                                                gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
-                                            } else 0f
-                                            val viewport = with(LocalDensity.current) { gridState.layoutInfo.viewportSize.height.toDp() }
-                                            val dateOffset = viewport * progress - 24.dp
-
                                             Box(
                                                 modifier = Modifier
                                                     .align(Alignment.TopStart)
