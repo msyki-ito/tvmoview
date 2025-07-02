@@ -95,7 +95,7 @@ fun ModernTopBar(
                 Icon(
                     imageVector = when (viewMode) {
                         ViewMode.TILE -> Icons.Default.ViewList
-                        ViewMode.LIST -> Icons.Default.ViewModule
+                        ViewMode.HULU_STYLE -> Icons.Default.ViewModule
                     },
                     contentDescription = "表示モード切り替え"
                 )

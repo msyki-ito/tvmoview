@@ -46,7 +46,9 @@ class OneDriveRepository(
     }
 
     private val okHttpClient = OkHttpClient()
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
 
     private val ROOT_ID = "root"
     private val mutex = Mutex()
@@ -224,7 +226,8 @@ class OneDriveRepository(
 
     private fun parseDate(text: String?): Date {
         return try {
-            dateFormat.parse(text ?: "") ?: Date()
+            val instant = java.time.Instant.parse(text)
+            Date.from(instant)
         } catch (e: Exception) {
             Date()
         }
@@ -353,11 +356,7 @@ class OneDriveRepository(
         val isFolder = folder != null
         val mimeType = file?.mimeType
         val size = size ?: 0
-        val lastModified = try {
-            dateFormat.parse(lastModifiedDateTime) ?: Date()
-        } catch (e: Exception) {
-            Date()
-        }
+        val lastModified = parseDate(lastModifiedDateTime)
 
         // サムネイルURLを生成
         val thumbnailUrl = if (!isFolder && (mimeType?.startsWith("image/") == true ||

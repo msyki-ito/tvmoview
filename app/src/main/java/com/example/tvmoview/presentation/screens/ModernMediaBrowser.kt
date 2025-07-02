@@ -191,16 +191,13 @@ fun ModernMediaBrowser(
                                     }
                                 }
                             }
-                            ViewMode.LIST -> {
-                                ModernListView(
+                            ViewMode.HULU_STYLE -> {
+                                HuluStyleView(
                                     items = items,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
-                                            Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
                                             onFolderSelected(item.id)
                                         } else {
-                                            Log.d("ModernMediaBrowser", "🎬 メディア選択: ${item.name}")
-                                            Log.d("ModernMediaBrowser", "📊 downloadUrl: ${item.downloadUrl}")
                                             onMediaSelected(item)
                                         }
                                     }

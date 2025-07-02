@@ -11,10 +11,13 @@ import kotlinx.coroutines.launch
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 enum class ViewMode {
-    TILE, LIST
+    TILE,
+    HULU_STYLE
 }
 
 enum class SortBy {
@@ -23,6 +26,17 @@ enum class SortBy {
 
 enum class SortOrder {
     ASC, DESC
+}
+
+data class DateGroup(
+    val date: Date,
+    val items: List<MediaItem>
+) {
+    val displayDate: String
+        get() {
+            val dateFormat = SimpleDateFormat("yyyy年M月d日（E）", Locale.JAPAN)
+            return "${dateFormat.format(date)} (${items.size}件)"
+        }
 }
 
 class MediaBrowserViewModel : ViewModel() {
@@ -150,8 +164,8 @@ class MediaBrowserViewModel : ViewModel() {
 
     fun toggleViewMode() {
         _viewMode.value = when (_viewMode.value) {
-            ViewMode.TILE -> ViewMode.LIST
-            ViewMode.LIST -> ViewMode.TILE
+            ViewMode.TILE -> ViewMode.HULU_STYLE
+            ViewMode.HULU_STYLE -> ViewMode.TILE
         }
         Log.d("MediaBrowserViewModel", "🎨 表示モード変更: ${_viewMode.value}")
     }
