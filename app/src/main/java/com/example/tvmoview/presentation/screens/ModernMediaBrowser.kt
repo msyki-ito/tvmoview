@@ -262,10 +262,11 @@ fun SortDialog(
 @Composable
 private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<MediaItem>) {
     val isScrolling by remember { derivedStateOf { state.isScrollInProgress } }
-    val width by animateDpAsState(if (isScrolling) 80.dp else 24.dp, label = "w")
-    val bar by animateDpAsState(if (isScrolling) 8.dp else 4.dp, label = "b")
+    val width = 56.dp
+    val bar = 4.dp
     val alpha by animateFloatAsState(if (isScrolling) 1f else 0.6f, label = "a")
-    val textStyle = if (isScrolling) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelSmall
+    val fontSize by animateFloatAsState(if (isScrolling) 20f else 12f, label = "fs")
+    val textStyle = MaterialTheme.typography.labelLarge.copy(fontSize = fontSize.sp)
 
     val currentDate by remember {
         derivedStateOf {
@@ -312,18 +313,21 @@ private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<Media
         }
 
         if (currentDate.isNotEmpty()) {
-            Text(
-                text = currentDate,
-                style = textStyle,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Clip,
-                softWrap = false,
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = (-72).dp, y = dateOffset)
+                    .offset(x = (-48).dp, y = dateOffset)
                     .alpha(alpha)
-            )
+            ) {
+                Text(
+                    text = currentDate,
+                    style = textStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
         }
     }
 }
