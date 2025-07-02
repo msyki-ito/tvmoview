@@ -51,7 +51,14 @@ class MediaBrowserViewModel : ViewModel() {
     private val _currentFolderId = MutableStateFlow<String?>(null)
     val currentFolderId: StateFlow<String?> = _currentFolderId.asStateFlow()
 
+    private val _lastIndex = MutableStateFlow(0)
+    val lastIndex: StateFlow<Int> = _lastIndex.asStateFlow()
+
     private var loadJob: Job? = null
+
+    fun saveScrollPosition(index: Int) {
+        _lastIndex.value = index
+    }
 
     fun loadItems(folderId: String? = null, force: Boolean = false) {
         loadJob?.cancel()
@@ -61,6 +68,7 @@ class MediaBrowserViewModel : ViewModel() {
         } else {
             "OneDrive"
         }
+        _lastIndex.value = 0
 
         Log.d(
             "MediaBrowserViewModel",

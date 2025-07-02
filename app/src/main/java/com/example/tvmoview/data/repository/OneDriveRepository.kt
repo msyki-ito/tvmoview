@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.OkHttpClient
@@ -285,7 +286,11 @@ class OneDriveRepository(
     }
 
     fun getCurrentPath(folderId: String?): String {
-        return folderId?.let { "OneDriveフォルダ" } ?: "OneDrive"
+        return if (folderId == null) {
+            "OneDrive"
+        } else {
+            runBlocking { mediaDao.getNameById(folderId) } ?: "OneDriveフォルダ"
+        }
     }
 
     private suspend fun cacheItems(folderId: String?, items: List<MediaItem>) = withContext(Dispatchers.IO) {

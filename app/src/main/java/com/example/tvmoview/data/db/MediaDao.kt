@@ -23,6 +23,9 @@ interface MediaDao {
     @Query("DELETE FROM media_items WHERE lastAccessedAt < :threshold")
     suspend fun deleteOlderThan(threshold: Long)
 
+    @Query("SELECT name FROM media_items WHERE id = :id LIMIT 1")
+    suspend fun getNameById(id: String): String?
+
     @Transaction
     suspend fun replaceFolder(folderId: String?, items: List<CachedMediaItem>) {
         clearFolder(folderId)

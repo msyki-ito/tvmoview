@@ -17,7 +17,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
@@ -52,7 +51,6 @@ fun HighQualityPlayerScreen(
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
-    var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     Log.d("VideoPlayer", "🎬 プレイヤー起動: itemId=$itemId")
 
@@ -110,29 +108,16 @@ fun HighQualityPlayerScreen(
         focusRequester.requestFocus()
     }
 
-    // 戻るボタン制御（1回目で一時停止・再度で終了）
+    // 戻るボタンで即終了
     BackHandler {
-        val now = System.currentTimeMillis()
-        if (now - lastBackPressTime < 1500) {
-            val pos = exoPlayer?.currentPosition ?: 0L
-            val dur = exoPlayer?.duration ?: 0L
-            if (dur - pos > 3000) {
-                UserPreferences.setResumePosition(itemId, pos)
-            } else {
-                UserPreferences.clearResumePosition(itemId)
-            }
-            onBack()
+        val pos = exoPlayer?.currentPosition ?: 0L
+        val dur = exoPlayer?.duration ?: 0L
+        if (dur - pos > 3000) {
+            UserPreferences.setResumePosition(itemId, pos)
         } else {
-            lastBackPressTime = now
-            exoPlayer?.pause()
-            showSeekBarTemporarily("戻るでもう一度終了", 3000)
-            coroutineScope.launch {
-                delay(3000)
-                if (System.currentTimeMillis() - lastBackPressTime >= 3000) {
-                    exoPlayer?.play()
-                }
-            }
+            UserPreferences.clearResumePosition(itemId)
         }
+        onBack()
     }
 
     Box(
@@ -225,61 +210,45 @@ fun HighQualityPlayerScreen(
 
         // カスタムシークバー（一時表示）
         if (showCustomSeek && duration > 0) {
-            Box(
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp, vertical = 32.dp)
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(vertical = 8.dp, horizontal = 32.dp)
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Black.copy(alpha = 0.8f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = seekMessage,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                LinearProgressIndicator(
+                    progress = if (duration > 0) {
+                        (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                    } else 0f,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = Color.DarkGray
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        // シークメッセージ
-                        Text(
-                            text = seekMessage,
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // プログレスバー
-                        LinearProgressIndicator(
-                            progress = if (duration > 0) {
-                                (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
-                            } else 0f,
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = Color.Gray.copy(alpha = 0.3f)
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // 時間表示
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = formatTime(currentPosition),
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = formatTime(duration),
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
+                    Text(
+                        text = formatTime(currentPosition),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Text(
+                        text = formatTime(duration),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }

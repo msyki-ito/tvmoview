@@ -46,10 +46,19 @@ fun ModernMediaBrowser(
     val sortOrder by viewModel.sortOrder.collectAsState()
     val tileColumns by viewModel.tileColumns.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
+    val lastIndex by viewModel.lastIndex.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
-    val gridState = rememberLazyGridState()
+    val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     val coroutineScope = rememberCoroutineScope()
+
+    DisposableEffect(Unit) {
+        onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
+    }
+
+    LaunchedEffect(lastIndex) {
+        if (lastIndex > 0) gridState.scrollToItem(lastIndex)
+    }
 
     // OneDrive統合：データ取得処理
     LaunchedEffect(folderId) {
@@ -113,8 +122,8 @@ fun ModernMediaBrowser(
                                     }
                                 )
 
-                                // 細いシークバー（撮影日順の場合のみ表示）
-                                if (sortBy == SortBy.SHOOT && items.isNotEmpty()) {
+                                // 細いシークバー（撮影日・更新日順）
+                                if ((sortBy == SortBy.SHOOT || sortBy == SortBy.DATE) && items.isNotEmpty()) {
                                     // 現在表示中アイテムの日付を監視
                                     val currentVisibleDate by remember {
                                         derivedStateOf {
@@ -196,24 +205,6 @@ fun ModernMediaBrowser(
                     }
                 }
 
-                // OneDrive統合状態表示（デバッグ用）
-                if (MainActivity.authManager.isAuthenticated()) {
-                    Card(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                        )
-                    ) {
-                        Text(
-                            text = "🔐 OneDrive接続中",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
             }
         }
 
