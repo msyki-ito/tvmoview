@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import coil.transform.BlurTransformation
+import androidx.compose.ui.draw.blur
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
 
@@ -74,11 +74,13 @@ private fun VerticalMediaContent(item: MediaItem) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(item.thumbnailUrl ?: item.downloadUrl)
-                .transformations(BlurTransformation(radius = 25f, sampling = 4f))
+                .crossfade(true)
                 .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(16.dp)
         )
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
