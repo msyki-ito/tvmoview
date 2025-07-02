@@ -26,6 +26,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
+import com.example.tvmoview.data.prefs.UserPreferences
+import com.example.tvmoview.presentation.components.LoadingAnimation
 import kotlinx.coroutines.delay
 
 @Composable
@@ -62,13 +64,18 @@ fun HighQualityPlayerScreen(
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
                 player.prepare()
+                val resume = UserPreferences.getResumePosition(itemId)
+                if (resume > 0) {
+                    player.seekTo(resume)
+                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                }
                 player.playWhenReady = true
             }
         }
     }
 
     // カスタムシークバー表示コルーチン
-    fun showSeekBarTemporarily(message: String) {
+    fun showSeekBarTemporarily(message: String, durationMillis: Long = 1000L) {
         exoPlayer?.let {
             currentPosition = it.currentPosition
             duration = it.duration
@@ -76,9 +83,9 @@ fun HighQualityPlayerScreen(
         seekMessage = message
         showCustomSeek = true
 
-        // 1秒後に自動非表示
+        // 指定時間後に自動非表示
         coroutineScope.launch {
-            delay(1000)
+            delay(durationMillis)
             showCustomSeek = false
         }
     }
@@ -86,6 +93,13 @@ fun HighQualityPlayerScreen(
     // クリーンアップ
     DisposableEffect(Unit) {
         onDispose {
+            val pos = exoPlayer?.currentPosition ?: 0L
+            val dur = exoPlayer?.duration ?: 0L
+            if (dur - pos > 3000) {
+                UserPreferences.setResumePosition(itemId, pos)
+            } else {
+                UserPreferences.clearResumePosition(itemId)
+            }
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
             exoPlayer?.release()
         }
@@ -96,18 +110,28 @@ fun HighQualityPlayerScreen(
         focusRequester.requestFocus()
     }
 
-    // 戻るボタン制御（ダブルプレス方式）
+    // 戻るボタン制御（1回目で一時停止・再度で終了）
     BackHandler {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastBackPressTime < 1000) {
-            // 1秒以内の2回目：実際に戻る
-            Log.d("VideoPlayer", "🔙 画面を戻る（ダブルプレス）")
+        val now = System.currentTimeMillis()
+        if (now - lastBackPressTime < 1500) {
+            val pos = exoPlayer?.currentPosition ?: 0L
+            val dur = exoPlayer?.duration ?: 0L
+            if (dur - pos > 3000) {
+                UserPreferences.setResumePosition(itemId, pos)
+            } else {
+                UserPreferences.clearResumePosition(itemId)
+            }
             onBack()
         } else {
-            // 1回目：コントローラーを隠して時間記録
-            playerView?.hideController()
-            lastBackPressTime = currentTime
-            Log.d("VideoPlayer", "🎮 コントロール非表示（1回目のプレス）")
+            lastBackPressTime = now
+            exoPlayer?.pause()
+            showSeekBarTemporarily("戻るでもう一度終了", 3000)
+            coroutineScope.launch {
+                delay(3000)
+                if (System.currentTimeMillis() - lastBackPressTime >= 3000) {
+                    exoPlayer?.play()
+                }
+            }
         }
     }
 
@@ -120,20 +144,20 @@ fun HighQualityPlayerScreen(
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown) {
                     when (keyEvent.key) {
-                        // 📺 TVリモコン：右ボタン（15秒進む）
+                        // 📺 TVリモコン：右ボタン（10秒進む）
                         Key.DirectionRight -> {
-                            val newPosition = exoPlayer?.currentPosition?.plus(15000) ?: 0
+                            val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏩ +15秒")
-                            Log.d("VideoPlayer", "⏩ 15秒進む: ${newPosition}ms")
+                            showSeekBarTemporarily("⏩ +10秒")
+                            Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
                         }
-                        // 📺 TVリモコン：左ボタン（15秒戻る）
+                        // 📺 TVリモコン：左ボタン（10秒戻る）
                         Key.DirectionLeft -> {
-                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 15000)
+                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏪ -15秒")
-                            Log.d("VideoPlayer", "⏪ 15秒戻る: ${newPosition}ms")
+                            showSeekBarTemporarily("⏪ -10秒")
+                            Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：上ボタン（音量上げる）
@@ -163,21 +187,8 @@ fun HighQualityPlayerScreen(
                             }
                             true
                         }
-                        // 📺 TVリモコン：戻るボタン
-                        Key.Back, Key.Escape -> {
-                            val currentTime = System.currentTimeMillis()
-                            if (currentTime - lastBackPressTime < 1000) {
-                                // 1秒以内の2回目：実際に戻る
-                                Log.d("VideoPlayer", "🔙 戻るボタン（ダブルプレス）")
-                                onBack()
-                            } else {
-                                // 1回目：コントローラーを隠して時間記録
-                                playerView?.hideController()
-                                lastBackPressTime = currentTime
-                                Log.d("VideoPlayer", "🎮 コントロール非表示（1回目のプレス）")
-                            }
-                            true
-                        }
+                        // 📺 TVリモコン：戻るボタン（BackHandlerに委任）
+                        Key.Back, Key.Escape -> false
                         // キーボード用（開発時）
                         Key.Spacebar -> {
                             if (exoPlayer?.isPlaying == true) {
@@ -194,7 +205,7 @@ fun HighQualityPlayerScreen(
                 }
             }
     ) {
-        // ExoPlayer表示
+        // ExoPlayer表示（URL未解決時はローディング）
         resolvedUrl?.let {
             AndroidView(
                 factory = { ctx ->
@@ -208,7 +219,7 @@ fun HighQualityPlayerScreen(
                 },
                 modifier = Modifier.fillMaxSize()
             )
-        }
+        } ?: LoadingAnimation()
 
 
 
