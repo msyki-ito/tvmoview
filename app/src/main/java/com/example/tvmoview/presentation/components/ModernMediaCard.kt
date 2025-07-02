@@ -40,9 +40,9 @@ fun ModernMediaCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
-    val elevation by animateDpAsState(if (isFocused) 12.dp else 4.dp, tween(200))
-    val border = if (isFocused) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
-    val shape = RoundedCornerShape(8.dp)
+    val elevation by animateDpAsState(if (isFocused) 16.dp else 4.dp, tween(200))
+    val border = if (isFocused) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)) else null
+    val cardShape = RoundedCornerShape(8.dp)
 
     Card(
         modifier = Modifier
@@ -54,12 +54,14 @@ fun ModernMediaCard(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                shadowElevation = elevation.toPx()
+                shape = cardShape
+                clip = true
             }
-            .shadow(elevation, shape)
             .zIndex(if (isFocused) 1f else 0f),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         border = border,
-        shape = shape
+        shape = cardShape
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
