@@ -6,6 +6,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -27,7 +30,6 @@ import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
-import kotlinx.coroutines.delay
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -48,6 +50,7 @@ fun HighQualityPlayerScreen(
     var currentPosition by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
+    var seekForward by remember { mutableStateOf(true) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -73,11 +76,12 @@ fun HighQualityPlayerScreen(
     }
 
     // カスタムシークバー表示コルーチン
-    fun showSeekBarTemporarily(message: String, durationMillis: Long = 1000L) {
+    fun showSeekBarTemporarily(forward: Boolean, message: String, durationMillis: Long = 1000L) {
         exoPlayer?.let {
             currentPosition = it.currentPosition
             duration = it.duration
         }
+        seekForward = forward
         seekMessage = message
         showCustomSeek = true
 
@@ -133,7 +137,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionRight -> {
                             val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏩ +10秒")
+                            showSeekBarTemporarily(true, "+10秒")
                             Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
                         }
@@ -141,7 +145,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionLeft -> {
                             val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏪ -10秒")
+                            showSeekBarTemporarily(false, "-10秒")
                             Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true
                         }
@@ -217,12 +221,22 @@ fun HighQualityPlayerScreen(
                     .background(Color.Black.copy(alpha = 0.6f))
                     .padding(vertical = 8.dp, horizontal = 32.dp)
             ) {
-                Text(
-                    text = seekMessage,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (seekForward) Icons.Default.FastForward else Icons.Default.FastRewind,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = seekMessage,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 LinearProgressIndicator(
                     progress = if (duration > 0) {
                         (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)

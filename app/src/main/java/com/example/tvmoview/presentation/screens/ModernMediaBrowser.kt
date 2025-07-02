@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,6 +47,7 @@ fun ModernMediaBrowser(
     val sortOrder by viewModel.sortOrder.collectAsState()
     val tileColumns by viewModel.tileColumns.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
+    val currentFolder by viewModel.currentFolderId.collectAsState()
     val lastIndex by viewModel.lastIndex.collectAsState()
 
     var showSortDialog by remember { mutableStateOf(false) }
@@ -177,9 +179,12 @@ fun ModernMediaBrowser(
                                                 text = currentVisibleDate,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Clip,
+                                                softWrap = false,
                                                 modifier = Modifier
-                                                    .align(Alignment.TopCenter)
-                                                    .offset(y = dateOffset)
+                                                    .align(Alignment.TopEnd)
+                                                    .offset(x = (-72).dp, y = dateOffset)
                                                     .alpha(0.6f)
                                             )
                                         }
