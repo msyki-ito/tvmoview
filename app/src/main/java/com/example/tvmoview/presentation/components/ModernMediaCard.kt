@@ -2,7 +2,12 @@
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,10 +36,26 @@ fun ModernMediaCard(
     loadPriority: Float = 0.5f,
     showName: Boolean = true
 ) {
+    var focused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (focused) 1.1f else 1f, label = "focus_scale")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
+            .heightIn(min = 180.dp)
+            .onFocusChanged { focused = it.isFocused }
+            .focusable()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .zIndex(if (focused) 1f else 0f)
+            .border(
+                BorderStroke(
+                    width = if (focused) 2.dp else 0.dp,
+                    color = if (focused) MaterialTheme.colorScheme.primary else Color.Transparent
+                )
+            )
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {

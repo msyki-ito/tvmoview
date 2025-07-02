@@ -6,18 +6,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// ダークテーマのカラーパレット
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF4FC3F7),
-    secondary = Color(0xFF81C784), 
-    tertiary = Color(0xFFFFB74D),
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.Black,
-    onBackground = Color.White,
-    onSurface = Color.White
+// Hulu風ダークテーマ
+private val HuluDarkColorScheme = darkColorScheme(
+    background = Color(0xFF0B0C0F),
+    surface = Color(0xFF1A1C22),
+    primary = Color(0xFF1CE783),
+    onBackground = Color(0xFFFFFFFF),
+    onSurface = Color(0xFFB0B0B0),
+    surfaceVariant = Color(0xFF1A1C22)
 )
 
 // ライトテーマのカラーパレット
@@ -40,8 +36,8 @@ fun TVMovieTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) {
-        DarkColorScheme
-    } else {
+        HuluDarkColorScheme
+        } else {
         LightColorScheme
     }
 
