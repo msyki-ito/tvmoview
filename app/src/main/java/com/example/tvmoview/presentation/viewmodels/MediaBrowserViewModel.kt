@@ -61,14 +61,19 @@ class MediaBrowserViewModel : ViewModel() {
     }
 
     fun loadItems(folderId: String? = null, force: Boolean = false) {
+        if (!force && folderId == _currentFolderId.value && _items.value.isNotEmpty()) {
+            return
+        }
+
         loadJob?.cancel()
+        val folderChanged = folderId != _currentFolderId.value
         _currentFolderId.value = folderId
         _currentPath.value = if (folderId != null) {
             MainActivity.oneDriveRepository.getCurrentPath(folderId)
         } else {
             "OneDrive"
         }
-        _lastIndex.value = 0
+        if (folderChanged) _lastIndex.value = 0
 
         Log.d(
             "MediaBrowserViewModel",
