@@ -260,7 +260,7 @@ fun SortDialog(
 }
 
 @Composable
-private fun DateScrollIndicator(state: LazyGridState, items: List<MediaItem>) {
+private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<MediaItem>) {
     val isScrolling by remember { derivedStateOf { state.isScrollInProgress } }
     val width by animateDpAsState(if (isScrolling) 80.dp else 24.dp, label = "w")
     val bar by animateDpAsState(if (isScrolling) 8.dp else 4.dp, label = "b")
