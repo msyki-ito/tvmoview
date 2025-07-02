@@ -24,9 +24,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
-import kotlinx.coroutines.delay
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -37,6 +37,10 @@ fun HighQualityPlayerScreen(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
+
+    val startPosition = remember {
+        com.example.tvmoview.data.prefs.UserPreferences.getPlaybackPosition(itemId)
+    }
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)
@@ -56,19 +60,20 @@ fun HighQualityPlayerScreen(
 
     // ExoPlayer初期化
     val exoPlayer = remember(resolvedUrl) {
-        resolvedUrl?.let { url ->
+        resolvedUrl?.takeIf { it.isNotBlank() }?.let { url ->
             ExoPlayer.Builder(context).build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
                 player.prepare()
+                if (startPosition > 0) player.seekTo(startPosition)
                 player.playWhenReady = true
             }
         }
     }
 
     // カスタムシークバー表示コルーチン
-    fun showSeekBarTemporarily(message: String) {
+    fun showSeekBarTemporarily(message: String, displayMs: Long = 1000L) {
         exoPlayer?.let {
             currentPosition = it.currentPosition
             duration = it.duration
@@ -76,16 +81,22 @@ fun HighQualityPlayerScreen(
         seekMessage = message
         showCustomSeek = true
 
-        // 1秒後に自動非表示
+        // 一定時間後に自動非表示
         coroutineScope.launch {
-            delay(1000)
+            delay(displayMs)
             showCustomSeek = false
         }
     }
 
     // クリーンアップ
-    DisposableEffect(Unit) {
+    DisposableEffect(exoPlayer) {
         onDispose {
+            exoPlayer?.let {
+                com.example.tvmoview.data.prefs.UserPreferences.setPlaybackPosition(
+                    itemId,
+                    it.currentPosition
+                )
+            }
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
             exoPlayer?.release()
         }
@@ -99,15 +110,14 @@ fun HighQualityPlayerScreen(
     // 戻るボタン制御（ダブルプレス方式）
     BackHandler {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastBackPressTime < 1000) {
-            // 1秒以内の2回目：実際に戻る
+        if (currentTime - lastBackPressTime < 3000) {
             Log.d("VideoPlayer", "🔙 画面を戻る（ダブルプレス）")
             onBack()
         } else {
-            // 1回目：コントローラーを隠して時間記録
-            playerView?.hideController()
+            exoPlayer?.pause()
+            showSeekBarTemporarily("", 3000)
             lastBackPressTime = currentTime
-            Log.d("VideoPlayer", "🎮 コントロール非表示（1回目のプレス）")
+            Log.d("VideoPlayer", "⏸️ 一時停止してシーク表示")
         }
     }
 
@@ -120,20 +130,20 @@ fun HighQualityPlayerScreen(
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown) {
                     when (keyEvent.key) {
-                        // 📺 TVリモコン：右ボタン（15秒進む）
+                        // 📺 TVリモコン：右ボタン（10秒進む）
                         Key.DirectionRight -> {
-                            val newPosition = exoPlayer?.currentPosition?.plus(15000) ?: 0
+                            val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏩ +15秒")
-                            Log.d("VideoPlayer", "⏩ 15秒進む: ${newPosition}ms")
+                            showSeekBarTemporarily("⏩ +10秒")
+                            Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
                         }
-                        // 📺 TVリモコン：左ボタン（15秒戻る）
+                        // 📺 TVリモコン：左ボタン（10秒戻る）
                         Key.DirectionLeft -> {
-                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 15000)
+                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
                             exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily("⏪ -15秒")
-                            Log.d("VideoPlayer", "⏪ 15秒戻る: ${newPosition}ms")
+                            showSeekBarTemporarily("⏪ -10秒")
+                            Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：上ボタン（音量上げる）
@@ -166,15 +176,14 @@ fun HighQualityPlayerScreen(
                         // 📺 TVリモコン：戻るボタン
                         Key.Back, Key.Escape -> {
                             val currentTime = System.currentTimeMillis()
-                            if (currentTime - lastBackPressTime < 1000) {
-                                // 1秒以内の2回目：実際に戻る
+                            if (currentTime - lastBackPressTime < 3000) {
                                 Log.d("VideoPlayer", "🔙 戻るボタン（ダブルプレス）")
                                 onBack()
                             } else {
-                                // 1回目：コントローラーを隠して時間記録
-                                playerView?.hideController()
+                                exoPlayer?.pause()
+                                showSeekBarTemporarily("", 3000)
                                 lastBackPressTime = currentTime
-                                Log.d("VideoPlayer", "🎮 コントロール非表示（1回目のプレス）")
+                                Log.d("VideoPlayer", "⏸️ 一時停止してシーク表示")
                             }
                             true
                         }
@@ -195,22 +204,29 @@ fun HighQualityPlayerScreen(
             }
     ) {
         // ExoPlayer表示
-        resolvedUrl?.let {
-            AndroidView(
-                factory = { ctx ->
-                    PlayerView(ctx).apply {
-                        player = exoPlayer
-                        useController = true
-                        setShowSubtitleButton(true)
-                        setShowVrButton(false)
-                        playerView = this
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    useController = true
+                    setShowSubtitleButton(true)
+                    setShowVrButton(false)
+                    playerView = this
+                    player = exoPlayer
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            update = { view -> view.player = exoPlayer }
+        )
+
+        if (resolvedUrl == null ||
+            exoPlayer?.playbackState == Player.STATE_BUFFERING ||
+            exoPlayer?.playbackState == Player.STATE_IDLE
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White
             )
         }
-
-
 
         // カスタムシークバー（一時表示）
         if (showCustomSeek && duration > 0) {
