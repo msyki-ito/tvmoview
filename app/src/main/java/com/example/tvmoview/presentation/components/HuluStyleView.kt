@@ -40,12 +40,13 @@ fun HuluStyleView(
         modifier = modifier
             .fillMaxSize()
             .background(HuluColors.Background),
-        contentPadding = PaddingValues(vertical = 24.dp)
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         groupedItems.forEach { group ->
             item(key = group.date) {
                 HuluDateHeader(
                     dateText = group.displayDate,
+                    itemCount = group.itemCount,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
@@ -53,7 +54,7 @@ fun HuluStyleView(
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(items = group.items, key = { it.id }) { item ->
                         HuluMediaCard(

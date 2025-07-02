@@ -35,8 +35,11 @@ data class DateGroup(
     val displayDate: String
         get() {
             val dateFormat = SimpleDateFormat("yyyy年M月d日（E）", Locale.JAPAN)
-            return "${dateFormat.format(date)} (${items.size}件)"
+            return dateFormat.format(date)
         }
+
+    val itemCount: Int
+        get() = items.size
 }
 
 class MediaBrowserViewModel : ViewModel() {
