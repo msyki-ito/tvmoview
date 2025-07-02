@@ -2,6 +2,7 @@
 
 import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
@@ -124,71 +126,9 @@ fun ModernMediaBrowser(
                                     }
                                 )
 
-                                // 細いシークバー（撮影日・更新日順）
+                                // 撮影日・更新日順のときだけスクロールバーを表示
                                 if ((sortBy == SortBy.SHOOT || sortBy == SortBy.DATE) && items.isNotEmpty()) {
-                                    // 現在表示中アイテムの日付を監視
-                                    val currentVisibleDate by remember {
-                                        derivedStateOf {
-                                            if (gridState.firstVisibleItemIndex < items.size) {
-                                                val item = items[gridState.firstVisibleItemIndex]
-                                                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
-                                            } else ""
-                                        }
-                                    }
-
-                                    // 細いシークバー
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.CenterEnd)
-                                            .fillMaxHeight()
-                                            .width(24.dp)  // 80dp → 24dpに縮小
-                                            .padding(vertical = 48.dp, horizontal = 4.dp)
-                                    ) {
-                                        val progress = if (items.isNotEmpty()) {
-                                            gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
-                                        } else 0f
-                                        val viewport = with(LocalDensity.current) { gridState.layoutInfo.viewportSize.height.toDp() }
-                                        val dateOffset = viewport * progress - 24.dp
-
-                                        // 背景バー（細い）
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.Center)
-                                                .width(4.dp)  // 40dp → 4dpに細く
-                                                .fillMaxHeight()
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                                    shape = RoundedCornerShape(2.dp)
-                                                )
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .align(Alignment.TopStart)
-                                                    .width(4.dp)
-                                                    .fillMaxHeight(progress)
-                                                    .background(
-                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                                        shape = RoundedCornerShape(2.dp)
-                                                    )
-                                            )
-                                        }
-
-                                        // 日付表示（上部）
-                                        if (currentVisibleDate.isNotEmpty()) {
-                                            Text(
-                                                text = currentVisibleDate,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Clip,
-                                                softWrap = false,
-                                                modifier = Modifier
-                                                    .align(Alignment.TopEnd)
-                                                    .offset(x = (-72).dp, y = dateOffset)
-                                                    .alpha(0.6f)
-                                            )
-                                        }
-                                    }
+                                    DateScrollIndicator(gridState, items)
                                 }
                             }
                             ViewMode.LIST -> {
@@ -318,4 +258,82 @@ fun SortDialog(
             }
         }
     )
+}
+
+@Composable
+private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<MediaItem>) {
+    val isScrolling by remember { derivedStateOf { state.isScrollInProgress } }
+    val width = 56.dp
+    val bar = 4.dp
+    val alpha by animateFloatAsState(if (isScrolling) 1f else 0.6f, label = "a")
+    val fontSize by animateFloatAsState(if (isScrolling) 20f else 12f, label = "fs")
+    val dateWidth by animateDpAsState(if (isScrolling) 96.dp else 56.dp, label = "dw")
+    val textStyle = MaterialTheme.typography.labelLarge.copy(fontSize = fontSize.sp)
+
+    val currentDate by remember {
+        derivedStateOf {
+            if (state.firstVisibleItemIndex < items.size) {
+                val item = items[state.firstVisibleItemIndex]
+                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
+            } else ""
+        }
+    }
+
+    val progress = if (items.isNotEmpty()) {
+        state.firstVisibleItemIndex.toFloat() /
+            (items.size - 1).coerceAtLeast(1)
+    } else 0f
+    val viewport = with(LocalDensity.current) { state.layoutInfo.viewportSize.height.toDp() }
+    val dateOffset = viewport * progress - 24.dp
+
+    Box(
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .fillMaxHeight()
+            .width(width)
+            .padding(vertical = 48.dp, horizontal = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(bar)
+                .fillMaxHeight()
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp)
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .width(bar)
+                    .fillMaxHeight(progress)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+        }
+
+        if (currentDate.isNotEmpty()) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-dateWidth), y = dateOffset)
+                    .width(dateWidth)
+                    .alpha(alpha)
+            ) {
+                Text(
+                    text = currentDate,
+                    style = textStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+        }
+    }
 }
