@@ -9,6 +9,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ fun ModernMediaCard(
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
     val shadow by animateDpAsState(if (isFocused) 12.dp else 4.dp, tween(200))
+    val border = if (isFocused) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
 
     Card(
         modifier = Modifier
@@ -50,10 +52,10 @@ fun ModernMediaCard(
                 scaleX = scale
                 scaleY = scale
                 shadowElevation = shadow.toPx()
-                translationZ = shadow.toPx()
             }
             .zIndex(if (isFocused) 1f else 0f),
-        elevation = CardDefaults.cardElevation(defaultElevation = shadow)
+        elevation = CardDefaults.cardElevation(defaultElevation = shadow),
+        border = border
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
