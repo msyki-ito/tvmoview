@@ -21,4 +21,15 @@ object UserPreferences {
     var tileColumns: Int
         get() = prefs.getInt("tile_columns", 4)
         set(value) { prefs.edit().putInt("tile_columns", value).apply() }
+
+    fun getResumePosition(id: String): Long =
+        prefs.getLong("resume_" + id, 0L)
+
+    fun setResumePosition(id: String, position: Long) {
+        prefs.edit().putLong("resume_" + id, position).apply()
+    }
+
+    fun clearResumePosition(id: String) {
+        prefs.edit().remove("resume_" + id).apply()
+    }
 }
