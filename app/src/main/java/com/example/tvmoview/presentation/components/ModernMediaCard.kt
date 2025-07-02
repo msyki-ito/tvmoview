@@ -41,7 +41,9 @@ fun ModernMediaCard(
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
     val elevation by animateDpAsState(if (isFocused) 16.dp else 4.dp, tween(200))
-    val border = if (isFocused) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)) else null
+    val border = if (isFocused) {
+        BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+    } else null
     val cardShape = RoundedCornerShape(8.dp)
 
     Card(
