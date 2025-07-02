@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 // ViewMode import追加
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortOrder
+import com.example.tvmoview.presentation.viewmodels.TileSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,8 +24,10 @@ fun ModernTopBar(
     viewMode: ViewMode,
     sortOrder: SortOrder,
     tileColumns: Int,
+    tileSize: TileSize,
     onViewModeChange: () -> Unit,
     onTileColumnsChange: () -> Unit,
+    onTileSizeChange: () -> Unit,
     onSortClick: () -> Unit,
     onOrderToggle: () -> Unit,
     onRefreshClick: () -> Unit,
@@ -104,6 +107,15 @@ fun ModernTopBar(
             if (viewMode == ViewMode.TILE) {
                 IconButton(onClick = onTileColumnsChange) {
                     Text(tileColumns.toString())
+                }
+                IconButton(onClick = onTileSizeChange) {
+                    Text(
+                        when (tileSize) {
+                            TileSize.SMALL -> "S"
+                            TileSize.MEDIUM -> "M"
+                            TileSize.LARGE -> "L"
+                        }
+                    )
                 }
             }
 

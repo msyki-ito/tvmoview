@@ -46,6 +46,7 @@ fun ModernMediaBrowser(
     val sortBy by viewModel.sortBy.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val tileColumns by viewModel.tileColumns.collectAsState()
+    val tileSize by viewModel.tileSize.collectAsState()
     val currentPath by viewModel.currentPath.collectAsState()
     val currentFolder by viewModel.currentFolderId.collectAsState()
     val lastIndex by viewModel.lastIndex.collectAsState()
@@ -86,8 +87,10 @@ fun ModernMediaBrowser(
                 viewMode = viewMode,
                 sortOrder = sortOrder,
                 tileColumns = tileColumns,
+                tileSize = tileSize,
                 onViewModeChange = { viewModel.toggleViewMode() },
                 onTileColumnsChange = { viewModel.cycleTileColumns() },
+                onTileSizeChange = { viewModel.cycleTileSize() },
                 onSortClick = { showSortDialog = true },
                 onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
                 onRefreshClick = { viewModel.refresh() },
@@ -111,6 +114,7 @@ fun ModernMediaBrowser(
                                 ModernTileView(
                                     items = items,
                                     columnCount = tileColumns,
+                                    tileSize = tileSize,
                                     state = gridState,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
