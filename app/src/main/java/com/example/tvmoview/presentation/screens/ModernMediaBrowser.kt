@@ -124,71 +124,9 @@ fun ModernMediaBrowser(
                                     }
                                 )
 
-                                // 細いシークバー（撮影日・更新日順）
+                                // 撮影日・更新日順のときだけスクロールバーを表示
                                 if ((sortBy == SortBy.SHOOT || sortBy == SortBy.DATE) && items.isNotEmpty()) {
-                                    // 現在表示中アイテムの日付を監視
-                                    val currentVisibleDate by remember {
-                                        derivedStateOf {
-                                            if (gridState.firstVisibleItemIndex < items.size) {
-                                                val item = items[gridState.firstVisibleItemIndex]
-                                                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
-                                            } else ""
-                                        }
-                                    }
-
-                                    // 細いシークバー
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.CenterEnd)
-                                            .fillMaxHeight()
-                                            .width(24.dp)  // 80dp → 24dpに縮小
-                                            .padding(vertical = 48.dp, horizontal = 4.dp)
-                                    ) {
-                                        val progress = if (items.isNotEmpty()) {
-                                            gridState.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1).toFloat()
-                                        } else 0f
-                                        val viewport = with(LocalDensity.current) { gridState.layoutInfo.viewportSize.height.toDp() }
-                                        val dateOffset = viewport * progress - 24.dp
-
-                                        // 背景バー（細い）
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.Center)
-                                                .width(4.dp)  // 40dp → 4dpに細く
-                                                .fillMaxHeight()
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                                    shape = RoundedCornerShape(2.dp)
-                                                )
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .align(Alignment.TopStart)
-                                                    .width(4.dp)
-                                                    .fillMaxHeight(progress)
-                                                    .background(
-                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                                                        shape = RoundedCornerShape(2.dp)
-                                                    )
-                                            )
-                                        }
-
-                                        // 日付表示（上部）
-                                        if (currentVisibleDate.isNotEmpty()) {
-                                            Text(
-                                                text = currentVisibleDate,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Clip,
-                                                softWrap = false,
-                                                modifier = Modifier
-                                                    .align(Alignment.TopEnd)
-                                                    .offset(x = (-72).dp, y = dateOffset)
-                                                    .alpha(0.6f)
-                                            )
-                                        }
-                                    }
+                                    DateScrollIndicator(gridState, items)
                                 }
                             }
                             ViewMode.LIST -> {
@@ -318,4 +256,73 @@ fun SortDialog(
             }
         }
     )
+}
+
+@Composable
+private fun DateScrollIndicator(state: LazyGridState, items: List<MediaItem>) {
+    val isScrolling by remember { derivedStateOf { state.isScrollInProgress } }
+    val width by animateDpAsState(if (isScrolling) 80.dp else 24.dp, label = "w")
+    val bar by animateDpAsState(if (isScrolling) 8.dp else 4.dp, label = "b")
+    val alpha by animateFloatAsState(if (isScrolling) 1f else 0.6f, label = "a")
+    val textStyle = if (isScrolling) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelSmall
+
+    val currentDate by remember {
+        derivedStateOf {
+            if (state.firstVisibleItemIndex < items.size) {
+                val item = items[state.firstVisibleItemIndex]
+                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
+            } else ""
+        }
+    }
+
+    val progress = if (items.isNotEmpty()) {
+        state.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1)
+    } else 0f
+    val viewport = with(LocalDensity.current) { state.layoutInfo.viewportSize.height.toDp() }
+    val dateOffset = viewport * progress - width
+
+    Box(
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .fillMaxHeight()
+            .width(width)
+            .padding(vertical = 48.dp, horizontal = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(bar)
+                .fillMaxHeight()
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp)
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .width(bar)
+                    .fillMaxHeight(progress)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+        }
+
+        if (currentDate.isNotEmpty()) {
+            Text(
+                text = currentDate,
+                style = textStyle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Clip,
+                softWrap = false,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-72).dp, y = dateOffset)
+                    .alpha(alpha)
+            )
+        }
+    }
 }
