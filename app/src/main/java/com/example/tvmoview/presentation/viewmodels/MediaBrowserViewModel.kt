@@ -36,10 +36,14 @@ class MediaBrowserViewModel : ViewModel() {
     private val _viewMode = MutableStateFlow(ViewMode.TILE)
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
-    private val _sortBy = MutableStateFlow(SortBy.valueOf(UserPreferences.sortBy))
+    private val _sortBy = MutableStateFlow(
+        runCatching { SortBy.valueOf(UserPreferences.sortBy) }.getOrDefault(SortBy.NAME)
+    )
     val sortBy: StateFlow<SortBy> = _sortBy.asStateFlow()
 
-    private val _sortOrder = MutableStateFlow(SortOrder.valueOf(UserPreferences.sortOrder))
+    private val _sortOrder = MutableStateFlow(
+        runCatching { SortOrder.valueOf(UserPreferences.sortOrder) }.getOrDefault(SortOrder.DESC)
+    )
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
     private val _tileColumns = MutableStateFlow(UserPreferences.tileColumns)

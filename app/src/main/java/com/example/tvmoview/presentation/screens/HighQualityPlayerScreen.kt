@@ -60,7 +60,7 @@ fun HighQualityPlayerScreen(
 
     // ExoPlayer初期化
     val exoPlayer = remember(resolvedUrl) {
-        resolvedUrl?.let { url ->
+        resolvedUrl?.takeIf { it.isNotBlank() }?.let { url ->
             ExoPlayer.Builder(context).build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
@@ -89,7 +89,7 @@ fun HighQualityPlayerScreen(
     }
 
     // クリーンアップ
-    DisposableEffect(Unit) {
+    DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer?.let {
                 com.example.tvmoview.data.prefs.UserPreferences.setPlaybackPosition(
@@ -204,20 +204,19 @@ fun HighQualityPlayerScreen(
             }
     ) {
         // ExoPlayer表示
-        resolvedUrl?.let {
-            AndroidView(
-                factory = { ctx ->
-                    PlayerView(ctx).apply {
-                        player = exoPlayer
-                        useController = true
-                        setShowSubtitleButton(true)
-                        setShowVrButton(false)
-                        playerView = this
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    useController = true
+                    setShowSubtitleButton(true)
+                    setShowVrButton(false)
+                    playerView = this
+                    player = exoPlayer
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            update = { view -> view.player = exoPlayer }
+        )
 
         if (resolvedUrl == null ||
             exoPlayer?.playbackState == Player.STATE_BUFFERING ||
