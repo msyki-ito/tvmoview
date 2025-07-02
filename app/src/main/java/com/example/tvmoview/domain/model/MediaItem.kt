@@ -47,12 +47,11 @@ data class MediaItem(
             else -> 1f
         }
 
+    companion object {
+        // 横動画(16:9)の高さを基準に全サムネイルを統一
+        val BaseCardHeight: Dp = 108.dp
+    }
+
     val cardHeight: Dp
-        get() = when {
-            isFolder -> 160.dp
-            isVerticalMedia -> 240.dp
-            isVideo -> 135.dp
-            isImage -> 180.dp
-            else -> 160.dp
-        }
+        get() = BaseCardHeight
 }

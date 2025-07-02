@@ -38,7 +38,7 @@ fun HuluMediaCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
-    val elevation by animateDpAsState(if (isFocused) 12.dp else 4.dp, tween(200))
+    val shadow by animateDpAsState(if (isFocused) 12.dp else 4.dp, tween(200))
 
     Card(
         modifier = modifier
@@ -50,12 +50,12 @@ fun HuluMediaCard(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-                shadowElevation = elevation.toPx()
+                shadowElevation = shadow.toPx()
             }
             .zIndex(if (isFocused) 1f else 0f),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+        elevation = CardDefaults.cardElevation(defaultElevation = shadow)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (item.isVerticalMedia) {
