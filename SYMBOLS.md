@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-07-01)
+# 📘 SYMBOLS.md (generated 2025-07-02)
 
 ## 
 - AuthenticationManager
@@ -57,6 +57,7 @@
 ## com.example.tvmoview.data.db
 - CachedMediaItem
   - [P] downloadUrl: String?,
+  - [P] duration: Long
   - [P] isFolder: Boolean,
   - [P] lastAccessedAt: Long
   - [P] lastModified: Long,
@@ -97,11 +98,17 @@
 - OneDriveResponse
 
 ## com.example.tvmoview.data.model
+- OneDriveVideo
+
+## com.example.tvmoview.data.model
 - Success
 
 ## com.example.tvmoview.data.prefs
 - UserPreferences
+  - [F] clearResumePosition(id: String)
+  - [F] getResumePosition(id: String): Long
   - [F] init(context: Context)
+  - [F] setResumePosition(id: String, position: Long)
   - [P] sortBy: String
   - [P] sortOrder: String
   - [P] tileColumns: Int
@@ -164,6 +171,7 @@
   - [F] cycleTileColumns()
   - [F] loadItems(folderId: String? = null, force: Boolean = false)
   - [F] refresh()
+  - [F] saveScrollPosition(index: Int)
   - [F] setSortBy(sortBy: SortBy)
   - [F] setSortOrder(order: SortOrder)
   - [F] toggleViewMode()
@@ -171,6 +179,7 @@
   - [P] currentPath: StateFlow<String>
   - [P] isLoading: StateFlow<Boolean>
   - [P] items: StateFlow<List<MediaItem>>
+  - [P] lastIndex: StateFlow<Int>
   - [P] sortBy: StateFlow<SortBy>
   - [P] sortOrder: StateFlow<SortOrder>
   - [P] tileColumns: StateFlow<Int>
