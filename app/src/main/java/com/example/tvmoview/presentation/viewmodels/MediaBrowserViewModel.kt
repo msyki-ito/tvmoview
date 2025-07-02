@@ -205,7 +205,7 @@ class MediaBrowserViewModel : ViewModel() {
             SortBy.DATE -> compareBy<MediaItem> { it.lastModified }
             SortBy.SIZE -> compareBy<MediaItem> { it.size }
             SortBy.TYPE -> compareBy<MediaItem> { it.mimeType ?: "" }.thenBy { it.name.lowercase() }
-            SortBy.SHOOT -> compareBy<MediaItem> { it.lastModified }
+            SortBy.SHOOT -> compareBy<MediaItem> { it.takenAt ?: it.lastModified }
         }
 
         val folders = items.filter { it.isFolder }.sortedWith(comparator)

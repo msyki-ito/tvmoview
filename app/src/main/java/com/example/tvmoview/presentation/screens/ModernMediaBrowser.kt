@@ -131,7 +131,7 @@ fun ModernMediaBrowser(
                                         derivedStateOf {
                                             if (gridState.firstVisibleItemIndex < items.size) {
                                                 val item = items[gridState.firstVisibleItemIndex]
-                                                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.lastModified)
+                                                SimpleDateFormat("yyyy/MM", Locale.getDefault()).format(item.takenAt ?: item.lastModified)
                                             } else ""
                                         }
                                     }

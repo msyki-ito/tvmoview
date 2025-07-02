@@ -154,6 +154,11 @@ class OneDriveRepository(
                     name = oneDriveItem.name,
                     size = oneDriveItem.size ?: 0,
                     lastModified = parseDate(oneDriveItem.lastModifiedDateTime),
+                    takenAt = parseDate(
+                        oneDriveItem.photo?.takenDateTime
+                            ?: oneDriveItem.fileSystemInfo?.createdDateTime
+                            ?: oneDriveItem.lastModifiedDateTime
+                    ),
                     mimeType = oneDriveItem.file?.mimeType,
                     isFolder = oneDriveItem.folder != null,
                     thumbnailUrl = generateThumbnailUrl(oneDriveItem),
@@ -170,7 +175,7 @@ class OneDriveRepository(
     private suspend fun fetchAllItems(folderId: String?): List<OneDriveItem> {
         val token = authManager.getValidToken() ?: return emptyList()
         val auth = "Bearer ${token.accessToken}"
-        val select = "id,name,size,lastModifiedDateTime,file,folder,video"
+        val select = "id,name,size,lastModifiedDateTime,file,folder,video,fileSystemInfo,photo"
         val items = mutableListOf<OneDriveItem>()
 
         var response = if (folderId == null) {
@@ -199,6 +204,7 @@ class OneDriveRepository(
                 name = item.name,
                 size = item.size,
                 lastModified = item.lastModified.time,
+                takenAt = item.takenAt?.time,
                 mimeType = item.mimeType,
                 isFolder = item.isFolder,
                 thumbnailUrl = item.thumbnailUrl,
@@ -357,6 +363,9 @@ class OneDriveRepository(
         val mimeType = file?.mimeType
         val size = size ?: 0
         val lastModified = parseDate(lastModifiedDateTime)
+        val takenAt = parseDate(
+            photo?.takenDateTime ?: fileSystemInfo?.createdDateTime ?: lastModifiedDateTime
+        )
 
         // サムネイルURLを生成
         val thumbnailUrl = if (!isFolder && (mimeType?.startsWith("image/") == true ||
@@ -371,6 +380,7 @@ class OneDriveRepository(
             name = name,
             size = size,
             lastModified = lastModified,
+            takenAt = takenAt,
             mimeType = mimeType,
             isFolder = isFolder,
             thumbnailUrl = thumbnailUrl,

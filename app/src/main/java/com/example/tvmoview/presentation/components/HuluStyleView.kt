@@ -26,7 +26,7 @@ fun HuluStyleView(
     val groupedItems = remember(items) {
         items.groupBy {
             Calendar.getInstance().apply {
-                time = it.lastModified
+                time = it.takenAt ?: it.lastModified
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
