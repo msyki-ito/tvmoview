@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.onFocusChanged
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.transform.BlurTransformation
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
 
@@ -43,7 +45,7 @@ fun HuluMediaCard(
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
             .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged { state -> isFocused = state.isFocused }
             .clickable { onClick() }
             .graphicsLayer {
                 scaleX = scale
@@ -72,7 +74,7 @@ private fun VerticalMediaContent(item: MediaItem) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(item.thumbnailUrl ?: item.downloadUrl)
-                .transformations(coil.transform.BlurTransformation(25f, 4f))
+                .transformations(BlurTransformation(radius = 25f, sampling = 4f))
                 .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
