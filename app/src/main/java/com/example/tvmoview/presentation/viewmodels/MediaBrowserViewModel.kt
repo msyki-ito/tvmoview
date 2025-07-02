@@ -187,30 +187,21 @@ class MediaBrowserViewModel : ViewModel() {
     }
 
     private fun applySorting(items: List<MediaItem>): List<MediaItem> {
-        val sorted = when (_sortBy.value) {
-            SortBy.NAME -> items.sortedWith(
-                compareBy<MediaItem> { !it.isFolder }
-                    .thenBy { it.name.lowercase() }
-            )
-            SortBy.DATE -> items.sortedWith(
-                compareBy<MediaItem> { !it.isFolder }
-                    .thenBy { it.lastModified }
-            )
-            SortBy.SIZE -> items.sortedWith(
-                compareBy<MediaItem> { !it.isFolder }
-                    .thenBy { it.size }
-            )
-            SortBy.TYPE -> items.sortedWith(
-                compareBy<MediaItem> { !it.isFolder }
-                    .thenBy { it.mimeType ?: "" }
-                    .thenBy { it.name.lowercase() }
-            )
-            SortBy.SHOOT -> items.sortedWith(
-                compareBy<MediaItem> { !it.isFolder }
-                    .thenBy { it.lastModified }
-            )
+        val comp = when (_sortBy.value) {
+            SortBy.NAME -> compareBy<MediaItem> { it.name.lowercase() }
+            SortBy.DATE -> compareBy<MediaItem> { it.lastModified }
+            SortBy.SIZE -> compareBy<MediaItem> { it.size }
+            SortBy.TYPE -> compareBy<MediaItem> { it.mimeType ?: "" }
+                .thenBy { it.name.lowercase() }
+            SortBy.SHOOT -> compareBy<MediaItem> { it.lastModified }
         }
-        return if (_sortOrder.value == SortOrder.DESC) sorted.reversed() else sorted
+
+        fun List<MediaItem>.sort() = if (_sortOrder.value == SortOrder.DESC)
+            this.sortedWith(comp).reversed() else this.sortedWith(comp)
+
+        val folders = items.filter { it.isFolder }.sort()
+        val files = items.filter { !it.isFolder }.sort()
+        return folders + files
     }
 
     fun refresh() {

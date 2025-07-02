@@ -21,4 +21,11 @@ object UserPreferences {
     var tileColumns: Int
         get() = prefs.getInt("tile_columns", 4)
         set(value) { prefs.edit().putInt("tile_columns", value).apply() }
+
+    fun getPlaybackPosition(id: String): Long =
+        prefs.getLong("playback_" + id, 0L)
+
+    fun setPlaybackPosition(id: String, position: Long) {
+        prefs.edit().putLong("playback_" + id, position).apply()
+    }
 }
