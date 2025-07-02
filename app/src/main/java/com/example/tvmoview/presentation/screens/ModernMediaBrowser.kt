@@ -267,6 +267,7 @@ private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<Media
     val bar = 4.dp
     val alpha by animateFloatAsState(if (isScrolling) 1f else 0.6f, label = "a")
     val fontSize by animateFloatAsState(if (isScrolling) 20f else 12f, label = "fs")
+    val dateWidth by animateDpAsState(if (isScrolling) 96.dp else 56.dp, label = "dw")
     val textStyle = MaterialTheme.typography.labelLarge.copy(fontSize = fontSize.sp)
 
     val currentDate by remember {
@@ -279,10 +280,14 @@ private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<Media
     }
 
     val progress = if (items.isNotEmpty()) {
-        state.firstVisibleItemIndex.toFloat() / (items.size - 1).coerceAtLeast(1)
+        val itemSize = state.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 1
+        val fullIndex = state.firstVisibleItemIndex +
+            state.firstVisibleItemScrollOffset.toFloat() / itemSize
+        fullIndex / (items.size - 1).coerceAtLeast(1)
     } else 0f
     val viewport = with(LocalDensity.current) { state.layoutInfo.viewportSize.height.toDp() }
-    val dateOffset = viewport * progress - width
+    val dateHeight = 32.dp
+    val dateOffset = (viewport - dateHeight).coerceAtLeast(0.dp) * progress
 
     Box(
         modifier = Modifier
@@ -319,13 +324,16 @@ private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<Media
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = (-48).dp, y = dateOffset)
+                    .offset(x = (-dateWidth), y = dateOffset)
+                    .width(dateWidth)
                     .alpha(alpha)
             ) {
                 Text(
                     text = currentDate,
                     style = textStyle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                 )
             }
