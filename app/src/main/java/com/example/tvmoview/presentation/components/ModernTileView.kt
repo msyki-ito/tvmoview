@@ -3,23 +3,29 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
+import com.example.tvmoview.presentation.viewmodels.TileSize
 
 @Composable
 fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
+    tileSize: TileSize,
     state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
-        contentPadding = PaddingValues(0.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentWidth(Alignment.CenterHorizontally),
+        contentPadding = PaddingValues(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         itemsIndexed(items) { index, item ->
             // 表示優先度を設定
@@ -34,7 +40,9 @@ fun ModernTileView(
                 onClick = { onItemClick(item) },
                 loadPriority = priority,
                 // showName の条件は変更なし（既に正しい）
-                showName = item.isFolder || (!item.isVideo && !item.isImage)
+                showName = item.isFolder || (!item.isVideo && !item.isImage),
+                height = tileSize.height.dp,
+                aspectRatio = 16f / 9f
             )
         }
     }

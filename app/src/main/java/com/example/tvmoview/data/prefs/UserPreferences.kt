@@ -22,6 +22,10 @@ object UserPreferences {
         get() = prefs.getInt("tile_columns", 4)
         set(value) { prefs.edit().putInt("tile_columns", value).apply() }
 
+    var tileHeight: Int
+        get() = prefs.getInt("tile_height", 180)
+        set(value) { prefs.edit().putInt("tile_height", value).apply() }
+
     fun getResumePosition(id: String): Long =
         prefs.getLong("resume_" + id, 0L)
 

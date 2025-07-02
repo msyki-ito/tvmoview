@@ -25,6 +25,20 @@ enum class SortOrder {
     ASC, DESC
 }
 
+enum class TileSize(val height: Int) {
+    SMALL(135),
+    MEDIUM(180),
+    LARGE(240);
+
+    companion object {
+        fun fromHeight(value: Int) = when (value) {
+            135 -> SMALL
+            240 -> LARGE
+            else -> MEDIUM
+        }
+    }
+}
+
 class MediaBrowserViewModel : ViewModel() {
 
     private val _items = MutableStateFlow<List<MediaItem>>(emptyList())
@@ -44,6 +58,9 @@ class MediaBrowserViewModel : ViewModel() {
 
     private val _tileColumns = MutableStateFlow(UserPreferences.tileColumns)
     val tileColumns: StateFlow<Int> = _tileColumns.asStateFlow()
+
+    private val _tileSize = MutableStateFlow(TileSize.fromHeight(UserPreferences.tileHeight))
+    val tileSize: StateFlow<TileSize> = _tileSize.asStateFlow()
 
     private val _currentPath = MutableStateFlow("OneDrive")
     val currentPath: StateFlow<String> = _currentPath.asStateFlow()
@@ -164,6 +181,16 @@ class MediaBrowserViewModel : ViewModel() {
         }
         _tileColumns.value = next
         UserPreferences.tileColumns = next
+    }
+
+    fun cycleTileSize() {
+        val next = when (_tileSize.value) {
+            TileSize.SMALL -> TileSize.MEDIUM
+            TileSize.MEDIUM -> TileSize.LARGE
+            TileSize.LARGE -> TileSize.SMALL
+        }
+        _tileSize.value = next
+        UserPreferences.tileHeight = next.height
     }
 
     fun setSortBy(sortBy: SortBy) {

@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
@@ -29,14 +31,17 @@ fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
     loadPriority: Float = 0.5f,
-    showName: Boolean = true
+    showName: Boolean = true,
+    height: Dp = 180.dp,
+    aspectRatio: Float = 16f / 9f
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
+            .height(height)
+            .aspectRatio(aspectRatio)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(6.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
