@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
 
@@ -14,12 +15,16 @@ fun ModernTileView(
     state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
+    val config = LocalConfiguration.current
+    val screenWidth = config.screenWidthDp.dp
+    val minWidth = screenWidth / columnCount
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(columnCount),
+        columns = GridCells.Adaptive(minWidth),
         state = state,
-        contentPadding = PaddingValues(0.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        contentPadding = PaddingValues(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         itemsIndexed(items) { index, item ->
             // 表示優先度を設定
