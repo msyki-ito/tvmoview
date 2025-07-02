@@ -9,6 +9,7 @@ data class MediaItem(
     val name: String,
     val size: Long = 0,
     val lastModified: Date = Date(),
+    val takenAt: Date? = null,
     val mimeType: String? = null,
     val isFolder: Boolean = false,
     val thumbnailUrl: String? = null,

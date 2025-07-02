@@ -12,6 +12,8 @@ data class OneDriveItem(
     @SerializedName("name") val name: String,
     @SerializedName("size") val size: Long? = null,
     @SerializedName("lastModifiedDateTime") val lastModifiedDateTime: String,
+    @SerializedName("photo") val photo: OneDrivePhoto? = null,
+    @SerializedName("fileSystemInfo") val fileSystemInfo: OneDriveFileSystemInfo? = null,
     @SerializedName("file") val file: OneDriveFile? = null,
     @SerializedName("folder") val folder: OneDriveFolder? = null,
     @SerializedName("video") val video: OneDriveVideo? = null,
@@ -28,6 +30,15 @@ data class OneDriveFile(
 
 data class OneDriveFolder(
     @SerializedName("childCount") val childCount: Int? = null
+)
+
+data class OneDrivePhoto(
+    @SerializedName("takenDateTime") val takenDateTime: String?
+)
+
+data class OneDriveFileSystemInfo(
+    @SerializedName("createdDateTime") val createdDateTime: String?,
+    @SerializedName("lastModifiedDateTime") val lastModifiedDateTime: String?
 )
 
 data class AuthToken(

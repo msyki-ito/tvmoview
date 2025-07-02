@@ -10,6 +10,7 @@ data class CachedMediaItem(
     val name: String,
     val size: Long,
     val lastModified: Long,
+    val takenAt: Long? = null,
     val mimeType: String?,
     val isFolder: Boolean,
     val thumbnailUrl: String?,

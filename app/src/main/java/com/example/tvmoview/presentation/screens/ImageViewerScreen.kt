@@ -194,7 +194,7 @@ fun ImageViewerScreen(
                             .padding(8.dp)
                     ) {
                         Text(item.name, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                        Text(dateFormat.format(item.lastModified), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                        Text(dateFormat.format(item.takenAt ?: item.lastModified), color = Color.White, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
