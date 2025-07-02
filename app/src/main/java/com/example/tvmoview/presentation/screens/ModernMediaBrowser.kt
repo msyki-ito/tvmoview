@@ -281,9 +281,9 @@ private fun BoxScope.DateScrollIndicator(state: LazyGridState, items: List<Media
 
     val progress = if (items.isNotEmpty()) {
         val itemSize = state.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 1
-        val fullIndex = state.firstVisibleItemIndex +
+        val fullIndex = state.firstVisibleItemIndex.toFloat() +
             state.firstVisibleItemScrollOffset.toFloat() / itemSize
-        fullIndex / (items.size - 1).coerceAtLeast(1)
+        fullIndex / (items.size - 1).coerceAtLeast(1).toFloat()
     } else 0f
     val viewport = with(LocalDensity.current) { state.layoutInfo.viewportSize.height.toDp() }
     val dateHeight = 32.dp
