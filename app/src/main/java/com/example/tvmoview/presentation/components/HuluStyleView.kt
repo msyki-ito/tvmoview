@@ -76,7 +76,7 @@ fun HuluStyleView(
                         .padding(bottom = 16.dp)
                         .focusRestorer()
                 ) {
-                    items(
+                    items<MediaItem>(
                         items = group.items,
                         key = { it.id },
                         contentType = { if (it.isFolder) "folder" else "media" }
