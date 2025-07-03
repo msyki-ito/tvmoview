@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
-import androidx.tv.foundation.lazy.list.focusRestorer
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.foundation.lazy.animateItemPlacement
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.onFocusChanged
@@ -67,7 +67,7 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
-                val listState = rememberTvLazyListState()
+                val listState = rememberLazyListState()
                 LazyRow(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
