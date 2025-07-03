@@ -40,7 +40,7 @@
 | UI                          | Jetpack Compose BOM                 | 2024.02.00（BOM）   |
 |                               | Compose UI                         | BOM準拠             |
 |                               | Material3                          | 1.2.0               |
-|                               | Compose for TV                     | 1.0.0-beta01|
+|                               | Compose for TV                     | 1.0.0               |
 | 画像                         | Coil                                | 2.5.0               |
 | 動画                         | ExoPlayer（androidx.media3）        | 1.2.1               |
 | OneDrive連携                | Microsoft Graph Java SDK            | 6.0.0               |
