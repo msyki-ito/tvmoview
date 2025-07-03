@@ -41,6 +41,7 @@
 |                               | Compose UI                         | BOM準拠             |
 |                               | Material3                          | 1.2.0               |
 |                               | Compose for TV                     | 1.0.0               |
+|                               | tv-foundation                      | 1.0.0-alpha12       |
 | 画像                         | Coil                                | 2.5.0               |
 | 動画                         | ExoPlayer（androidx.media3）        | 1.2.1               |
 | OneDrive連携                | Microsoft Graph Java SDK            | 6.0.0               |
@@ -56,6 +57,7 @@
 | コレクション操作             | androidx.collection:*               | 1.4.0               |
 | アノテーション関連            | androidx.annotation:*               | 1.7.0               |
 
+**tv-foundation は `1.0.0-alpha12` を使用し、安定版 `1.0.0` へ変更しないこと。**
 ---
 
 ## 🛠️ Kotlin Symbol Processing (KSP) の使用方針

@@ -2,6 +2,9 @@
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -36,6 +39,7 @@ import java.util.*
 fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     loadPriority: Float = 0.5f,
     showName: Boolean = true
 ) {
@@ -47,7 +51,7 @@ fun ModernMediaCard(
     val cardShape = RoundedCornerShape(8.dp)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .focusable()

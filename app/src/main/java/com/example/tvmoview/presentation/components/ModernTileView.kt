@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.focusRestorer
+import androidx.tv.foundation.lazy.grid.focusRestorer
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.Composable
