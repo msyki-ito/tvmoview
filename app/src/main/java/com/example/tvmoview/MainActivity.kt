@@ -29,7 +29,14 @@ import coil.ImageLoader
 import coil.Coil
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import coil.intercept.Dispatcher
 import okhttp3.OkHttpClient
+import okhttp3.ConnectionPool
+import java.util.concurrent.TimeUnit
+import android.view.WindowManager
+import android.view.View
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
 
@@ -43,6 +50,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ハードウェアアクセラレーションとシステムUI最適化
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 
         // 既存のテストデータ用（そのまま残す）
         mediaRepository = MediaRepository(this)
@@ -62,16 +80,25 @@ class MainActivity : ComponentActivity() {
             .diskCache(
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(50L * 1024 * 1024) // 50MB
+                    .maxSizeBytes(100L * 1024 * 1024) // 100MBに増量
                     .build()
             )
             .memoryCache(
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.15)
+                    .maxSizePercent(0.25) // 0.25に増量
                     .build()
             )
             .okHttpClient {
                 OkHttpClient.Builder()
+                    .connectionPool(
+                        ConnectionPool(
+                            maxIdleConnections = 10,
+                            keepAliveDuration = 60,
+                            timeUnit = TimeUnit.SECONDS
+                        )
+                    )
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
                     .addInterceptor { chain ->
                         val request = chain.request()
                         val url = request.url.toString()
@@ -95,7 +122,12 @@ class MainActivity : ComponentActivity() {
                     .build()
             }
             .respectCacheHeaders(false)
-            .crossfade(true)
+            .crossfade(100) // 100msに短縮
+            .dispatcher(
+                Dispatcher(
+                    parallelismCount = 6 // 並列ロード数を6に
+                )
+            )
             .build()
         Coil.setImageLoader(imageLoader)
 
