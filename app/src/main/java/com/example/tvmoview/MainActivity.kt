@@ -29,7 +29,6 @@ import coil.ImageLoader
 import coil.Coil
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import coil.request.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.ConnectionPool
 import java.util.concurrent.TimeUnit
@@ -123,11 +122,6 @@ class MainActivity : ComponentActivity() {
             }
             .respectCacheHeaders(false)
             .crossfade(100) // 100msに短縮
-            .dispatcher(
-                Dispatcher(
-                    parallelismCount = 6 // 並列ロード数を6に
-                )
-            )
             .build()
         Coil.setImageLoader(imageLoader)
 

@@ -77,7 +77,7 @@ fun ModernMediaCard(
                             .diskCacheKey("thumb_${item.id}")
                             .crossfade(if (loadPriority > 0.5f) 100 else 0) // 条件付きクロスフェード
                             .size(
-                                width = if (loadPriority > 0.7f) 480 else 240,
+                                width = if (loadPriority > 0.7f) 640 else 320,
                                 height = if (loadPriority > 0.7f) 360 else 180
                             )
                             .memoryCachePolicy(CachePolicy.ENABLED)
