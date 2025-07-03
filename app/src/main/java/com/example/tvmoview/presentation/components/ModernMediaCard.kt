@@ -36,7 +36,8 @@ fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
     loadPriority: Float = 0.5f,
-    showName: Boolean = true
+    showName: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
@@ -47,7 +48,7 @@ fun ModernMediaCard(
     val cardShape = RoundedCornerShape(8.dp)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .focusable()
