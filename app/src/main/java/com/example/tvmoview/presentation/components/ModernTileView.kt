@@ -3,7 +3,7 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
@@ -15,6 +15,16 @@ fun ModernTileView(
     state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
+    var focusedItemId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.layoutInfo.visibleItemsInfo.map { it.key as? String } }
+            .collect { visibleIds ->
+                if (focusedItemId !in visibleIds) {
+                    focusedItemId = visibleIds.firstOrNull()
+                }
+            }
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
@@ -41,13 +51,16 @@ fun ModernTileView(
                 else -> 0.1f        // それ以降は低優先度
             }
 
-            ModernMediaCard(
-                item = item,
-                onClick = { onItemClick(item) },
-                loadPriority = priority,
-                // showName の条件は変更なし（既に正しい）
-                showName = item.isFolder || (!item.isVideo && !item.isImage)
-            )
+            key(item.id) {
+                ModernMediaCard(
+                    item = item,
+                    onClick = { onItemClick(item) },
+                    loadPriority = priority,
+                    showName = item.isFolder || (!item.isVideo && !item.isImage),
+                    isFocused = focusedItemId == item.id,
+                    onFocusChanged = { if (it) focusedItemId = item.id }
+                )
+            }
         }
     }
 }

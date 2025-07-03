@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -34,31 +36,40 @@ import com.example.tvmoview.presentation.theme.HuluColors
 fun HuluMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFocused: Boolean = false,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(isFocused) {
+        if (isFocused) focusRequester.requestFocus()
+    }
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.05f else 1f,
-        animationSpec = tween(150) // 150msに短縮
+        targetValue = if (isFocused) 1.1f else 1f,
+        animationSpec = tween(150)
     )
-    val shadow by animateDpAsState(if (isFocused) 12.dp else 4.dp, tween(200))
+    val shadow by animateDpAsState(if (isFocused) 24.dp else 4.dp, tween(150))
 
     Card(
         modifier = modifier
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
+            .focusRequester(focusRequester)
             .focusable()
-            .onFocusChanged { state -> isFocused = state.isFocused }
+            .onFocusChanged { state -> onFocusChanged(state.isFocused) }
             .clickable { onClick() }
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 shadowElevation = shadow.toPx()
             }
-            .zIndex(if (isFocused) 1f else 0f),
+            .zIndex(if (isFocused) 10f else 0f),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = shadow)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = shadow,
+            pressedElevation = shadow + 4.dp
+        )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (item.isVerticalMedia) {
