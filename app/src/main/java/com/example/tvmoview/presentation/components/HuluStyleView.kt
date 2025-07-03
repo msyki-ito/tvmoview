@@ -74,7 +74,7 @@ fun HuluStyleView(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .padding(bottom = 16.dp)
-                        .focusRestorer(rowFocusRequester)
+                        .focusRestorer { rowFocusRequester }
                 ) {
                     items(
                         items = group.items,

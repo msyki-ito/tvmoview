@@ -30,7 +30,7 @@ fun ModernTileView(
         contentPadding = PaddingValues(0.dp),
         horizontalArrangement = Arrangement.spacedBy(0.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
-        modifier = Modifier.focusRestorer(firstItemFocusRequester)
+        modifier = Modifier.focusRestorer { firstItemFocusRequester }
     ) {
         itemsIndexed(
             items = items,
