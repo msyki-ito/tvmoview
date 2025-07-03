@@ -3,9 +3,11 @@ package com.example.tvmoview.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.animateItemPlacement
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
@@ -63,12 +65,14 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
-                val listState = rememberTvLazyListState()
-                TvLazyRow(
+                val listState = rememberLazyListState()
+                LazyRow(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .focusRestorer()
                 ) {
                     items(
                         items = group.items,
