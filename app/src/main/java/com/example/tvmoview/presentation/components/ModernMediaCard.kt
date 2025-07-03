@@ -75,8 +75,11 @@ fun ModernMediaCard(
                         model = ImageRequest.Builder(context)
                             .data(item.thumbnailUrl ?: generateVideoThumbnail(item))
                             .diskCacheKey("thumb_${item.id}")
-                            .crossfade(300)
-                            .size(480, 360)
+                            .crossfade(if (loadPriority > 0.5f) 100 else 0) // 条件付きクロスフェード
+                            .size(
+                                width = if (loadPriority > 0.7f) 640 else 320,
+                                height = if (loadPriority > 0.7f) 360 else 180
+                            )
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build(),

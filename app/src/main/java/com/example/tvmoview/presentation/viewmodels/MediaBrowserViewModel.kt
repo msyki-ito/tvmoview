@@ -225,18 +225,20 @@ class MediaBrowserViewModel : ViewModel() {
                 _items.value = sorted
             }
             sorted.size <= 30 -> {
-                _items.value = sorted.take(10)
+                val screenItemCount = _tileColumns.value * 3 // 3行分
+                _items.value = sorted.take(screenItemCount)
                 viewModelScope.launch {
-                    kotlinx.coroutines.delay(100)
+                    kotlinx.coroutines.delay(50) // 50msに短縮
                     _items.value = sorted
                 }
             }
             else -> {
-                _items.value = sorted.take(10)
+                val screenItemCount = _tileColumns.value * 3
+                _items.value = sorted.take(screenItemCount)
                 viewModelScope.launch {
-                    kotlinx.coroutines.delay(100)
+                    kotlinx.coroutines.delay(50)
                     _items.value = sorted.take(30)
-                    kotlinx.coroutines.delay(300)
+                    kotlinx.coroutines.delay(200) // 300ms→200msに短縮
                     _items.value = sorted
                 }
             }
