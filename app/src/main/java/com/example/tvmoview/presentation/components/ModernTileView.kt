@@ -10,10 +10,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ModernTileView(
     items: List<MediaItem>,
