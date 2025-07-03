@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
@@ -55,6 +57,17 @@ fun HuluMediaCard(
                 scaleY = scale
                 shadowElevation = shadow.toPx()
             }
+            .then(
+                if (isFocused) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .zIndex(if (isFocused) 1f else 0f),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),

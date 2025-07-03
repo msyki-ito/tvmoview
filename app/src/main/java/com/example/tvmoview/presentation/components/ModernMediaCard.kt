@@ -1,6 +1,7 @@
 ﻿package com.example.tvmoview.presentation.components
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -21,8 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.zIndex
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
@@ -39,7 +40,6 @@ fun ModernMediaCard(
     showName: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
     val elevation by animateDpAsState(if (isFocused) 16.dp else 4.dp, tween(200))
     val border = if (isFocused) {
         BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
@@ -54,12 +54,11 @@ fun ModernMediaCard(
             .onFocusChanged { isFocused = it.isFocused }
             .clickable { onClick() }
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
                 shadowElevation = elevation.toPx()
                 shape = cardShape
                 clip = true
             }
+            .scale(if (isFocused) 1.1f else 1f)
             .zIndex(if (isFocused) 1f else 0f),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         border = border,

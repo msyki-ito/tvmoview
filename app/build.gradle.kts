@@ -76,7 +76,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // TV Support
-    implementation("androidx.tv:tv-foundation:1.0.0-alpha12")
+    implementation("androidx.tv:tv-foundation:1.0.0")
     implementation("androidx.tv:tv-material:1.0.0")
 
     // ✅ Media3 ExoPlayer（動画再生強化）
