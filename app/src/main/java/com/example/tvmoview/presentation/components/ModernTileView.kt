@@ -1,10 +1,11 @@
 ﻿package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.layout.*
-import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
-import androidx.tv.foundation.lazy.grid.TvGridCells
-import androidx.tv.foundation.lazy.grid.TvLazyGridState
-import androidx.tv.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,15 +15,16 @@ import com.example.tvmoview.domain.model.MediaItem
 fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
-    state: TvLazyGridState,
+    state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
-    TvLazyVerticalGrid(
-        columns = TvGridCells.Fixed(columnCount),
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columnCount),
         state = state,
         contentPadding = PaddingValues(0.dp),
         horizontalArrangement = Arrangement.spacedBy(0.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        modifier = Modifier.focusRestorer()
     ) {
         itemsIndexed(
             items = items,
