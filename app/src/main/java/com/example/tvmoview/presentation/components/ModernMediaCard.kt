@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -36,13 +38,21 @@ fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
     loadPriority: Float = 0.5f,
-    showName: Boolean = true
+    showName: Boolean = true,
+    isFocused: Boolean = false,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
-    val elevation by animateDpAsState(if (isFocused) 16.dp else 4.dp, tween(200))
+    val focusRequester = remember { FocusRequester() }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.1f else 1f,
+        animationSpec = tween(150)
+    )
+    val elevation by animateDpAsState(
+        targetValue = if (isFocused) 24.dp else 4.dp,
+        animationSpec = tween(150)
+    )
     val border = if (isFocused) {
-        BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+        BorderStroke(3.dp, MaterialTheme.colorScheme.primary)
     } else null
     val cardShape = RoundedCornerShape(8.dp)
 
@@ -50,8 +60,11 @@ fun ModernMediaCard(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
+            .focusRequester(focusRequester)
             .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged { state ->
+                onFocusChanged(state.isFocused)
+            }
             .clickable { onClick() }
             .graphicsLayer {
                 scaleX = scale
@@ -60,8 +73,11 @@ fun ModernMediaCard(
                 shape = cardShape
                 clip = true
             }
-            .zIndex(if (isFocused) 1f else 0f),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+            .zIndex(if (isFocused) 10f else 0f),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = elevation,
+            pressedElevation = elevation + 4.dp
+        ),
         border = border,
         shape = cardShape
     ) {

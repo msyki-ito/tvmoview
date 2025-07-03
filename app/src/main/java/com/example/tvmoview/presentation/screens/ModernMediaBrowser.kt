@@ -18,6 +18,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.domain.model.*
@@ -79,6 +84,14 @@ fun ModernMediaBrowser(
                     )
                 )
             )
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    when (event.key) {
+                        Key.DirectionUp, Key.DirectionDown, Key.DirectionLeft, Key.DirectionRight -> true
+                        else -> false
+                    }
+                } else false
+            }
     ) {
         Column {
             ModernTopBar(
