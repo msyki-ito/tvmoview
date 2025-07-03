@@ -3,13 +3,17 @@ package com.example.tvmoview.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
@@ -22,7 +26,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HuluStyleView(
     items: List<MediaItem>,
@@ -63,12 +67,15 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
-                val listState = rememberTvLazyListState()
-                TvLazyRow(
+                val listState = rememberLazyListState()
+                val rowFocusRequester = remember { FocusRequester() }
+                LazyRow(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .focusRestorer { rowFocusRequester }
                 ) {
                     items(
                         items = group.items,
@@ -76,20 +83,17 @@ fun HuluStyleView(
                         contentType = { if (it.isFolder) "folder" else "media" }
                     ) { item ->
                         val itemIndex = group.items.indexOf(item)
-                        val isVisible = remember(listState) {
-                            derivedStateOf {
-                                val layoutInfo = listState.layoutInfo
-                                val visibleItems = layoutInfo.visibleItemsInfo
-                                visibleItems.any { it.index == itemIndex }
-                            }
-                        }
 
                         HuluMediaCard(
                             item = item,
                             onClick = { onItemClick(item) },
-                            modifier = Modifier.animateItemPlacement(
-                                animationSpec = tween(durationMillis = 100)
-                            )
+                            modifier = Modifier
+                                .animateItemPlacement(
+                                    animationSpec = tween(durationMillis = 100)
+                                )
+                                .let { mod ->
+                                    if (itemIndex == 0) mod.focusRequester(rowFocusRequester) else mod
+                                }
                         )
                     }
                 }
