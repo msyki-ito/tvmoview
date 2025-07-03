@@ -57,6 +57,11 @@
 | アノテーション関連            | androidx.annotation:*               | 1.7.0               |
 
 ---
+tv-foundation:1.0.0 は 存在しないため使えない（→ビルドエラーになる）
+ただし、1.0.0-alpha12 は Google公式も採用中（Jetstreamなど） の実績あるバージョン
+tv-material:1.0.0 は安定版なので問題なく使用可能
+Compose本体（foundation）への統合も始まっているが、現時点では TvLazy* を使うのがUX的に最良
+
 
 ## 🛠️ Kotlin Symbol Processing (KSP) の使用方針
 
