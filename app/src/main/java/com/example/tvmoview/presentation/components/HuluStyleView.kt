@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import androidx.tv.foundation.lazy.list.focusRestorer
+import androidx.compose.foundation.lazy.animateItemPlacement
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.animation.core.tween
