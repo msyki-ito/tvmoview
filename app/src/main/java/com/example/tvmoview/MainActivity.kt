@@ -29,7 +29,7 @@ import coil.ImageLoader
 import coil.Coil
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import coil.intercept.Dispatcher
+import coil.request.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.ConnectionPool
 import java.util.concurrent.TimeUnit
