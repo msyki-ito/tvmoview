@@ -3,10 +3,13 @@
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +20,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.zIndex
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.request.CachePolicy
@@ -31,12 +38,32 @@ fun ModernMediaCard(
     loadPriority: Float = 0.5f,
     showName: Boolean = true
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
+    val elevation by animateDpAsState(if (isFocused) 16.dp else 4.dp, tween(200))
+    val border = if (isFocused) {
+        BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+    } else null
+    val cardShape = RoundedCornerShape(8.dp)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .focusable()
+            .onFocusChanged { isFocused = it.isFocused }
+            .clickable { onClick() }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                shadowElevation = elevation.toPx()
+                shape = cardShape
+                clip = true
+            }
+            .zIndex(if (isFocused) 1f else 0f),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        border = border,
+        shape = cardShape
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
