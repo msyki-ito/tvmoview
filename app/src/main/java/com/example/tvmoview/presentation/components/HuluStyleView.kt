@@ -64,7 +64,7 @@ fun HuluStyleView(
             }
             item(key = "${group.date}_content") {
                 val listState = rememberLazyListState()
-                var focusedIndex by remember { mutableStateOf(0) }
+                var focusedItemId by remember { mutableStateOf<String?>(null) }
                 LazyRow(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
@@ -76,12 +76,11 @@ fun HuluStyleView(
                         key = { it.id },
                         contentType = { if (it.isFolder) "folder" else "media" }
                     ) { item ->
-                        val itemIndex = group.items.indexOf(item)
                         val isVisible = remember(listState) {
                             derivedStateOf {
                                 val layoutInfo = listState.layoutInfo
                                 val visibleItems = layoutInfo.visibleItemsInfo
-                                visibleItems.any { it.index == itemIndex }
+                                visibleItems.any { it.key == item.id }
                             }
                         }
 
@@ -91,8 +90,8 @@ fun HuluStyleView(
                             modifier = Modifier.animateItemPlacement(
                                 animationSpec = tween(durationMillis = 100)
                             ),
-                            isFocused = focusedIndex == itemIndex,
-                            onFocusChanged = { if (it) focusedIndex = itemIndex }
+                            isFocused = focusedItemId == item.id,
+                            onFocusChanged = { if (it) focusedItemId = item.id }
                         )
                     }
                 }

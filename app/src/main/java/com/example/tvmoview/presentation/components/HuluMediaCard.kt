@@ -41,6 +41,9 @@ fun HuluMediaCard(
     onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(isFocused) {
+        if (isFocused) focusRequester.requestFocus()
+    }
     val scale by animateFloatAsState(
         targetValue = if (isFocused) 1.1f else 1f,
         animationSpec = tween(150)

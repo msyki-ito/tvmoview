@@ -15,7 +15,16 @@ fun ModernTileView(
     state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
-    var focusedIndex by remember { mutableStateOf(0) }
+    var focusedItemId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.layoutInfo.visibleItemsInfo.map { it.key as? String } }
+            .collect { visibleIds ->
+                if (focusedItemId !in visibleIds) {
+                    focusedItemId = visibleIds.firstOrNull()
+                }
+            }
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
@@ -42,15 +51,16 @@ fun ModernTileView(
                 else -> 0.1f        // それ以降は低優先度
             }
 
-            ModernMediaCard(
-                item = item,
-                onClick = { onItemClick(item) },
-                loadPriority = priority,
-                // showName の条件は変更なし（既に正しい）
-                showName = item.isFolder || (!item.isVideo && !item.isImage),
-                isFocused = focusedIndex == index,
-                onFocusChanged = { if (it) focusedIndex = index }
-            )
+            key(item.id) {
+                ModernMediaCard(
+                    item = item,
+                    onClick = { onItemClick(item) },
+                    loadPriority = priority,
+                    showName = item.isFolder || (!item.isVideo && !item.isImage),
+                    isFocused = focusedItemId == item.id,
+                    onFocusChanged = { if (it) focusedItemId = item.id }
+                )
+            }
         }
     }
 }
