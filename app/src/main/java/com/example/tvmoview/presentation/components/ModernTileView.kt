@@ -1,10 +1,10 @@
 ﻿package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.tv.foundation.lazy.grid.TvGridCells
+import androidx.tv.foundation.lazy.grid.TvLazyGridState
 import androidx.tv.foundation.lazy.grid.TvLazyVerticalGrid
+import androidx.tv.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,7 +14,7 @@ import com.example.tvmoview.domain.model.MediaItem
 fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
-    state: LazyGridState,
+    state: TvLazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
     TvLazyVerticalGrid(
@@ -53,3 +53,4 @@ fun ModernTileView(
         }
     }
 }
+
