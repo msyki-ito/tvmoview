@@ -64,6 +64,7 @@ fun HuluStyleView(
             }
             item(key = "${group.date}_content") {
                 val listState = rememberLazyListState()
+                var focusedIndex by remember { mutableStateOf(0) }
                 LazyRow(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
@@ -89,7 +90,9 @@ fun HuluStyleView(
                             onClick = { onItemClick(item) },
                             modifier = Modifier.animateItemPlacement(
                                 animationSpec = tween(durationMillis = 100)
-                            )
+                            ),
+                            isFocused = focusedIndex == itemIndex,
+                            onFocusChanged = { if (it) focusedIndex = itemIndex }
                         )
                     }
                 }

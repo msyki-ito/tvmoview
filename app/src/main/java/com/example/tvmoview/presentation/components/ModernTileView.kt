@@ -3,7 +3,7 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
@@ -15,6 +15,7 @@ fun ModernTileView(
     state: LazyGridState,
     onItemClick: (MediaItem) -> Unit
 ) {
+    var focusedIndex by remember { mutableStateOf(0) }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
@@ -46,7 +47,9 @@ fun ModernTileView(
                 onClick = { onItemClick(item) },
                 loadPriority = priority,
                 // showName の条件は変更なし（既に正しい）
-                showName = item.isFolder || (!item.isVideo && !item.isImage)
+                showName = item.isFolder || (!item.isVideo && !item.isImage),
+                isFocused = focusedIndex == index,
+                onFocusChanged = { if (it) focusedIndex = index }
             )
         }
     }
