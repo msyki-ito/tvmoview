@@ -2,10 +2,13 @@ package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.itemsIndexed
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.onFocusEvent
+import kotlinx.coroutines.launch
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
@@ -42,7 +45,7 @@ fun HuluStyleView(
             .sortedByDescending { it.date }
     }
 
-    TvLazyColumn(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(HuluColors.Background),
@@ -57,9 +60,10 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
-                val rowState = rememberTvLazyListState()
+                val rowState = rememberLazyListState()
                 val rowFocusRequester = remember { FocusRequester() }
-                TvLazyRow(
+                val scope = rememberCoroutineScope()
+                LazyRow(
                     state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -71,7 +75,8 @@ fun HuluStyleView(
                         HuluMediaCard(
                             item = item,
                             onClick = { onItemClick(item) },
-                            modifier = if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier
+                            modifier = (if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier)
+                                .onFocusEvent { if (it.isFocused) scope.launch { rowState.animateScrollToItem(index) } }
                         )
                     }
                 }
