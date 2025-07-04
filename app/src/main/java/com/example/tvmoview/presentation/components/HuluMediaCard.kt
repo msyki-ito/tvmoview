@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
@@ -19,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -50,9 +50,15 @@ fun HuluMediaCard(
         shape = CardDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
         colors = CardDefaults.colors(containerColor = HuluColors.CardBackground),
         scale = CardDefaults.scale(focusedScale = 1.05f),
-        glow = CardDefaults.glow(),
+        glow = CardDefaults.glow(
+            glowColor = Color(0xFF66CCFF),
+            elevation = 8.dp
+        ),
         border = CardDefaults.border(
-            focusedBorder = BorderStroke(3.dp, Color.Cyan)
+            focusedBorder = CardDefaults.border().focusedBorder.copy(
+                width = 3.dp,
+                brush = androidx.compose.ui.graphics.SolidColor(Color.Cyan)
+            )
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
