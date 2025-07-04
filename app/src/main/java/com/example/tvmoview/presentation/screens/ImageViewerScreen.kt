@@ -47,6 +47,19 @@ fun ImageViewerScreen(
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 
+    suspend fun prefetchImage(index: Int) {
+        if (index < 0 || index >= imageItems.size) return
+        val item = imageItems[index]
+        val url = MainActivity.oneDriveRepository
+            .getDownloadUrl(item.id)
+            ?: item.downloadUrl
+        context.imageLoader.enqueue(
+            ImageRequest.Builder(context)
+                .data(url)
+                .build(),
+        )
+    }
+
     Log.d("ImageViewer", "Screen started with imageId: $currentImageId, folderId: $folderId")
 
     LaunchedEffect(folderId) {
@@ -100,19 +113,6 @@ fun ImageViewerScreen(
         showInfo.value = true
         delay(3000)
         showInfo.value = false
-    }
-
-    suspend fun prefetchImage(index: Int) {
-        if (index < 0 || index >= imageItems.size) return
-        val item = imageItems[index]
-        val url = MainActivity.oneDriveRepository
-            .getDownloadUrl(item.id)
-            ?: item.downloadUrl
-        context.imageLoader.enqueue(
-            ImageRequest.Builder(context)
-                .data(url)
-                .build()
-        )
     }
 
     LaunchedEffect(Unit) {
