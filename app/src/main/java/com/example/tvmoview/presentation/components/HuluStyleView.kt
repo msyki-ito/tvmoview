@@ -63,6 +63,9 @@ fun HuluStyleView(
                 val rowState = rememberLazyListState()
                 val rowFocusRequester = remember { FocusRequester() }
                 val scope = rememberCoroutineScope()
+                LaunchedEffect(Unit) {
+                    rowFocusRequester.requestFocus()
+                }
                 LazyRow(
                     state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
