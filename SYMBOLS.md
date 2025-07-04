@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-07-02)
+﻿# 祷 SYMBOLS.md (generated 2025-07-04)
 
 ## 
 - AuthenticationManager
@@ -31,28 +31,6 @@
   - [P] accessToken: String,
   - [P] expiresIn: Int
   - [P] refreshToken: String?,
-
-## com.example.tvmoview
-- Authenticated
-
-## com.example.tvmoview
-- Checking
-
-## com.example.tvmoview
-- ExampleInstrumentedTest
-  - [F] useAppContext()
-
-## com.example.tvmoview
-- ExampleUnitTest
-  - [F] addition_isCorrect()
-
-## com.example.tvmoview
-- MainActivity
-  - [F] AuthenticationWrapper()
-
-## com.example.tvmoview
-- NotAuthenticated
-  - [F] AppNavigation()
 
 ## com.example.tvmoview.data.db
 - CachedMediaItem
@@ -128,6 +106,9 @@
 
 ## com.example.tvmoview.domain.model
 - MediaItem
+  - [P] BaseCardHeight: Dp
+  - [P] cardHeight: Dp
+  - [P] displayAspectRatio: Float
   - [P] downloadUrl: String?
   - [P] duration: Long
   - [P] fileExtension: String
@@ -135,6 +116,7 @@
   - [P] id: String,
   - [P] isFolder: Boolean
   - [P] isImage: Boolean
+  - [P] isVerticalMedia: Boolean
   - [P] isVideo: Boolean
   - [P] lastModified: Date
   - [P] mimeType: String?
@@ -166,6 +148,16 @@
 ## com.example.tvmoview.presentation.screens
 - Success
 
+## com.example.tvmoview.presentation.theme
+- HuluColors
+
+## com.example.tvmoview.presentation.viewmodels
+- DateGroup
+  - [P] date: Date,
+  - [P] displayDate: String
+  - [P] itemCount: Int
+  - [P] items: List<MediaItem>
+
 ## com.example.tvmoview.presentation.viewmodels
 - MediaBrowserViewModel
   - [F] cycleTileColumns()
@@ -188,5 +180,27 @@
 ## com.example.tvmoview.tv
 - FireTVOptimizations
   - [F] initializeForFireTV(activity: Activity)
+
+## com.example.tvmoview
+- Authenticated
+
+## com.example.tvmoview
+- Checking
+
+## com.example.tvmoview
+- ExampleInstrumentedTest
+  - [F] useAppContext()
+
+## com.example.tvmoview
+- ExampleUnitTest
+  - [F] addition_isCorrect()
+
+## com.example.tvmoview
+- MainActivity
+  - [F] AuthenticationWrapper()
+
+## com.example.tvmoview
+- NotAuthenticated
+  - [F] AppNavigation()
 
 
