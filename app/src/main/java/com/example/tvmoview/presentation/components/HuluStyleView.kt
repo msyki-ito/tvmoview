@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.onFocusEvent
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
@@ -63,15 +64,13 @@ fun HuluStyleView(
                 val rowState = rememberLazyListState()
                 val rowFocusRequester = remember { FocusRequester() }
                 val scope = rememberCoroutineScope()
-                LaunchedEffect(Unit) {
-                    rowFocusRequester.requestFocus()
-                }
                 LazyRow(
                     state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .padding(bottom = 16.dp)
+                        .focusGroup()
                         .focusRestorer { rowFocusRequester }
                 ) {
                     itemsIndexed(items = group.items, key = { _, it -> it.id }) { index, item ->
@@ -82,6 +81,9 @@ fun HuluStyleView(
                                 .onFocusEvent { if (it.isFocused) scope.launch { rowState.animateScrollToItem(index) } }
                         )
                     }
+                }
+                LaunchedEffect(Unit) {
+                    rowFocusRequester.requestFocus()
                 }
             }
         }
