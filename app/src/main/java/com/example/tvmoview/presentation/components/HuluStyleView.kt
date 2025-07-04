@@ -4,12 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.itemsIndexed
 import androidx.tv.foundation.lazy.list.rememberTvLazyListState
+import androidx.tv.foundation.lazy.list.focusRestorer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import android.util.Log
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
@@ -74,24 +73,21 @@ fun HuluStyleView(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .focusRestorer()
+                        .focusRequester(focusRequester)
+                        .padding(bottom = 16.dp)
                 ) {
-                    items(
+                    itemsIndexed(
                         items = group.items,
-                        key = { it.id },
-                        contentType = { if (it.isFolder) "folder" else "media" }
-                    ) { item ->
-                        val itemIndex = group.items.indexOf(item)
-
-                        val debugModifier = Modifier.onFocusChanged { state ->
-                            if (state.isFocused) Log.d("HuluStyle", "Focused index=$itemIndex")
-                        }
+                        key = { _, item -> item.id },
+                        contentType = { _, item -> if (item.isFolder) "folder" else "media" }
+                    ) { index, item ->
                         HuluMediaCard(
                             item = item,
                             onClick = { onItemClick(item) },
                             modifier = Modifier
-                                .then(if (itemIndex == 0) Modifier.focusRequester(focusRequester) else Modifier)
-                                .then(debugModifier)
+                                .then(if (index == 0) Modifier.focusRequester(focusRequester) else Modifier)
                                 .animateItemPlacement(animationSpec = tween(durationMillis = 100))
                         )
                     }
