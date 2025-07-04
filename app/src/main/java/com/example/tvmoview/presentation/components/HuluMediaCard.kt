@@ -3,9 +3,9 @@ package com.example.tvmoview.presentation.components
 
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+//import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.focus.onFocusChanged
+//import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.tv.material3.Card
@@ -43,11 +43,7 @@ fun HuluMediaCard(
         modifier = modifier
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
-            .focusable()
-            .onFocusChanged { state ->
-                isFocused = state.isFocused
-                Log.d("HuluMediaCard", "focus=$isFocused")
-            },
+            ,
         shape = CardDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
         colors = CardDefaults.colors(containerColor = HuluColors.CardBackground),
         scale = CardDefaults.scale(focusedScale = 1.05f),
