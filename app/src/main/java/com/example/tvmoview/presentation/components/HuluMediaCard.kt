@@ -2,7 +2,6 @@ package com.example.tvmoview.presentation.components
 
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -35,12 +34,12 @@ fun HuluMediaCard(
 ) {
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
-            .focusable()
-            .clickable { onClick() },
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+            .focusable(),
+        shape = CardDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
         colors = CardDefaults.colors(containerColor = HuluColors.CardBackground),
         scale = CardDefaults.scale(focusedScale = 1.05f),
         glow = CardDefaults.glow()
