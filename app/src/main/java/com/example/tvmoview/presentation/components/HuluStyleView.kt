@@ -2,13 +2,14 @@ package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.TvLazyRow
+import androidx.tv.foundation.lazy.list.itemsIndexed
+import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,10 +43,11 @@ fun HuluStyleView(
             .sortedByDescending { it.date }
     }
 
-    LazyColumn(
+    TvLazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(HuluColors.Background),
+            .background(HuluColors.Background)
+            .focusGroup(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         groupedItems.forEach { group ->
@@ -57,15 +59,16 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
-                val rowState = rememberLazyListState()
+                val rowState = rememberTvLazyListState()
                 val rowFocusRequester = remember { FocusRequester() }
-                LazyRow(
+                TvLazyRow(
                     state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .padding(bottom = 16.dp)
                         .focusRestorer { rowFocusRequester }
+                        .focusGroup()
                 ) {
                     itemsIndexed(items = group.items, key = { _, it -> it.id }) { index, item ->
                         HuluMediaCard(
