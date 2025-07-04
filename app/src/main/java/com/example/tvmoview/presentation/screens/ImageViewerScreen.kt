@@ -17,9 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import coil.imageLoader
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.domain.model.MediaItem
 import kotlinx.coroutines.delay
@@ -40,6 +43,9 @@ fun ImageViewerScreen(
     var isLoading by remember { mutableStateOf(true) }
     var imageUrl by remember { mutableStateOf<String?>(null) }
     val showInfo = remember { mutableStateOf(true) }
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
 
     Log.d("ImageViewer", "Screen started with imageId: $currentImageId, folderId: $folderId")
 
@@ -84,6 +90,8 @@ fun ImageViewerScreen(
                     .getDownloadUrl(currentItem.id)
                     ?: currentItem.downloadUrl
                 imageUrl = url
+                prefetchImage(currentIndex + 1)
+                prefetchImage(currentIndex - 1)
             }
         }
     }
@@ -92,6 +100,19 @@ fun ImageViewerScreen(
         showInfo.value = true
         delay(3000)
         showInfo.value = false
+    }
+
+    suspend fun prefetchImage(index: Int) {
+        if (index < 0 || index >= imageItems.size) return
+        val item = imageItems[index]
+        val url = MainActivity.oneDriveRepository
+            .getDownloadUrl(item.id)
+            ?: item.downloadUrl
+        context.imageLoader.enqueue(
+            ImageRequest.Builder(context)
+                .data(url)
+                .build()
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -109,17 +130,46 @@ fun ImageViewerScreen(
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown) {
                     when (keyEvent.key) {
+                        Key.Enter -> {
+                            scale = if (scale < 5f) scale + 1f else 1f
+                            true
+                        }
                         Key.DirectionLeft -> {
-                            if (currentIndex > 0) {
+                            if (scale > 1f) {
+                                offsetX = (offsetX + 40f).coerceIn(-1000f, 1000f)
+                            } else if (currentIndex > 0) {
                                 currentIndex--
                                 Log.d("ImageViewer", "Navigate left to index: $currentIndex")
                             }
                             true
                         }
                         Key.DirectionRight -> {
-                            if (currentIndex < imageItems.size - 1) {
+                            if (scale > 1f) {
+                                offsetX = (offsetX - 40f).coerceIn(-1000f, 1000f)
+                            } else if (currentIndex < imageItems.size - 1) {
                                 currentIndex++
                                 Log.d("ImageViewer", "Navigate right to index: $currentIndex")
+                            }
+                            true
+                        }
+                        Key.DirectionUp -> {
+                            if (scale > 1f) {
+                                offsetY = (offsetY + 40f).coerceIn(-1000f, 1000f)
+                                true
+                            } else false
+                        }
+                        Key.DirectionDown -> {
+                            if (scale > 1f) {
+                                offsetY = (offsetY - 40f).coerceIn(-1000f, 1000f)
+                                true
+                            } else false
+                        }
+                        Key.M -> {
+                            folderId?.let {
+                                scope.launch {
+                                    MainActivity.oneDriveRepository.setFolderCover(it, imageItems[currentIndex].id)
+                                    Toast.makeText(context, "カバー画像を設定しました", Toast.LENGTH_SHORT).show()
+                                }
                             }
                             true
                         }
@@ -152,7 +202,14 @@ fun ImageViewerScreen(
                         null
                     },
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            translationX = offsetX
+                            translationY = offsetY
+                        },
                     loading = {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -198,22 +255,6 @@ fun ImageViewerScreen(
                     }
                 }
 
-                if (imageItems.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 32.dp)
-                            .background(Color.Black.copy(alpha = 0.7f))
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "${currentIndex + 1} / ${imageItems.size}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
             }
             else -> {
                 Box(

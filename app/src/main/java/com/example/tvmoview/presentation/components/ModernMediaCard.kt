@@ -36,7 +36,7 @@ fun ModernMediaCard(
             .fillMaxWidth()
             .aspectRatio(1f)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
@@ -49,7 +49,7 @@ fun ModernMediaCard(
                             .data(item.thumbnailUrl ?: generateVideoThumbnail(item))
                             .diskCacheKey("thumb_${item.id}")
                             .crossfade(300)
-                            .size(480, 360)
+                            .size(800, 600)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build(),

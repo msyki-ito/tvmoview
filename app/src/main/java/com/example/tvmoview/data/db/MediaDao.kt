@@ -26,6 +26,9 @@ interface MediaDao {
     @Query("SELECT name FROM media_items WHERE id = :id LIMIT 1")
     suspend fun getNameById(id: String): String?
 
+    @Query("SELECT * FROM media_items WHERE id = :id LIMIT 1")
+    suspend fun getItemById(id: String): CachedMediaItem?
+
     @Transaction
     suspend fun replaceFolder(folderId: String?, items: List<CachedMediaItem>) {
         clearFolder(folderId)

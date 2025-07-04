@@ -73,9 +73,9 @@ fun ModernMediaBrowser(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface
+                    listOf(
+                        MaterialTheme.colorScheme.surfaceVariant,
+                        MaterialTheme.colorScheme.background
                     )
                 )
             )
@@ -284,7 +284,7 @@ fun SortDialog(
         title = { Text("並び順") },
         text = {
             Column {
-                SortBy.values().forEach { sortOption ->
+                listOf(SortBy.SHOOT, SortBy.DATE).forEach { sortOption ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -297,13 +297,7 @@ fun SortDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = when (sortOption) {
-                                SortBy.SHOOT -> "撮影日順"
-                                SortBy.DATE -> "更新日時順"
-                                SortBy.SIZE -> "サイズ順"
-                                SortBy.NAME -> "名前順"
-                                SortBy.TYPE -> "種類順"
-                            }
+                            text = if (sortOption == SortBy.SHOOT) "撮影日順" else "更新日時順"
                         )
                     }
                 }

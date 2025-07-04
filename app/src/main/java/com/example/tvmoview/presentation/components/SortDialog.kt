@@ -27,7 +27,7 @@ fun SortDialog(
         },
         text = {
             Column {
-                SortBy.values().forEach { sortOption ->
+                listOf(SortBy.SHOOT, SortBy.DATE).forEach { sortOption ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -44,13 +44,7 @@ fun SortDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = when (sortOption) {
-                                SortBy.NAME -> "名前順"
-                                SortBy.DATE -> "更新日時順"
-                                SortBy.SIZE -> "サイズ順"
-                                SortBy.TYPE -> "種類順"
-                                SortBy.SHOOT -> "撮影日順"
-                            },
+                            text = if (sortOption == SortBy.SHOOT) "撮影日順" else "更新日時順",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }

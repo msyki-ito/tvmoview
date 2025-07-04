@@ -9,6 +9,8 @@ import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.data.db.MediaDao
 import com.example.tvmoview.data.db.FolderSyncDao
 import com.example.tvmoview.data.db.FolderSyncStatus
+import com.example.tvmoview.data.db.FolderCoverDao
+import com.example.tvmoview.data.db.FolderCover
 import com.example.tvmoview.data.db.CachedMediaItem
 import com.example.tvmoview.data.db.toCached
 import com.example.tvmoview.data.db.toDomain
@@ -34,7 +36,8 @@ import java.util.*
 class OneDriveRepository(
     private val authManager: AuthenticationManager,
     private val mediaDao: MediaDao,
-    private val folderSyncDao: FolderSyncDao
+    private val folderSyncDao: FolderSyncDao,
+    private val folderCoverDao: FolderCoverDao
 ) {
 
     private val apiService: OneDriveApiService by lazy {
@@ -85,7 +88,17 @@ class OneDriveRepository(
             Log.d("OneDriveRepository", "キャッシュ取得: ${cached.size}件")
             mediaDao.updateAccessTime(cached.map { it.id }, System.currentTimeMillis())
         }
-        cached.map { it.toDomain() }
+        cached.map { item ->
+            var domain = item.toDomain()
+            if (domain.isFolder) {
+                val coverId = folderCoverDao.getCoverItemId(domain.id)
+                if (coverId != null) {
+                    val cover = mediaDao.getItemById(coverId)
+                    domain = domain.copy(thumbnailUrl = cover?.thumbnailUrl)
+                }
+            }
+            domain
+        }
     }
 
     fun getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>> =
@@ -97,7 +110,17 @@ class OneDriveRepository(
                 }
             }
             .map { list ->
-                list.map { it.toDomain() }
+                list.map { item ->
+                    var domain = item.toDomain()
+                    if (domain.isFolder) {
+                        val coverId = folderCoverDao.getCoverItemId(domain.id)
+                        if (coverId != null) {
+                            val cover = mediaDao.getItemById(coverId)
+                            domain = domain.copy(thumbnailUrl = cover?.thumbnailUrl)
+                        }
+                    }
+                    domain
+                }
             }
 
     suspend fun getDownloadUrl(itemId: String): String? {
@@ -221,7 +244,7 @@ class OneDriveRepository(
             it.startsWith("image/") || it.startsWith("video/")
         } ?: false
         return if (!isMedia || item.folder != null) null
-        else "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/medium/content"
+        else "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/large/content"
     }
 
     private fun parseDate(text: String?): Date {
@@ -334,7 +357,7 @@ class OneDriveRepository(
 
     private fun generateThumbnailUrl(item: MediaItem): String? {
         return if (!item.isFolder && (item.isImage || item.isVideo)) {
-            "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/medium/content"
+            "https://graph.microsoft.com/v1.0/me/drive/items/${item.id}/thumbnails/0/large/content"
         } else {
             null
         }
@@ -361,7 +384,7 @@ class OneDriveRepository(
         // サムネイルURLを生成
         val thumbnailUrl = if (!isFolder && (mimeType?.startsWith("image/") == true ||
                     mimeType?.startsWith("video/") == true)) {
-            "https://graph.microsoft.com/v1.0/me/drive/items/$id/thumbnails/0/medium/content"
+            "https://graph.microsoft.com/v1.0/me/drive/items/$id/thumbnails/0/large/content"
         } else {
             null
         }
@@ -376,5 +399,15 @@ class OneDriveRepository(
             thumbnailUrl = thumbnailUrl,
             downloadUrl = downloadUrl
         )
+    }
+
+    suspend fun setFolderCover(folderId: String, itemId: String) {
+        folderCoverDao.setCover(FolderCover(folderId, itemId))
+    }
+
+    suspend fun getFolderCoverItem(folderId: String): MediaItem? {
+        val coverId = folderCoverDao.getCoverItemId(folderId) ?: return null
+        val cached = mediaDao.getItemById(coverId)
+        return cached?.toDomain()
     }
 }

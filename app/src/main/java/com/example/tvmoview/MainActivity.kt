@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.example.tvmoview.presentation.screens.SplashScreen
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +56,8 @@ class MainActivity : ComponentActivity() {
         oneDriveRepository = OneDriveRepository(
             authManager,
             MediaDatabaseProvider.database.mediaDao(),
-            MediaDatabaseProvider.database.folderSyncDao()
+            MediaDatabaseProvider.database.folderSyncDao(),
+            MediaDatabaseProvider.database.folderCoverDao()
         )
 
         val imageLoader = ImageLoader.Builder(this)
@@ -143,10 +145,7 @@ fun AuthenticationWrapper() {
     }
 
     when (authState) {
-        AuthState.Checking -> {
-            // 簡単なローディング表示
-            Text("起動中...")
-        }
+        AuthState.Checking -> SplashScreen()
 
         AuthState.Authenticated -> {
             AppNavigation()

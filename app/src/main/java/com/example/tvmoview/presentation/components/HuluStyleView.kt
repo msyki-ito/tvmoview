@@ -29,8 +29,12 @@ fun HuluStyleView(
     onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val groupedItems = remember(items) {
-        items.groupBy {
+    val (folders, media) = remember(items) {
+        items.partition { it.isFolder }
+    }
+    val sortedFolders = remember(folders) { folders.sortedBy { it.name.lowercase() } }
+    val groupedItems = remember(media) {
+        media.groupBy {
             Calendar.getInstance().apply {
                 time = it.lastModified
                 set(Calendar.HOUR_OF_DAY, 0)
@@ -48,6 +52,35 @@ fun HuluStyleView(
             .background(HuluColors.Background),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
+        if (sortedFolders.isNotEmpty()) {
+            item(key = "folders_header") {
+                HuluDateHeader(
+                    dateText = "フォルダ一覧",
+                    itemCount = sortedFolders.size,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+            }
+            item(key = "folders_row") {
+                val rowState = rememberLazyListState()
+                val rowFocusRequester = remember { FocusRequester() }
+                LazyRow(
+                    state = rowState,
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .focusRestorer { rowFocusRequester }
+                ) {
+                    itemsIndexed(sortedFolders, key = { _, it -> it.id }) { index, item ->
+                        HuluMediaCard(
+                            item = item,
+                            onClick = { onItemClick(item) },
+                            modifier = if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier
+                        )
+                    }
+                }
+            }
+        }
         groupedItems.forEach { group ->
             item(key = group.date) {
                 HuluDateHeader(

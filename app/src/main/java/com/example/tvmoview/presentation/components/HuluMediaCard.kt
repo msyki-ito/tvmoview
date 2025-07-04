@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.draw.blur
@@ -41,6 +42,7 @@ fun HuluMediaCard(
     Card(
         onClick = onClick,
         modifier = modifier
+            .shadow(6.dp, androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
             ,
@@ -73,6 +75,7 @@ private fun VerticalMediaContent(item: MediaItem) {
             model = ImageRequest.Builder(LocalContext.current)
                 .data(item.thumbnailUrl ?: item.downloadUrl)
                 .crossfade(true)
+                .size(800, 600)
                 .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
@@ -84,6 +87,7 @@ private fun VerticalMediaContent(item: MediaItem) {
             model = ImageRequest.Builder(LocalContext.current)
                 .data(item.thumbnailUrl ?: item.downloadUrl)
                 .crossfade(true)
+                .size(800, 600)
                 .build(),
             contentDescription = item.name,
             contentScale = ContentScale.Fit,
@@ -100,6 +104,7 @@ private fun StandardMediaContent(item: MediaItem) {
         model = ImageRequest.Builder(LocalContext.current)
             .data(item.thumbnailUrl ?: item.downloadUrl)
             .crossfade(true)
+            .size(800, 600)
             .build(),
         contentDescription = item.name,
         contentScale = ContentScale.Crop,
@@ -137,6 +142,18 @@ private fun MediaOverlay(item: MediaItem) {
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
+        }
+        if (item.isFolder) {
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+            )
         }
         if (item.isFolder) {
             androidx.compose.material3.Icon(

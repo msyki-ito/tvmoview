@@ -3,7 +3,7 @@
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,8 +54,8 @@ fun ModernTopBar(
             ) {
                 if (onBackClick != null) {
                     IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBack,
                             contentDescription = "戻る"
                         )
                     }
@@ -94,8 +94,8 @@ fun ModernTopBar(
             IconButton(onClick = onViewModeChange) {
                 Icon(
                     imageVector = when (viewMode) {
-                        ViewMode.TILE -> Icons.Default.ViewList
-                        ViewMode.HULU_STYLE -> Icons.Default.ViewModule
+                        ViewMode.TILE -> Icons.Rounded.ViewList
+                        ViewMode.HULU_STYLE -> Icons.Rounded.ViewModule
                     },
                     contentDescription = "表示モード切り替え"
                 )
@@ -109,7 +109,7 @@ fun ModernTopBar(
 
             IconButton(onClick = onOrderToggle) {
                 Icon(
-                    imageVector = if (sortOrder == SortOrder.ASC) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                    imageVector = if (sortOrder == SortOrder.ASC) Icons.Rounded.ArrowUpward else Icons.Rounded.ArrowDownward,
                     contentDescription = "並び順方向"
                 )
             }
@@ -120,7 +120,7 @@ fun ModernTopBar(
                 enabled = !isLoading
             ) {
                 Icon(
-                    imageVector = Icons.Default.Refresh,
+                    imageVector = Icons.Rounded.Refresh,
                     contentDescription = if (isLoading) "更新中" else "更新",
                     modifier = Modifier.graphicsLayer {
                         rotationZ = rotation
@@ -131,7 +131,7 @@ fun ModernTopBar(
             // ソートボタン
             IconButton(onClick = onSortClick) {
                 Icon(
-                    imageVector = Icons.Default.Sort,
+                    imageVector = Icons.Rounded.Sort,
                     contentDescription = "並び順"
                 )
             }
@@ -140,7 +140,7 @@ fun ModernTopBar(
             if (onSettingsClick != null) {
                 IconButton(onClick = onSettingsClick) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = Icons.Rounded.Settings,
                         contentDescription = "設定"
                     )
                 }
