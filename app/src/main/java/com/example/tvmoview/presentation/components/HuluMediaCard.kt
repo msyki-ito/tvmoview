@@ -3,9 +3,9 @@ package com.example.tvmoview.presentation.components
 
 import android.util.Log
 import androidx.compose.foundation.background
-//import androidx.compose.foundation.focusable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
-//import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.tv.material3.Card
@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
@@ -43,7 +44,10 @@ fun HuluMediaCard(
     Card(
         onClick = onClick,
         modifier = modifier
-            .shadow(6.dp, androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .shadow(if (isFocused) 12.dp else 6.dp, androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+            .zIndex(if (isFocused) 1f else 0f)
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
             ,
