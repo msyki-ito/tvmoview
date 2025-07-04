@@ -4,7 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -17,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HuluStyleView(
     items: List<MediaItem>,
@@ -51,15 +57,21 @@ fun HuluStyleView(
                 )
             }
             item(key = "${group.date}_content") {
+                val rowState = rememberLazyListState()
+                val rowFocusRequester = remember { FocusRequester() }
                 LazyRow(
+                    state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .focusRestorer { rowFocusRequester }
                 ) {
-                    items(items = group.items, key = { it.id }) { item ->
+                    itemsIndexed(items = group.items, key = { _, it -> it.id }) { index, item ->
                         HuluMediaCard(
                             item = item,
-                            onClick = { onItemClick(item) }
+                            onClick = { onItemClick(item) },
+                            modifier = if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier
                         )
                     }
                 }
