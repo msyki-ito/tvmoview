@@ -151,7 +151,7 @@ fun AuthenticationWrapper() {
     }
 
     when (authState) {
-        AuthState.Checking -> SplashScreen()
+        AuthState.Checking -> SplashScreen(onFinished = {})
 
         AuthState.Authenticated -> {
             AppNavigation()
