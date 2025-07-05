@@ -11,7 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
-import androidx.compose.foundation.lazy.grid.*
+import androidx.tv.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -58,7 +58,7 @@ fun ModernMediaBrowser(
     val itemFocusRequester = remember { FocusRequester() }
 
     var showSortDialog by remember { mutableStateOf(false) }
-    val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
+    val gridState = rememberTvLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {

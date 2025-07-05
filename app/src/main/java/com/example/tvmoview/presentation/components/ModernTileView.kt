@@ -1,7 +1,7 @@
 ﻿package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.tv.foundation.lazy.grid.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -17,13 +17,13 @@ import com.example.tvmoview.domain.model.MediaItem
 fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
-    state: LazyGridState,
+    state: TvLazyGridState,
     onItemClick: (MediaItem) -> Unit,
     focusedId: String?,
     onItemFocused: (String) -> Unit,
     focusRequester: FocusRequester
 ) {
-    LazyVerticalGrid(
+    TvLazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
         modifier = Modifier.focusRestorer { focusRequester },
