@@ -6,8 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +27,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
+import androidx.compose.ui.res.painterResource
+import com.example.tvmoview.R
+import androidx.compose.foundation.Image
 
 @Composable
 fun HuluMediaCard(
@@ -154,12 +155,11 @@ private fun MediaOverlay(item: MediaItem) {
             )
         }
         if (item.isFolder) {
-            androidx.compose.material3.Icon(
-                imageVector = Icons.Default.Folder,
+            Image(
+                painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(96.dp)
                     .align(Alignment.Center)
             )
         }

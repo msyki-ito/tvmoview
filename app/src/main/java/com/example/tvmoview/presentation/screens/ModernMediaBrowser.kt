@@ -15,9 +15,12 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import com.example.tvmoview.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.domain.model.*
@@ -250,11 +253,10 @@ fun EmptyStateView() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.FolderOpen,
+            Image(
+                painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(128.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
