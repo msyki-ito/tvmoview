@@ -30,6 +30,7 @@ import com.example.tvmoview.presentation.theme.HuluColors
 import androidx.compose.ui.res.painterResource
 import com.example.tvmoview.R
 import androidx.compose.foundation.Image
+import androidx.compose.ui.focus.onFocusChanged
 
 @Composable
 fun HuluMediaCard(
