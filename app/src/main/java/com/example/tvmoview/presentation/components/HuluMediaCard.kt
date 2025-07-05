@@ -159,7 +159,7 @@ private fun MediaOverlay(item: MediaItem) {
                 painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(96.dp)
                     .align(Alignment.Center)
             )
         }

@@ -117,7 +117,7 @@ fun ModernMediaCard(
                         Image(
                             painter = painterResource(R.drawable.folder_icon),
                             contentDescription = null,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(96.dp)
                         )
                     }
                 }
