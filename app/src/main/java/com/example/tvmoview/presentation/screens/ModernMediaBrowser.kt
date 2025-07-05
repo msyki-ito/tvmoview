@@ -20,6 +20,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import com.example.tvmoview.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
@@ -52,6 +56,8 @@ fun ModernMediaBrowser(
     val currentPath by viewModel.currentPath.collectAsState()
     val currentFolder by viewModel.currentFolderId.collectAsState()
     val lastIndex by viewModel.lastIndex.collectAsState()
+    val focusedId by viewModel.lastFocusedId.collectAsState()
+    val itemFocusRequester = remember { FocusRequester() }
 
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
@@ -63,6 +69,11 @@ fun ModernMediaBrowser(
 
     LaunchedEffect(lastIndex) {
         if (lastIndex > 0) gridState.scrollToItem(lastIndex)
+    }
+
+    LaunchedEffect(focusedId) {
+        focusedId ?: return@LaunchedEffect
+        itemFocusRequester.requestFocus()
     }
 
     // OneDrive統合：データ取得処理
@@ -124,7 +135,10 @@ fun ModernMediaBrowser(
                                             Log.d("ModernMediaBrowser", "📊 downloadUrl: ${item.downloadUrl}")
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    focusedId = focusedId,
+                                    onItemFocused = { viewModel.saveFocusedItem(it) },
+                                    focusRequester = itemFocusRequester
                                 )
 
                                 // 細いシークバー（撮影日・更新日順）
@@ -203,7 +217,10 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    focusedId = focusedId,
+                                    onItemFocused = { viewModel.saveFocusedItem(it) },
+                                    focusRequester = itemFocusRequester
                                 )
                             }
                         }

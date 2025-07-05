@@ -32,13 +32,16 @@ fun ModernMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
     loadPriority: Float = 0.5f,
-    showName: Boolean = true
+    showName: Boolean = true,
+    modifier: Modifier = Modifier,
+    onFocused: (() -> Unit)? = null
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .onFocusChanged { if (it.isFocused) onFocused?.invoke() },
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
     ) {

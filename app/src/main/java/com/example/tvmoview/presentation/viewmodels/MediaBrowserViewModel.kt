@@ -71,10 +71,17 @@ class MediaBrowserViewModel : ViewModel() {
     private val _lastIndex = MutableStateFlow(0)
     val lastIndex: StateFlow<Int> = _lastIndex.asStateFlow()
 
+    private val _lastFocusedId = MutableStateFlow<String?>(null)
+    val lastFocusedId: StateFlow<String?> = _lastFocusedId.asStateFlow()
+
     private var loadJob: Job? = null
 
     fun saveScrollPosition(index: Int) {
         _lastIndex.value = index
+    }
+
+    fun saveFocusedItem(id: String) {
+        _lastFocusedId.value = id
     }
 
     fun loadItems(folderId: String? = null, force: Boolean = false) {
@@ -90,7 +97,10 @@ class MediaBrowserViewModel : ViewModel() {
         } else {
             "OneDrive"
         }
-        if (folderChanged) _lastIndex.value = 0
+        if (folderChanged) {
+            _lastIndex.value = 0
+            _lastFocusedId.value = null
+        }
 
         Log.d(
             "MediaBrowserViewModel",

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,7 +28,10 @@ import java.util.Calendar
 fun HuluStyleView(
     items: List<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    focusedId: String?,
+    onItemFocused: (String) -> Unit,
+    focusRequester: FocusRequester
 ) {
     val (folders, media) = remember(items) {
         items.partition { it.isFolder }
@@ -49,7 +53,8 @@ fun HuluStyleView(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(HuluColors.Background),
+            .background(HuluColors.Background)
+            .focusRestorer { focusRequester },
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         if (sortedFolders.isNotEmpty()) {
@@ -72,10 +77,16 @@ fun HuluStyleView(
                         .focusRestorer { rowFocusRequester }
                 ) {
                     itemsIndexed(sortedFolders, key = { _, it -> it.id }) { index, item ->
+                        val mod = when {
+                            item.id == focusedId -> Modifier.focusRequester(focusRequester)
+                            index == 0 -> Modifier.focusRequester(rowFocusRequester)
+                            else -> Modifier
+                        }
                         HuluMediaCard(
                             item = item,
                             onClick = { onItemClick(item) },
-                            modifier = if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier
+                            modifier = mod,
+                            onFocused = { onItemFocused(item.id) }
                         )
                     }
                 }
@@ -101,10 +112,16 @@ fun HuluStyleView(
                         .focusRestorer { rowFocusRequester }
                 ) {
                     itemsIndexed(items = group.items, key = { _, it -> it.id }) { index, item ->
+                        val mod = when {
+                            item.id == focusedId -> Modifier.focusRequester(focusRequester)
+                            index == 0 -> Modifier.focusRequester(rowFocusRequester)
+                            else -> Modifier
+                        }
                         HuluMediaCard(
                             item = item,
                             onClick = { onItemClick(item) },
-                            modifier = if (index == 0) Modifier.focusRequester(rowFocusRequester) else Modifier
+                            modifier = mod,
+                            onFocused = { onItemFocused(item.id) }
                         )
                     }
                 }

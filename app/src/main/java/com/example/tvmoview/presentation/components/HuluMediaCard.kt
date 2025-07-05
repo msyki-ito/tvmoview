@@ -35,7 +35,8 @@ import androidx.compose.foundation.Image
 fun HuluMediaCard(
     item: MediaItem,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFocused: ((String) -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
@@ -46,6 +47,10 @@ fun HuluMediaCard(
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
             .clickable { onClick() }
+            .onFocusChanged {
+                isFocused = it.isFocused
+                if (it.isFocused) onFocused?.invoke(item.id)
+            }
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
