@@ -1,18 +1,15 @@
 package com.example.tvmoview.presentation.components
 
-
-import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-//import androidx.compose.foundation.focusable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-//import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
-import androidx.tv.material3.Card
-import androidx.tv.material3.CardDefaults
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Border
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -20,18 +17,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.shadow
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun HuluMediaCard(
     item: MediaItem,
@@ -39,24 +37,23 @@ fun HuluMediaCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
+    val shadow by animateDpAsState(if (isFocused) 12.dp else 6.dp, tween(200))
 
     Card(
-        onClick = onClick,
         modifier = modifier
-            .shadow(6.dp, androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
             .width(item.cardHeight * item.displayAspectRatio)
             .height(item.cardHeight)
-            ,
-        shape = CardDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)),
-        colors = CardDefaults.colors(containerColor = HuluColors.CardBackground),
-        scale = CardDefaults.scale(focusedScale = 1.05f),
-        glow = CardDefaults.glow(),
-        border = CardDefaults.border(
-            focusedBorder = Border(
-                border = BorderStroke(3.dp, Color.Cyan),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
-            )
-        )
+            .clickable { onClick() }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                shadowElevation = shadow.toPx()
+            }
+            .zIndex(if (isFocused) 1f else 0f),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+        colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = shadow)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (item.isVerticalMedia) {
