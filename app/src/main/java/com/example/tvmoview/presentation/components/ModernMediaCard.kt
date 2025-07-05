@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.request.CachePolicy
@@ -113,11 +114,10 @@ fun ModernMediaCard(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
+                        Image(
                             painter = painterResource(R.drawable.folder_icon),
                             contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.size(48.dp)
                         )
                     }
                 }

@@ -29,6 +29,7 @@ import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
 import androidx.compose.ui.res.painterResource
 import com.example.tvmoview.R
+import androidx.compose.foundation.Image
 
 @Composable
 fun HuluMediaCard(
@@ -154,10 +155,9 @@ private fun MediaOverlay(item: MediaItem) {
             )
         }
         if (item.isFolder) {
-            androidx.compose.material3.Icon(
+            Image(
                 painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier
                     .size(48.dp)
                     .align(Alignment.Center)

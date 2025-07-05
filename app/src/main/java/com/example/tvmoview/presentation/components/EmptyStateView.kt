@@ -1,6 +1,7 @@
 ﻿package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
 import androidx.compose.material3.*
 import androidx.compose.ui.res.painterResource
 import com.example.tvmoview.R
@@ -16,11 +17,10 @@ fun EmptyStateView() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
+            Image(
                 painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
