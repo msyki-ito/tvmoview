@@ -1,32 +1,29 @@
 ﻿package com.example.tvmoview.presentation.components
 
 import androidx.compose.foundation.layout.*
-import androidx.tv.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.tv.foundation.ExperimentalTvFoundationApi
-import androidx.tv.foundation.lazy.grid.focusRestorer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.domain.model.MediaItem
 
-@OptIn(ExperimentalTvFoundationApi::class)
 @Composable
 fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
-    state: TvLazyGridState,
+    state: LazyGridState,
     onItemClick: (MediaItem) -> Unit,
     focusedId: String?,
     onItemFocused: (String) -> Unit,
     focusRequester: FocusRequester
 ) {
-    TvLazyVerticalGrid(
+    LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
-        modifier = Modifier.focusRestorer { focusRequester },
+        modifier = Modifier.focusRequester(focusRequester),
         contentPadding = PaddingValues(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)

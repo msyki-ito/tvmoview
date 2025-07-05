@@ -11,7 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
-import androidx.tv.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -58,7 +58,7 @@ fun ModernMediaBrowser(
     val itemFocusRequester = remember { FocusRequester() }
 
     var showSortDialog by remember { mutableStateOf(false) }
-    val gridState = rememberTvLazyGridState(initialFirstVisibleItemIndex = lastIndex)
+    val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
@@ -69,9 +69,14 @@ fun ModernMediaBrowser(
         if (lastIndex > 0) gridState.scrollToItem(lastIndex)
     }
 
-    LaunchedEffect(focusedId) {
-        focusedId ?: return@LaunchedEffect
-        itemFocusRequester.requestFocus()
+    LaunchedEffect(items, focusedId) {
+        if (focusedId != null) {
+            val target = items.indexOfFirst { it.id == focusedId }
+            if (target >= 0) {
+                gridState.scrollToItem(target)
+                itemFocusRequester.requestFocus()
+            }
+        }
     }
 
     // OneDrive統合：データ取得処理
