@@ -105,8 +105,14 @@ class MainActivity : ComponentActivity() {
         Log.d("MainActivity", "📁 OneDrive統合準備完了")
 
         setContent {
+            var showSplash by remember { mutableStateOf(true) }
+
             TVMovieTheme {
-                AuthenticationWrapper()
+                if (showSplash) {
+                    SplashScreen(onFinished = { showSplash = false })
+                } else {
+                    AuthenticationWrapper()
+                }
             }
         }
 

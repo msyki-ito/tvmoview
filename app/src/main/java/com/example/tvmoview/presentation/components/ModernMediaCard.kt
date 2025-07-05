@@ -17,10 +17,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.request.CachePolicy
 import com.example.tvmoview.domain.model.MediaItem
+import com.example.tvmoview.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -112,7 +114,7 @@ fun ModernMediaCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Folder,
+                            painter = painterResource(R.drawable.folder_icon),
                             contentDescription = null,
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.primary
