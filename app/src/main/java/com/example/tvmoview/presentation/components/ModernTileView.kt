@@ -17,9 +17,9 @@ fun ModernTileView(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
-        contentPadding = PaddingValues(0.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        contentPadding = PaddingValues(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         itemsIndexed(items) { index, item ->
             // 表示優先度を設定

@@ -36,7 +36,8 @@ fun ModernMediaCard(
             .fillMaxWidth()
             .aspectRatio(1f)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分
