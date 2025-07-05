@@ -8,7 +8,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.tv.foundation.focus.focusRestorer
+import androidx.tv.foundation.ExperimentalTvFoundationApi
+import androidx.tv.foundation.lazy.list.focusRestorer
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,7 +23,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalTvFoundationApi::class)
 @Composable
 fun HuluStyleView(
     items: List<MediaItem>,
