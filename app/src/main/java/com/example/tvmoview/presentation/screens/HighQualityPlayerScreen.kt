@@ -60,6 +60,7 @@ fun HighQualityPlayerScreen(
     // ExoPlayer初期化
     var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
     LaunchedEffect(resolvedUrl) {
+        releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
             ExoPlayer.Builder(context).build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
@@ -74,6 +75,10 @@ fun HighQualityPlayerScreen(
                 player.playWhenReady = true
             }
         }
+        playerView?.player = exoPlayer
+    }
+    LaunchedEffect(playerView, exoPlayer) {
+        playerView?.player = exoPlayer
     }
 
     // カスタムシークバー表示コルーチン
@@ -97,6 +102,7 @@ fun HighQualityPlayerScreen(
         exoPlayer?.pause()
         exoPlayer?.release()
         exoPlayer = null
+        playerView?.player = null
     }
 
     // 再生位置更新ループ
