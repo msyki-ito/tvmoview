@@ -59,6 +59,14 @@ fun HighQualityPlayerScreen(
 
     // ExoPlayer初期化
     var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
+
+    fun releasePlayer() {
+        exoPlayer?.pause()
+        exoPlayer?.release()
+        exoPlayer = null
+        playerView?.player = null
+    }
+
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
@@ -96,13 +104,6 @@ fun HighQualityPlayerScreen(
             delay(durationMillis)
             showCustomSeek = false
         }
-    }
-
-    fun releasePlayer() {
-        exoPlayer?.pause()
-        exoPlayer?.release()
-        exoPlayer = null
-        playerView?.player = null
     }
 
     // 再生位置更新ループ
