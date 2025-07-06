@@ -64,12 +64,13 @@ class MainActivity : ComponentActivity() {
             .diskCache(
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(50L * 1024 * 1024) // 50MB
+                    .maxSizeBytes(30L * 1024 * 1024) // 30MB
                     .build()
             )
             .memoryCache(
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.15)
+                    .maxSizePercent(0.08)
+                    .weakReferencesEnabled(true)
                     .build()
             )
             .okHttpClient {
