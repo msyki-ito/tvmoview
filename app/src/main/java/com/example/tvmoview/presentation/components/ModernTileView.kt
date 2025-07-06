@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.layout.LazyLayoutPrefetchPolicy
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -26,13 +27,16 @@ fun ModernTileView(
         modifier = Modifier.focusRequester(focusRequester),
         contentPadding = PaddingValues(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        prefetchPolicy = LazyLayoutPrefetchPolicy(initialPrefetchItemsCount = 6),
+        userScrollEnabled = true,
+        beyondBoundsLayout = null
     ) {
         itemsIndexed(items) { index, item ->
             // 表示優先度を設定
             val priority = when {
-                index < 10 -> 1.0f  // 最初の10個は最優先
-                index < 30 -> 0.5f  // 次の20個は中優先度
+                index < 6 -> 1.0f  // 最初の6個は最優先
+                index < 18 -> 0.5f  // 次の12個は中優先度
                 else -> 0.1f        // それ以降は低優先度
             }
 
