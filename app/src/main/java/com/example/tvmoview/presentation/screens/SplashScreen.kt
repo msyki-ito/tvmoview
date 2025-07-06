@@ -1,42 +1,73 @@
 package com.example.tvmoview.presentation.screens
 
-import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.tvmoview.R
+import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(@DrawableRes logoRes: Int = R.drawable.app_banner) {
+fun SplashScreen(
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var startAnimation by remember { mutableStateOf(false) }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+        label = "alpha"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 1.1f,
+        animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+        label = "scale"
+    )
+
+    LaunchedEffect(Unit) {
+        startAnimation = true
+        delay(2000)
+        onFinished()
+    }
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.surface
-                    )
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFF0A0A0A), Color(0xFF1A1A1A))
                 )
             ),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(logoRes),
-                contentDescription = null,
-                modifier = Modifier.size(180.dp)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            CircularProgressIndicator()
-        }
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(400.dp)
+                .graphicsLayer {
+                    this.alpha = alpha
+                    this.scaleX = scale
+                    this.scaleY = scale
+                    this.shadowElevation = 12f
+                    this.shape = RoundedCornerShape(24.dp)
+                    this.clip = true
+                }
+        )
     }
 }

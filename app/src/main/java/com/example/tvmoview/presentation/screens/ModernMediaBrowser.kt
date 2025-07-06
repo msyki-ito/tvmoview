@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
+import com.example.tvmoview.R
 import com.example.tvmoview.domain.model.*
 import com.example.tvmoview.presentation.components.*
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
@@ -266,11 +267,10 @@ fun EmptyStateView() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.FolderOpen,
+            Image(
+                painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(128.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(

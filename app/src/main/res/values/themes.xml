@@ -4,7 +4,9 @@
     <style name="Theme.TvMoview" parent="android:Theme.Material.Light.NoActionBar" />
 
     <!-- メインテーマ（Androidビルトイン） -->
-    <style name="Theme.TVMovieViewer" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.TVMovieViewer" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 
     <!-- フルスクリーンテーマ（エラー解決用） -->
     <style name="Theme.TVMovieViewer.Fullscreen" parent="android:Theme.Material.Light.NoActionBar">
