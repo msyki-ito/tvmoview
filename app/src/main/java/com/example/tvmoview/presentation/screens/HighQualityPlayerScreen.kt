@@ -58,8 +58,9 @@ fun HighQualityPlayerScreen(
     Log.d("VideoPlayer", "🎬 プレイヤー起動: itemId=$itemId")
 
     // ExoPlayer初期化
-    val exoPlayer = remember(resolvedUrl) {
-        resolvedUrl?.let { url ->
+    var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
+    LaunchedEffect(resolvedUrl) {
+        exoPlayer = resolvedUrl?.let { url ->
             ExoPlayer.Builder(context).build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
@@ -92,6 +93,21 @@ fun HighQualityPlayerScreen(
         }
     }
 
+    fun releasePlayer() {
+        exoPlayer?.pause()
+        exoPlayer?.release()
+        exoPlayer = null
+    }
+
+    // 再生位置更新ループ
+    LaunchedEffect(exoPlayer) {
+        while (exoPlayer != null) {
+            currentPosition = exoPlayer?.currentPosition ?: 0L
+            duration = exoPlayer?.duration ?: 0L
+            delay(500)
+        }
+    }
+
     // クリーンアップ
     DisposableEffect(Unit) {
         onDispose {
@@ -103,7 +119,7 @@ fun HighQualityPlayerScreen(
                 UserPreferences.clearResumePosition(itemId)
             }
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
-            exoPlayer?.release()
+            releasePlayer()
         }
     }
 
@@ -121,6 +137,7 @@ fun HighQualityPlayerScreen(
         } else {
             UserPreferences.clearResumePosition(itemId)
         }
+        releasePlayer()
         onBack()
     }
 
@@ -169,15 +186,26 @@ fun HighQualityPlayerScreen(
                         Key.DirectionCenter, Key.Enter, Key.MediaPlayPause -> {
                             if (exoPlayer?.isPlaying == true) {
                                 exoPlayer?.pause()
-                            Log.d("VideoPlayer", "⏸️ 一時停止")
+                                Log.d("VideoPlayer", "⏸️ 一時停止")
                             } else {
                                 exoPlayer?.play()
                                 Log.d("VideoPlayer", "▶️ 再生開始")
                             }
                             true
                         }
-                        // 📺 TVリモコン：戻るボタン（BackHandlerに委任）
-                        Key.Back, Key.Escape -> false
+                        // 📺 TVリモコン：戻るボタン
+                        Key.Back, Key.Escape -> {
+                            val pos = exoPlayer?.currentPosition ?: 0L
+                            val dur = exoPlayer?.duration ?: 0L
+                            if (dur - pos > 3000) {
+                                UserPreferences.setResumePosition(itemId, pos)
+                            } else {
+                                UserPreferences.clearResumePosition(itemId)
+                            }
+                            releasePlayer()
+                            onBack()
+                            true
+                        }
                         // キーボード用（開発時）
                         Key.Spacebar -> {
                             if (exoPlayer?.isPlaying == true) {

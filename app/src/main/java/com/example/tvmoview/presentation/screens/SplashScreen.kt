@@ -59,13 +59,13 @@ fun SplashScreen(
             painter = painterResource(id = R.drawable.app_logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(400.dp)
+                .size(200.dp)
                 .graphicsLayer {
                     this.alpha = alpha
                     this.scaleX = scale
                     this.scaleY = scale
                     this.shadowElevation = 12f
-                    this.shape = RoundedCornerShape(24.dp)
+                    this.shape = RoundedCornerShape(16.dp)
                     this.clip = true
                 }
         )

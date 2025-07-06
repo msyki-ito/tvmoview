@@ -20,7 +20,7 @@ fun EmptyStateView() {
             Image(
                 painter = painterResource(R.drawable.folder_icon),
                 contentDescription = null,
-                modifier = Modifier.size(128.dp)
+                modifier = Modifier.size(102.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
