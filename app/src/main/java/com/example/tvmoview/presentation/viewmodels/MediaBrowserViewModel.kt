@@ -15,9 +15,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// enum定義
 enum class ViewMode {
     TILE,
-    HULU_STYLE
+    HULU_STYLE,
+    HOME_VIDEO  // 新規追加
 }
 
 enum class SortBy {
@@ -168,7 +170,8 @@ class MediaBrowserViewModel : ViewModel() {
     fun toggleViewMode() {
         _viewMode.value = when (_viewMode.value) {
             ViewMode.TILE -> ViewMode.HULU_STYLE
-            ViewMode.HULU_STYLE -> ViewMode.TILE
+            ViewMode.HULU_STYLE -> ViewMode.HOME_VIDEO
+            ViewMode.HOME_VIDEO -> ViewMode.TILE
         }
         Log.d("MediaBrowserViewModel", "🎨 表示モード変更: ${_viewMode.value}")
     }

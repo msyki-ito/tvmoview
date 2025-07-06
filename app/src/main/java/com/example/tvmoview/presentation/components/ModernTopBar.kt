@@ -4,6 +4,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+// 必要に応じてインポートに追加
+import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -95,9 +97,14 @@ fun ModernTopBar(
                 Icon(
                     imageVector = when (viewMode) {
                         ViewMode.TILE -> Icons.Rounded.ViewList
-                        ViewMode.HULU_STYLE -> Icons.Rounded.ViewModule
+                        ViewMode.HULU_STYLE -> Icons.Rounded.Tv  // TVアイコンに変更
+                        ViewMode.HOME_VIDEO -> Icons.Rounded.ViewModule
                     },
-                    contentDescription = "表示モード切り替え"
+                    contentDescription = when (viewMode) {
+                        ViewMode.TILE -> "リスト表示に切り替え"
+                        ViewMode.HULU_STYLE -> "ホームビデオ表示に切り替え"
+                        ViewMode.HOME_VIDEO -> "タイル表示に切り替え"
+                    }
                 )
             }
 

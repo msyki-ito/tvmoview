@@ -51,7 +51,7 @@ fun HuluMediaCard(
                 shadowElevation = shadow.toPx()
             }
             .zIndex(if (isFocused) 1f else 0f),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(5.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = shadow)
     ) {

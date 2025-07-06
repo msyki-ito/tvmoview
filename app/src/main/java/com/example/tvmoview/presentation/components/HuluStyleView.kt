@@ -95,7 +95,7 @@ fun HuluStyleView(
                 LazyRow(
                     state = rowState,
                     contentPadding = PaddingValues(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier
                         .padding(bottom = 16.dp)
                         .focusRestorer { rowFocusRequester }

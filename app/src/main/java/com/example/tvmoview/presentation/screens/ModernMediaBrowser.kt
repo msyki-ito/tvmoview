@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
@@ -191,8 +193,22 @@ fun ModernMediaBrowser(
                                     }
                                 }
                             }
+
                             ViewMode.HULU_STYLE -> {
                                 HuluStyleView(
+                                    items = items,
+                                    onItemClick = { item ->
+                                        if (item.isFolder) {
+                                            onFolderSelected(item.id)
+                                        } else {
+                                            onMediaSelected(item)
+                                        }
+                                    }
+                                )
+                            }
+
+                            ViewMode.HOME_VIDEO -> {
+                                HomeVideoView(
                                     items = items,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
