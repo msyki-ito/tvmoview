@@ -224,22 +224,22 @@ class MediaBrowserViewModel : ViewModel() {
     private fun displayItemsProgressive(allItems: List<MediaItem>) {
         val sorted = applySorting(allItems)
         when {
-            sorted.size <= 10 -> {
+            sorted.size <= 8 -> {
                 _items.value = sorted
             }
-            sorted.size <= 30 -> {
-                _items.value = sorted.take(10)
+            sorted.size <= 24 -> {
+                _items.value = sorted.take(8)
                 viewModelScope.launch {
-                    kotlinx.coroutines.delay(100)
+                    kotlinx.coroutines.delay(150)
                     _items.value = sorted
                 }
             }
             else -> {
-                _items.value = sorted.take(10)
+                _items.value = sorted.take(8)
                 viewModelScope.launch {
-                    kotlinx.coroutines.delay(100)
-                    _items.value = sorted.take(30)
-                    kotlinx.coroutines.delay(300)
+                    kotlinx.coroutines.delay(150)
+                    _items.value = sorted.take(24)
+                    kotlinx.coroutines.delay(400)
                     _items.value = sorted
                 }
             }
