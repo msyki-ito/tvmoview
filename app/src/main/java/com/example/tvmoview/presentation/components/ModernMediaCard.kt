@@ -65,10 +65,7 @@ fun ModernMediaCard(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(
-                                        shimmerBrush(
-                                            targetValue = 1300f,
-                                            showShimmer = true
-                                        )
+                                        shimmerBrush(targetValue = 1300f)
                                     )
                             )
                         },
@@ -181,7 +178,7 @@ private fun generateVideoThumbnail(item: MediaItem): String? {
 
 // シマーエフェクト用ブラシ
 @Composable
-fun shimmerBrush(targetValue: Float = 1000f, showShimmer: Boolean = true): Brush {
+fun shimmerBrush(targetValue: Float = 1000f, showShimmer: Boolean = false): Brush {
     return if (showShimmer) {
         val shimmerColors = listOf(
             Color.LightGray.copy(alpha = 0.6f),
@@ -206,9 +203,10 @@ fun shimmerBrush(targetValue: Float = 1000f, showShimmer: Boolean = true): Brush
         )
     } else {
         Brush.linearGradient(
-            colors = listOf(Color.Transparent, Color.Transparent),
-            start = Offset.Zero,
-            end = Offset.Zero
+            colors = listOf(
+                Color.LightGray.copy(alpha = 0.3f),
+                Color.LightGray.copy(alpha = 0.3f)
+            )
         )
     }
 }
