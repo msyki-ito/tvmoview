@@ -103,20 +103,20 @@ fun HomeVideoView(
             .fillMaxSize()
             .background(HomeVideoColors.BackgroundPrimary)
     ) {
-        // メインプレビューエリア（50%）
+        // メインプレビューエリア（60%）
         MainPreviewArea(
             selectedMedia = selectedMedia,
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.50f)
+            modifier = Modifier.weight(0.60f)
         )
 
-        // セクションリストエリア（50%）
+        // セクションリストエリア（40%）
         SectionListArea(
             sections = sections,
             selectedMedia = selectedMedia,
             onMediaSelected = { selectedMedia = it },
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.50f)
+            modifier = Modifier.weight(0.40f)
         )
     }
 }
@@ -308,7 +308,7 @@ private fun SectionListArea(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp), // 行間を8dpに調整
+        verticalArrangement = Arrangement.spacedBy(26.dp), // 行間を26dpに拡大
         contentPadding = PaddingValues(top = 20.dp, bottom = 16.dp) // 上部に20dpの余白
     ) {
         itemsIndexed(

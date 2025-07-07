@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,6 +31,8 @@ import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -56,6 +59,16 @@ fun ModernMediaBrowser(
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     val coroutineScope = rememberCoroutineScope()
+    var showTopBar by remember { mutableStateOf(true) }
+    var hideJob by remember { mutableStateOf<Job?>(null) }
+    fun scheduleHide() {
+        hideJob?.cancel()
+        hideJob = coroutineScope.launch {
+            delay(3000)
+            showTopBar = false
+        }
+    }
+    LaunchedEffect(Unit) { scheduleHide() }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
@@ -74,22 +87,35 @@ fun ModernMediaBrowser(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .onKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionUp) {
+                    showTopBar = true
+                    scheduleHide()
+                    true
+                } else false
+            }
     ) {
         Column {
-            ModernTopBar(
-                currentPath = currentPath,
-                viewMode = viewMode,
-                sortOrder = sortOrder,
-                tileColumns = tileColumns,
-                onViewModeChange = { viewModel.toggleViewMode() },
-                onTileColumnsChange = { viewModel.cycleTileColumns() },
-                onSortClick = { showSortDialog = true },
-                onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
-                onRefreshClick = { viewModel.refresh() },
-                onSettingsClick = onSettingsClick,
-                onBackClick = onBackClick,
-                isLoading = isLoading
-            )
+            AnimatedVisibility(
+                visible = showTopBar,
+                enter = fadeIn(tween(150)),
+                exit = fadeOut(tween(150))
+            ) {
+                ModernTopBar(
+                    currentPath = currentPath,
+                    viewMode = viewMode,
+                    sortOrder = sortOrder,
+                    tileColumns = tileColumns,
+                    onViewModeChange = { viewModel.toggleViewMode() },
+                    onTileColumnsChange = { viewModel.cycleTileColumns() },
+                    onSortClick = { showSortDialog = true },
+                    onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
+                    onRefreshClick = { viewModel.refresh() },
+                    onSettingsClick = onSettingsClick,
+                    onBackClick = onBackClick,
+                    isLoading = isLoading
+                )
+            }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
