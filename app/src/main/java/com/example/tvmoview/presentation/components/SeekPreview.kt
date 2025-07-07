@@ -34,10 +34,14 @@ fun SeekPreview(
     }
 
     AndroidView(
-        factory = { PlayerView(it).apply {
-            player = previewPlayer
-            useController = false
-        } },
+        factory = { context ->
+            PlayerView(context).apply {
+                useController = false
+            }
+        },
+        update = { view ->
+            view.player = previewPlayer
+        },
         modifier = modifier.size(160.dp, 90.dp)
     )
 }
