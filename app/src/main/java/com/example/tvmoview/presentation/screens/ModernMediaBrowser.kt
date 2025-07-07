@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
@@ -19,7 +18,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,8 +30,7 @@ import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -59,17 +56,21 @@ fun ModernMediaBrowser(
 
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
-    val coroutineScope = rememberCoroutineScope()
     var showTopBar by remember { mutableStateOf(true) }
-    var hideJob by remember { mutableStateOf<Job?>(null) }
-    fun scheduleHide() {
-        hideJob?.cancel()
-        hideJob = coroutineScope.launch {
-            delay(3000)
-            showTopBar = false
-        }
+    var previousIndex by remember { mutableStateOf(0) }
+    var previousOffset by remember { mutableStateOf(0) }
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                when {
+                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> showTopBar = false
+                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> showTopBar = true
+                }
+                previousIndex = index
+                previousOffset = offset
+            }
     }
-    LaunchedEffect(Unit) { scheduleHide() }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
@@ -86,15 +87,7 @@ fun ModernMediaBrowser(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .onKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionUp) {
-                    showTopBar = true
-                    scheduleHide()
-                    true
-                } else false
-            }
+        modifier = Modifier.fillMaxSize()
     ) {
         Column {
             AnimatedVisibility(
