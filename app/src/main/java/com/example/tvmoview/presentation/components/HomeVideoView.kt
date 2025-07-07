@@ -2,7 +2,6 @@ package com.example.tvmoview.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -104,21 +103,22 @@ fun HomeVideoView(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(HomeVideoColors.BackgroundPrimary)
     ) {
-        // メインプレビューエリア（55%）
+        // メインプレビューエリア（50%）
         MainPreviewArea(
             selectedMedia = selectedMedia,
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.55f)
+            modifier = Modifier.weight(0.50f)
         )
 
-        // セクションリストエリア（45%）
+        // セクションリストエリア（50%）
         SectionListArea(
             sections = sections,
             selectedMedia = selectedMedia,
             onMediaSelected = { selectedMedia = it },
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.45f)
+            modifier = Modifier.weight(0.50f)
         )
     }
 }
@@ -300,8 +300,8 @@ private fun SectionListArea(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(4.dp), // 行間をさらに狭めて2行表示を確実に
-        contentPadding = PaddingValues(vertical = 4.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp), // 行間を8dpに調整
+        contentPadding = PaddingValues(top = 20.dp, bottom = 16.dp) // 上部に20dpの余白
     ) {
         items(
             items = sections,
@@ -327,27 +327,27 @@ private fun SectionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp), // 行の高さを140dpに縮小
-        verticalAlignment = Alignment.CenterVertically
+            .height(140.dp), // 行の高さを140dpに設定
+        verticalAlignment = Alignment.Bottom // 底辺で揃える
     ) {
         // 日付ラベル（左側固定幅）
         DateLabel(
             date = section.items.firstOrNull()?.lastModified ?: Date(),
             modifier = Modifier
-                .width(80.dp) // 72dp→80dpに拡張
-                .height(120.dp) // 高さを明示的に指定
-                .padding(start = 16.dp, end = 8.dp)
+                .width(110.dp) // 幅を110dpに拡張
+                .height(100.dp) // カードとバランスの良い高さ
+                .padding(start = 16.dp, end = 12.dp, bottom = 10.dp) // 余白を調整
         )
 
         // 横スクロールカードリスト
         val listState = rememberLazyListState()
         LazyRow(
             state = listState,
-            horizontalArrangement = Arrangement.spacedBy(8.dp), // 間隔を8dpに縮小
-            contentPadding = PaddingValues(start = 4.dp, end = 16.dp), // 左側の余白を追加
+            horizontalArrangement = Arrangement.spacedBy(24.dp), // 間隔を24dpに拡大
+            contentPadding = PaddingValues(end = 16.dp), // 右側の余白
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(vertical = 10.dp) // 上下に余白を追加してカードを中央寄せ
+                .padding(vertical = 10.dp) // 上下の余白
         ) {
             items(section.items, key = { it.id }) { item ->
                 MediaCard(
@@ -392,24 +392,24 @@ private fun DateLabel(
             // 日（最も大きく）
             Text(
                 text = String.format("%02d", day),
-                fontSize = 32.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = HomeVideoColors.TextPrimary,
-                lineHeight = 32.sp
+                lineHeight = 28.sp
             )
             // 月
             Text(
                 text = month,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 color = HomeVideoColors.TextPrimary,
-                lineHeight = 16.sp
+                lineHeight = 18.sp
             )
             // 年
             Text(
                 text = year.toString(),
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 color = HomeVideoColors.TextSecondary,
-                lineHeight = 12.sp
+                lineHeight = 14.sp
             )
         }
     }
@@ -435,20 +435,15 @@ private fun MediaCard(
 
     // アニメーション値
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.25f else 1f,
+        targetValue = if (isFocused) 1.1f else 1f,
         animationSpec = tween(200),
         label = "scale"
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (isFocused) 12.dp else 0.dp,
-        animationSpec = tween(200),
-        label = "elevation"
     )
 
     Card(
         modifier = Modifier
-            .width(160.dp)
-            .height(90.dp)
+            .width((item.cardHeight.value * 0.9f * item.displayAspectRatio).dp) // サイズを90%に縮小
+            .height((item.cardHeight.value * 0.9f).dp) // 高さも90%に
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
@@ -459,21 +454,18 @@ private fun MediaCard(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-                shadowElevation = elevation.toPx()
-                clip = true
             }
             .then(
                 if (isFocused) {
                     Modifier.border(
                         width = 2.dp,
                         color = HomeVideoColors.CardBorderFocus,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(6.dp)
                     )
                 } else Modifier
             ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(6.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), // elevationを0に
         onClick = onClick
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

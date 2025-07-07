@@ -51,71 +51,74 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                when (authState) {
+                    DeviceAuthState.Ready -> {
+                        ReadyToLoginContent(
+                            onStartLogin = {
+                                authState = DeviceAuthState.GettingCode
+                                scope.launch {
+                                    try {
+                                        val response = MainActivity.authManager.startDeviceCodeFlow()
+                                        deviceCodeResponse = response
+                                        authState = DeviceAuthState.ShowingCode
 
-            when (authState) {
-                DeviceAuthState.Ready -> {
-                    ReadyToLoginContent(
-                        onStartLogin = {
-                            authState = DeviceAuthState.GettingCode
-                            scope.launch {
-                                try {
-                                    val response = MainActivity.authManager.startDeviceCodeFlow()
-                                    deviceCodeResponse = response
-                                    authState = DeviceAuthState.ShowingCode
-
-                                    // バックグラウンドでトークン取得開始
-                                    launch {
-                                        try {
-                                            MainActivity.authManager.pollForToken(response.deviceCode, response.interval)
-                                            authState = DeviceAuthState.Success
-                                            onLoginSuccess()
-                                        } catch (e: Exception) {
-                                            errorMessage = e.message
-                                            authState = DeviceAuthState.Error
+                                        // バックグラウンドでトークン取得開始
+                                        launch {
+                                            try {
+                                                MainActivity.authManager.pollForToken(
+                                                    response.deviceCode,
+                                                    response.interval
+                                                )
+                                                authState = DeviceAuthState.Success
+                                                onLoginSuccess()
+                                            } catch (e: Exception) {
+                                                errorMessage = e.message
+                                                authState = DeviceAuthState.Error
+                                            }
                                         }
+                                    } catch (e: Exception) {
+                                        errorMessage = e.message
+                                        authState = DeviceAuthState.Error
                                     }
-                                } catch (e: Exception) {
-                                    errorMessage = e.message
-                                    authState = DeviceAuthState.Error
                                 }
-                            }
-                        },
-                        onUseTestData = onUseTestData
-                    )
-                }
+                            },
+                            onUseTestData = onUseTestData
+                        )
+                    }
 
-                DeviceAuthState.GettingCode -> {
-                    GettingCodeContent()
-                }
+                    DeviceAuthState.GettingCode -> {
+                        GettingCodeContent()
+                    }
 
-                DeviceAuthState.ShowingCode -> {
-                    deviceCodeResponse?.let { response ->
-                        ShowingCodeContent(
-                            userCode = response.userCode,
-                            verificationUri = response.verificationUri,
-                            onCancel = {
+                    DeviceAuthState.ShowingCode -> {
+                        deviceCodeResponse?.let { response ->
+                            ShowingCodeContent(
+                                userCode = response.userCode,
+                                verificationUri = response.verificationUri,
+                                onCancel = {
+                                    authState = DeviceAuthState.Ready
+                                    deviceCodeResponse = null
+                                }
+                            )
+                        }
+                    }
+
+                    DeviceAuthState.Success -> {
+                        SuccessContent()
+                    }
+
+                    DeviceAuthState.Error -> {
+                        ErrorContent(
+                            message = errorMessage ?: "不明なエラー",
+                            onRetry = {
                                 authState = DeviceAuthState.Ready
+                                errorMessage = null
                                 deviceCodeResponse = null
                             }
                         )
                     }
                 }
-
-                DeviceAuthState.Success -> {
-                    SuccessContent()
-                }
-
-                DeviceAuthState.Error -> {
-                    ErrorContent(
-                        message = errorMessage ?: "不明なエラー",
-                        onRetry = {
-                            authState = DeviceAuthState.Ready
-                            errorMessage = null
-                            deviceCodeResponse = null
-                        }
-                    )
-                }
-            }
+            } // ← Column の閉じ括弧（抜けていた）
         }
     }
 }
