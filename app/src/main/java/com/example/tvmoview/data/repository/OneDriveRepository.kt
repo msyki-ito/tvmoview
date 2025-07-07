@@ -168,6 +168,12 @@ class OneDriveRepository(
         }
     }
 
+    suspend fun getPreviewUrl(itemId: String): String? {
+        return getDownloadUrl(itemId)?.let { url ->
+            url.replace("/large/", "/c360x202/")
+        }
+    }
+
     private suspend fun fetchAndCacheItems(folderId: String?) {
         try {
             val items = fetchAllItems(folderId)

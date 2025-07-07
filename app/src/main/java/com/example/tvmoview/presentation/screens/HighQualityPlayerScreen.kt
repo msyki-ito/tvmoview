@@ -1,6 +1,5 @@
 ﻿package com.example.tvmoview.presentation.screens
 
-import android.content.Context
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -25,7 +24,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.dash.DashMediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.upstream.DefaultDataSource
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
@@ -40,6 +45,7 @@ fun HighQualityPlayerScreen(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val dataSourceFactory = remember { DefaultDataSource.Factory(context) }
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)
@@ -70,18 +76,36 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                val resume = UserPreferences.getResumePosition(itemId)
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+            ExoPlayer.Builder(context)
+                .setTrackSelector(
+                    DefaultTrackSelector(context).apply {
+                        setParameters(
+                            buildUponParameters()
+                                .setMaxVideoSizeSd()
+                                .setAllowVideoMixedMimeTypeAdaptiveness(true)
+                                .setPreferredVideoMimeType(MimeTypes.VIDEO_H264)
+                                .build()
+                        )
+                    }
+                )
+                .build().also { player ->
+                    val mediaSource = when {
+                        url.contains(".m3u8") -> HlsMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(MediaItem.fromUri(url))
+                        url.contains(".mpd") -> DashMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(MediaItem.fromUri(url))
+                        else -> ProgressiveMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(MediaItem.fromUri(url))
+                    }
+                    player.setMediaSource(mediaSource)
+                    player.prepare()
+                    val resume = UserPreferences.getResumePosition(itemId)
+                    if (resume > 0) {
+                        player.seekTo(resume)
+                        Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                    }
+                    player.playWhenReady = true
                 }
-                player.playWhenReady = true
-            }
         }
         playerView?.player = exoPlayer
     }
