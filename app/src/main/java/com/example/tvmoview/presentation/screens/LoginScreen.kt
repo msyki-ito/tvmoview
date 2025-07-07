@@ -117,6 +117,7 @@ fun LoginScreen(
         }
     }
 }
+}
 
 @Composable
 fun ReadyToLoginContent(
