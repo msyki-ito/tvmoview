@@ -216,7 +216,8 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    onScroll = { showTopBar = it }
                                 )
                             }
 
@@ -229,7 +230,8 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    onScroll = { showTopBar = it }
                                 )
                             }
                         }

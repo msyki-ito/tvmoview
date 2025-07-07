@@ -41,6 +41,7 @@ import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.viewmodels.DateGroup
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -61,7 +62,8 @@ object HomeVideoColors {
 fun HomeVideoView(
     items: List<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onScroll: (Boolean) -> Unit = {}
 ) {
     // 選択中のメディア状態
     var selectedMedia by remember { mutableStateOf<MediaItem?>(null) }
@@ -116,7 +118,8 @@ fun HomeVideoView(
             selectedMedia = selectedMedia,
             onMediaSelected = { selectedMedia = it },
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.40f)
+            modifier = Modifier.weight(0.40f),
+            onScroll = onScroll
         )
     }
 }
@@ -294,9 +297,24 @@ private fun SectionListArea(
     selectedMedia: MediaItem?,
     onMediaSelected: (MediaItem) -> Unit,
     onItemClick: (MediaItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onScroll: (Boolean) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
+    var previousIndex by remember { mutableStateOf(0) }
+    var previousOffset by remember { mutableStateOf(0) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                when {
+                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> onScroll(false)
+                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> onScroll(true)
+                }
+                previousIndex = index
+                previousOffset = offset
+            }
+    }
 
     LaunchedEffect(selectedMedia) {
         val index = sections.indexOfFirst { it.items.contains(selectedMedia) }
