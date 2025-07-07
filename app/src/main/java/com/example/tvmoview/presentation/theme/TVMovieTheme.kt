@@ -13,8 +13,10 @@ import androidx.compose.ui.graphics.Brush
 
 // ダークテーマのカラーパレット
 object HuluColors {
-    val Background = Color(0xFF0B0C0F)
-    val GradientCenter = Color(0xFF12141A)
+    val GradientTop = Color(0xFF1A1C24)
+    val GradientCenter = Color(0xFF181B22)
+    val GradientBottom = Color(0xFF0B0C10)
+    val Background = GradientBottom
     val Surface = Color(0xFF1A1C22)
     val CardBackground = Color(0xFF16181D)
     val TextPrimary = Color(0xFFFFFFFF)
@@ -66,9 +68,9 @@ fun TVMovieTheme(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            HuluColors.Background,
+                            HuluColors.GradientTop,
                             HuluColors.GradientCenter,
-                            HuluColors.Background
+                            HuluColors.GradientBottom
                         )
                     )
                 )

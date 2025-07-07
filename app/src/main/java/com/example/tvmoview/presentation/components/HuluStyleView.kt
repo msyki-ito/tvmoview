@@ -48,8 +48,7 @@ fun HuluStyleView(
 
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
-            .background(HuluColors.Background),
+            .fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         if (sortedFolders.isNotEmpty()) {
