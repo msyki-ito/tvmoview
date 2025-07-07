@@ -16,10 +16,11 @@ fun SeekPreview(
     seekPosition: Long,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var previewPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
 
     DisposableEffect(previewUrl) {
-        previewPlayer = ExoPlayer.Builder(LocalContext.current).build().apply {
+        previewPlayer = ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(previewUrl))
             prepare()
             seekTo(seekPosition)
