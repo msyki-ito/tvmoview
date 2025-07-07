@@ -1,6 +1,5 @@
 ﻿package com.example.tvmoview.presentation.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,12 +32,18 @@ fun LoginScreen(
     var deviceCodeResponse by remember { mutableStateOf<AuthenticationManager.DeviceCodeResponse?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        contentAlignment = Alignment.Center
     ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,6 +118,7 @@ fun LoginScreen(
             }
         }
     }
+}
 }
 
 @Composable
@@ -212,7 +218,9 @@ fun ShowingCodeContent(
         // 認証コードを大きく表示
         Card(
             modifier = Modifier.padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -237,7 +245,9 @@ fun ShowingCodeContent(
         // URLを確実に表示（デバッグ）
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -278,7 +288,9 @@ fun ShowingCodeContent(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp)

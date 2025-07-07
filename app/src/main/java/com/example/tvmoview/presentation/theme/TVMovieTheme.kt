@@ -5,12 +5,20 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 
 // ダークテーマのカラーパレット
 object HuluColors {
-    val Background = Color(0xFF0B0C0F)
+    val GradientTop = Color(0xFF1A1C24)
+    val GradientCenter = Color(0xFF22252D)
+    val GradientBottom = Color(0xFF0B0C10)
+    val Background = GradientBottom
     val Surface = Color(0xFF1A1C22)
-    val CardBackground = Color(0xFF16181D)
+    val CardBackground = Color(0xFF22252D)
     val TextPrimary = Color(0xFFFFFFFF)
     val TextSecondary = Color(0xFFB0B0B0)
     val TextTertiary = Color(0xFF808080)
@@ -52,7 +60,20 @@ fun TVMovieTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+        typography = Typography
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            HuluColors.GradientTop,
+                            HuluColors.GradientCenter,
+                            HuluColors.GradientBottom
+                        )
+                    )
+                )
+        ) { content() }
+    }
 }
