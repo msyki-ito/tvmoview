@@ -99,7 +99,6 @@ fun HomeVideoView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(HomeVideoColors.BackgroundPrimary)
     ) {
         // メインプレビューエリア（55%）
         MainPreviewArea(
@@ -348,18 +347,21 @@ private fun MediaCard(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                shadowElevation = elevation.toPx()
+                clip = true
             }
             .then(
                 if (isFocused) {
                     Modifier.border(
                         width = 2.dp,
                         color = HomeVideoColors.CardBorderFocus,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                 } else Modifier
             ),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         onClick = onClick
     ) {
         Box {

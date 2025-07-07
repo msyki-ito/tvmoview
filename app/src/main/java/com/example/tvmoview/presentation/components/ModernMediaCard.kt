@@ -24,6 +24,8 @@ import coil.request.ImageRequest
 import coil.request.CachePolicy
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.R
+import com.example.tvmoview.presentation.theme.HuluColors
+import androidx.compose.foundation.shape.RoundedCornerShape
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -40,7 +42,8 @@ fun ModernMediaCard(
             .aspectRatio(1f)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(5.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分

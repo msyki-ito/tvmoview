@@ -18,7 +18,7 @@ object HuluColors {
     val GradientBottom = Color(0xFF0B0C10)
     val Background = GradientBottom
     val Surface = Color(0xFF1A1C22)
-    val CardBackground = Color(0xFF16181D)
+    val CardBackground = Color(0xFF22252D)
     val TextPrimary = Color(0xFFFFFFFF)
     val TextSecondary = Color(0xFFB0B0B0)
     val TextTertiary = Color(0xFF808080)

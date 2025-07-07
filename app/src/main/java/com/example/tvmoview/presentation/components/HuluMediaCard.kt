@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -50,9 +52,15 @@ fun HuluMediaCard(
                 scaleX = scale
                 scaleY = scale
                 shadowElevation = shadow.toPx()
+                clip = true
             }
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) Color.White.copy(alpha = 0.3f) else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
             .zIndex(if (isFocused) 1f else 0f),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = shadow)
     ) {

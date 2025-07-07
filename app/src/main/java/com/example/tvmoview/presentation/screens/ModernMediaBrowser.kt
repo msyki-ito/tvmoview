@@ -74,14 +74,6 @@ fun ModernMediaBrowser(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.surfaceVariant,
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            )
     ) {
         Column {
             ModernTopBar(
