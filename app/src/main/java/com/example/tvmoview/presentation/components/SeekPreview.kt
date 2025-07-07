@@ -29,6 +29,10 @@ fun SeekPreview(
         onDispose { previewPlayer?.release() }
     }
 
+    LaunchedEffect(seekPosition) {
+        previewPlayer?.seekTo(seekPosition)
+    }
+
     AndroidView(
         factory = { PlayerView(it).apply {
             player = previewPlayer
