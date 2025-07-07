@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,14 +35,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.runtime.rememberCoroutineScope
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.viewmodels.DateGroup
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalDensity
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -299,14 +297,11 @@ private fun SectionListArea(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
-    val offsetPx = with(density) { 20.dp.roundToPx() }
 
     LaunchedEffect(selectedMedia) {
         val index = sections.indexOfFirst { it.items.contains(selectedMedia) }
         if (index >= 0) {
-            listState.animateScrollToItem(index, -offsetPx)
+            listState.animateScrollToItem(index)
         }
     }
 
@@ -337,13 +332,13 @@ private fun SectionRow(
     onMediaSelected: (MediaItem) -> Unit,
     onItemClick: (MediaItem) -> Unit
 ) {
-    val rowHeight = MediaItem.BaseCardHeight * 0.9f + 20.dp
+    val rowHeight = MediaItem.BaseCardHeight * 0.9f
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(rowHeight),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Bottom
     ) {
         // 日付ラベル（左側固定幅）
         DateLabel(
