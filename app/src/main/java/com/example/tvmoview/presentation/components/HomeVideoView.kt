@@ -2,7 +2,6 @@ package com.example.tvmoview.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,19 +11,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -298,15 +296,25 @@ private fun SectionListArea(
     onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(selectedMedia) {
+        val index = sections.indexOfFirst { it.items.contains(selectedMedia) }
+        if (index >= 0) {
+            listState.animateScrollToItem(index)
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp), // 行間を8dpに調整
         contentPadding = PaddingValues(top = 20.dp, bottom = 16.dp) // 上部に20dpの余白
     ) {
-        items(
+        itemsIndexed(
             items = sections,
-            key = { section -> section.title } // 安定したキーを使用
-        ) { section ->
+            key = { _, section -> section.title } // 安定したキーを使用
+        ) { _, section ->
             SectionRow(
                 section = section,
                 selectedMedia = selectedMedia,
@@ -324,19 +332,21 @@ private fun SectionRow(
     onMediaSelected: (MediaItem) -> Unit,
     onItemClick: (MediaItem) -> Unit
 ) {
+    val rowHeight = MediaItem.BaseCardHeight * 0.9f
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp), // 行の高さを140dpに設定
-        verticalAlignment = Alignment.Bottom // 底辺で揃える
+            .height(rowHeight),
+        verticalAlignment = Alignment.Bottom
     ) {
         // 日付ラベル（左側固定幅）
         DateLabel(
             date = section.items.firstOrNull()?.lastModified ?: Date(),
             modifier = Modifier
-                .width(110.dp) // 幅を110dpに拡張
-                .height(100.dp) // カードとバランスの良い高さ
-                .padding(start = 16.dp, end = 12.dp, bottom = 10.dp) // 余白を調整
+                .width(110.dp)
+                .height(100.dp)
+                .padding(start = 16.dp, end = 12.dp)
         )
 
         // 横スクロールカードリスト
@@ -344,10 +354,9 @@ private fun SectionRow(
         LazyRow(
             state = listState,
             horizontalArrangement = Arrangement.spacedBy(24.dp), // 間隔を24dpに拡大
-            contentPadding = PaddingValues(end = 16.dp), // 右側の余白
+            contentPadding = PaddingValues(end = 16.dp),
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(vertical = 10.dp) // 上下の余白
         ) {
             items(section.items, key = { it.id }) { item ->
                 MediaCard(
@@ -433,13 +442,6 @@ private fun MediaCard(
         }
     }
 
-    // アニメーション値
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.1f else 1f,
-        animationSpec = tween(200),
-        label = "scale"
-    )
-
     Card(
         modifier = Modifier
             .width((item.cardHeight.value * 0.9f * item.displayAspectRatio).dp) // サイズを90%に縮小
@@ -450,10 +452,6 @@ private fun MediaCard(
                 if (focusState.isFocused) {
                     onFocus()
                 }
-            }
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
             }
             .then(
                 if (isFocused) {
