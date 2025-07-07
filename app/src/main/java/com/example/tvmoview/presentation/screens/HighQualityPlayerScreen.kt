@@ -37,6 +37,7 @@ import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
+import com.example.tvmoview.presentation.components.SeekPreview
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -51,6 +52,11 @@ fun HighQualityPlayerScreen(
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)
+    }
+
+    // プレビュー用低解像度URL
+    val previewUrl by produceState<String?>(null, itemId) {
+        value = MainActivity.oneDriveRepository.getPreviewUrl(itemId)
     }
 
     // カスタムシークバー表示制御
@@ -118,6 +124,10 @@ fun HighQualityPlayerScreen(
         playerView?.player = exoPlayer
     }
 
+    LaunchedEffect(isSeekingPreview) {
+        playerView?.useController = !isSeekingPreview
+    }
+
     // シークプレビュー開始
     fun startSeekPreview(forward: Boolean, message: String) {
         exoPlayer?.let { player ->
@@ -125,6 +135,9 @@ fun HighQualityPlayerScreen(
                 wasPlayingBeforeSeek = player.isPlaying
                 player.pause()
             }
+
+            playerView?.hideController()
+            playerView?.useController = false
 
             isSeekingPreview = true
             currentPosition = player.currentPosition
@@ -303,18 +316,26 @@ fun HighQualityPlayerScreen(
                     .padding(horizontal = 32.dp, vertical = 24.dp)
             ) {
                 if (isSeekingPreview) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(320.dp, 180.dp)
-                            .background(Color.Black, RoundedCornerShape(8.dp))
-                            .padding(4.dp)
-                    ) {
-                        Text(
-                            text = "プレビュー: ${formatTime(previewPosition)}",
-                            color = Color.White,
-                            modifier = Modifier.align(Alignment.Center)
+                    if (previewUrl != null) {
+                        SeekPreview(
+                            previewUrl = previewUrl!!,
+                            seekPosition = previewPosition,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .size(320.dp, 180.dp)
+                                .background(Color.Black, RoundedCornerShape(8.dp))
+                                .padding(4.dp)
+                        ) {
+                            Text(
+                                text = "プレビュー: ${formatTime(previewPosition)}",
+                                color = Color.White,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
