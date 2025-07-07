@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
@@ -26,8 +27,8 @@ import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.dash.DashMediaSource
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.datasource.DefaultDataSource
@@ -57,6 +58,9 @@ fun HighQualityPlayerScreen(
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
     var seekForward by remember { mutableStateOf(true) }
+    var isSeekingPreview by remember { mutableStateOf(false) }
+    var previewPosition by remember { mutableLongStateOf(0L) }
+    var wasPlayingBeforeSeek by remember { mutableStateOf(false) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -113,20 +117,35 @@ fun HighQualityPlayerScreen(
         playerView?.player = exoPlayer
     }
 
-    // カスタムシークバー表示コルーチン
-    fun showSeekBarTemporarily(forward: Boolean, message: String, durationMillis: Long = 1000L) {
-        exoPlayer?.let {
-            currentPosition = it.currentPosition
-            duration = it.duration
-        }
-        seekForward = forward
-        seekMessage = message
-        showCustomSeek = true
+    // シークプレビュー開始
+    fun startSeekPreview(forward: Boolean, message: String) {
+        exoPlayer?.let { player ->
+            if (!isSeekingPreview) {
+                wasPlayingBeforeSeek = player.isPlaying
+                player.pause()
+            }
 
-        // 指定時間後に自動非表示
-        coroutineScope.launch {
-            delay(durationMillis)
-            showCustomSeek = false
+            isSeekingPreview = true
+            currentPosition = player.currentPosition
+            duration = player.duration
+            previewPosition = if (forward) {
+                minOf(duration, currentPosition + 10000)
+            } else {
+                maxOf(0, currentPosition - 10000)
+            }
+
+            player.seekTo(previewPosition)
+
+            seekForward = forward
+            seekMessage = message
+            showCustomSeek = true
+
+            coroutineScope.launch {
+                delay(3000)
+                if (isSeekingPreview) {
+                    showCustomSeek = false
+                }
+            }
         }
     }
 
@@ -181,20 +200,12 @@ fun HighQualityPlayerScreen(
             .onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown) {
                     when (keyEvent.key) {
-                        // 📺 TVリモコン：右ボタン（10秒進む）
                         Key.DirectionRight -> {
-                            val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
-                            exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily(true, "+10秒")
-                            Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
+                            startSeekPreview(true, "+10秒")
                             true
                         }
-                        // 📺 TVリモコン：左ボタン（10秒戻る）
                         Key.DirectionLeft -> {
-                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
-                            exoPlayer?.seekTo(newPosition)
-                            showSeekBarTemporarily(false, "-10秒")
-                            Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
+                            startSeekPreview(false, "-10秒")
                             true
                         }
                         // 📺 TVリモコン：上ボタン（音量上げる）
@@ -213,14 +224,17 @@ fun HighQualityPlayerScreen(
                             Log.d("VideoPlayer", "🔉 音量下げる: $newVolume")
                             true
                         }
-                        // 📺 TVリモコン：決定ボタン/再生停止ボタン
                         Key.DirectionCenter, Key.Enter, Key.MediaPlayPause -> {
-                            if (exoPlayer?.isPlaying == true) {
-                                exoPlayer?.pause()
-                                Log.d("VideoPlayer", "⏸️ 一時停止")
-                            } else {
+                            if (isSeekingPreview) {
+                                isSeekingPreview = false
+                                showCustomSeek = false
                                 exoPlayer?.play()
-                                Log.d("VideoPlayer", "▶️ 再生開始")
+                            } else {
+                                if (exoPlayer?.isPlaying == true) {
+                                    exoPlayer?.pause()
+                                } else {
+                                    exoPlayer?.play()
+                                }
                             }
                             true
                         }
@@ -259,7 +273,7 @@ fun HighQualityPlayerScreen(
                 factory = { ctx ->
                     PlayerView(ctx).apply {
                         player = exoPlayer
-                        useController = true
+                        useController = !isSeekingPreview
                         setShowSubtitleButton(true)
                         setShowVrButton(false)
                         playerView = this
@@ -277,9 +291,32 @@ fun HighQualityPlayerScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(vertical = 8.dp, horizontal = 32.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.8f)
+                            )
+                        )
+                    )
+                    .padding(horizontal = 32.dp, vertical = 24.dp)
             ) {
+                if (isSeekingPreview) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .size(320.dp, 180.dp)
+                            .background(Color.Black, RoundedCornerShape(8.dp))
+                            .padding(4.dp)
+                    ) {
+                        Text(
+                            text = "プレビュー: ${formatTime(previewPosition)}",
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 Row(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically
@@ -287,40 +324,48 @@ fun HighQualityPlayerScreen(
                     Icon(
                         imageVector = if (seekForward) Icons.Default.FastForward else Icons.Default.FastRewind,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         text = seekMessage,
                         color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.titleMedium
                     )
+                    if (isSeekingPreview) {
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = "決定で再生",
+                            color = Color.White.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 LinearProgressIndicator(
-                    progress = if (duration > 0) {
-                        (currentPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
-                    } else 0f,
+                    progress = (previewPosition.toFloat() / duration.toFloat()).coerceIn(0f, 1f),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp),
+                        .height(6.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    trackColor = Color.DarkGray
+                    trackColor = Color.White.copy(alpha = 0.3f)
                 )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 2.dp),
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = formatTime(currentPosition),
+                        text = formatTime(if (isSeekingPreview) previewPosition else currentPosition),
                         color = Color.White,
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.bodySmall
                     )
                     Text(
                         text = formatTime(duration),
                         color = Color.White,
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
