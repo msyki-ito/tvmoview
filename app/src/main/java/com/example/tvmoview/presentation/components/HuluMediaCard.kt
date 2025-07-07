@@ -38,8 +38,8 @@ fun HuluMediaCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
-    val shadow by animateDpAsState(if (isFocused) 12.dp else 6.dp, tween(200))
+    val scale by animateFloatAsState(if (isFocused) 1.1f else 1f, tween(200))
+    val shadow by animateDpAsState(if (isFocused) 20.dp else 8.dp, tween(200))
 
     Card(
         modifier = modifier
