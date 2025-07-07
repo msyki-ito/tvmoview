@@ -1,4 +1,4 @@
-﻿# 祷 SYMBOLS.md (generated 2025-07-04)
+# 📘 SYMBOLS.md (generated 2025-07-07)
 
 ## 
 - AuthenticationManager
@@ -32,6 +32,28 @@
   - [P] expiresIn: Int
   - [P] refreshToken: String?,
 
+## com.example.tvmoview
+- Authenticated
+
+## com.example.tvmoview
+- Checking
+
+## com.example.tvmoview
+- ExampleInstrumentedTest
+  - [F] useAppContext()
+
+## com.example.tvmoview
+- ExampleUnitTest
+  - [F] addition_isCorrect()
+
+## com.example.tvmoview
+- MainActivity
+  - [F] AuthenticationWrapper()
+
+## com.example.tvmoview
+- NotAuthenticated
+  - [F] AppNavigation()
+
 ## com.example.tvmoview.data.db
 - CachedMediaItem
   - [P] downloadUrl: String?,
@@ -44,6 +66,10 @@
   - [P] parentId: String?,
   - [P] size: Long,
   - [P] thumbnailUrl: String?,
+
+## com.example.tvmoview.data.db
+- FolderCover
+  - [P] itemId: String
 
 ## com.example.tvmoview.data.db
 - FolderSyncStatus
@@ -102,7 +128,9 @@
   - [F] getCachedItems(folderId: String?): List<MediaItem>
   - [F] getCurrentPath(folderId: String?): String
   - [F] getDownloadUrl(itemId: String): String?
+  - [F] getFolderCoverItem(folderId: String): MediaItem?
   - [F] getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>>
+  - [F] setFolderCover(folderId: String, itemId: String)
 
 ## com.example.tvmoview.domain.model
 - MediaItem
@@ -123,6 +151,14 @@
   - [P] name: String,
   - [P] size: Long
   - [P] thumbnailUrl: String?
+
+## com.example.tvmoview.presentation.components
+- HomeVideoColors
+
+## com.example.tvmoview.presentation.components
+- MediaSection
+  - [P] items: List<MediaItem>
+  - [P] title: String,
 
 ## com.example.tvmoview.presentation.screens
 - Authenticated
@@ -180,27 +216,5 @@
 ## com.example.tvmoview.tv
 - FireTVOptimizations
   - [F] initializeForFireTV(activity: Activity)
-
-## com.example.tvmoview
-- Authenticated
-
-## com.example.tvmoview
-- Checking
-
-## com.example.tvmoview
-- ExampleInstrumentedTest
-  - [F] useAppContext()
-
-## com.example.tvmoview
-- ExampleUnitTest
-  - [F] addition_isCorrect()
-
-## com.example.tvmoview
-- MainActivity
-  - [F] AuthenticationWrapper()
-
-## com.example.tvmoview
-- NotAuthenticated
-  - [F] AppNavigation()
 
 

@@ -1,9 +1,12 @@
 package com.example.tvmoview.presentation.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -14,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -53,6 +57,7 @@ object HomeVideoColors {
     val TextPrimary = Color.White.copy(alpha = 0.9f)
     val TextSecondary = Color.White.copy(alpha = 0.7f)
     val ShadowColor = Color.Black.copy(alpha = 0.6f)
+    val DateLabelBackground = Color.Black.copy(alpha = 0.6f)
 }
 
 @Composable
@@ -101,20 +106,20 @@ fun HomeVideoView(
             .fillMaxSize()
             .background(HomeVideoColors.BackgroundPrimary)
     ) {
-        // メインプレビューエリア（55%）
+        // メインプレビューエリア（45%に縮小）
         MainPreviewArea(
             selectedMedia = selectedMedia,
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.55f)
+            modifier = Modifier.weight(0.45f)
         )
 
-        // セクションリストエリア（45%）
+        // セクションリストエリア（55%に拡大）
         SectionListArea(
             sections = sections,
             selectedMedia = selectedMedia,
             onMediaSelected = { selectedMedia = it },
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.45f)
+            modifier = Modifier.weight(0.55f)
         )
     }
 }
@@ -180,38 +185,72 @@ private fun MainPreviewArea(
                 }
             }
 
-            // オーバーレイ情報
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.BottomStart
+            // オーバーレイ情報（選択後に表示）
+            AnimatedVisibility(
+                visible = showVideo || !media.isVideo,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300))
             ) {
-                Column {
-                    Text(
-                        text = media.name,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HomeVideoColors.TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.BottomStart
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(
+                                color = Color.Black.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
                     ) {
                         Text(
-                            text = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
-                                .format(media.lastModified),
-                            fontSize = 14.sp,
-                            color = HomeVideoColors.TextSecondary
+                            text = media.name,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = HomeVideoColors.TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        if (media.isVideo && media.duration > 0) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             Text(
-                                text = formatDuration(media.duration),
+                                text = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
+                                    .format(media.lastModified),
                                 fontSize = 12.sp,
                                 color = HomeVideoColors.TextSecondary
                             )
+                            if (media.isVideo && media.duration > 0) {
+                                Text(
+                                    text = formatDuration(media.duration),
+                                    fontSize = 12.sp,
+                                    color = HomeVideoColors.TextSecondary
+                                )
+                            }
+                            if (!media.isFolder) {
+                                Text(
+                                    text = media.formattedSize,
+                                    fontSize = 12.sp,
+                                    color = HomeVideoColors.TextSecondary
+                                )
+                            }
                         }
+                        // 撮影場所情報の表示
+                        // 注意: 現在のMediaItemモデルには撮影場所（GPS/EXIF）情報が含まれていません。
+                        // 実装には以下が必要です：
+                        // 1. MediaItemモデルに location: String? プロパティを追加
+                        // 2. OneDriveRepository でメタデータ取得時にEXIF情報を解析
+                        // 3. Android の ExifInterface または外部ライブラリで GPS 情報を取得
+                        // 例: media.location?.let { location ->
+                        //     Text(
+                        //         text = "📍 $location",
+                        //         fontSize = 12.sp,
+                        //         color = HomeVideoColors.TextSecondary
+                        //     )
+                        // }
                     }
                 }
             }
@@ -262,10 +301,13 @@ private fun SectionListArea(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp), // 行間をさらに狭めて2行表示を確実に
+        contentPadding = PaddingValues(vertical = 4.dp)
     ) {
-        items(sections) { section ->
+        items(
+            items = sections,
+            key = { section -> section.title } // 安定したキーを使用
+        ) { section ->
             SectionRow(
                 section = section,
                 selectedMedia = selectedMedia,
@@ -283,22 +325,30 @@ private fun SectionRow(
     onMediaSelected: (MediaItem) -> Unit,
     onItemClick: (MediaItem) -> Unit
 ) {
-    Column {
-        // セクションヘッダー
-        Text(
-            text = section.title,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = HomeVideoColors.TextPrimary,
-            modifier = Modifier.padding(start = 48.dp, end = 48.dp, bottom = 8.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp), // 行の高さを140dpに縮小
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 日付ラベル（左側固定幅）
+        DateLabel(
+            date = section.items.firstOrNull()?.lastModified ?: Date(),
+            modifier = Modifier
+                .width(80.dp) // 72dp→80dpに拡張
+                .height(120.dp) // 高さを明示的に指定
+                .padding(start = 16.dp, end = 8.dp)
         )
 
         // 横スクロールカードリスト
         val listState = rememberLazyListState()
         LazyRow(
             state = listState,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 48.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp), // 間隔を8dpに縮小
+            contentPadding = PaddingValues(start = 4.dp, end = 16.dp), // 左側の余白を追加
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(vertical = 10.dp) // 上下に余白を追加してカードを中央寄せ
         ) {
             items(section.items, key = { it.id }) { item ->
                 MediaCard(
@@ -313,6 +363,60 @@ private fun SectionRow(
 }
 
 @Composable
+private fun DateLabel(
+    date: Date,
+    modifier: Modifier = Modifier
+) {
+    val calendar = Calendar.getInstance().apply { time = date }
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val month = SimpleDateFormat("MMM", Locale.getDefault()).format(date)
+    val year = calendar.get(Calendar.YEAR)
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+        )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(4.dp)
+        ) {
+            // 日（最も大きく）
+            Text(
+                text = String.format("%02d", day),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = HomeVideoColors.TextPrimary,
+                lineHeight = 32.sp
+            )
+            // 月
+            Text(
+                text = month,
+                fontSize = 16.sp,
+                color = HomeVideoColors.TextPrimary,
+                lineHeight = 16.sp
+            )
+            // 年
+            Text(
+                text = year.toString(),
+                fontSize = 12.sp,
+                color = HomeVideoColors.TextSecondary,
+                lineHeight = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
 private fun MediaCard(
     item: MediaItem,
     isSelected: Boolean,
@@ -321,23 +425,31 @@ private fun MediaCard(
 ) {
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // 初期選択時の自動フォーカス
+    LaunchedEffect(isSelected) {
+        if (isSelected && !isFocused) {
+            focusRequester.requestFocus()
+        }
+    }
 
     // アニメーション値
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.25f else 1f,
+        targetValue = if (isFocused) 1.1f else 1f,
         animationSpec = tween(200),
         label = "scale"
     )
     val elevation by animateDpAsState(
-        targetValue = if (isFocused) 12.dp else 0.dp,
+        targetValue = if (isFocused) 12.dp else 4.dp,
         animationSpec = tween(200),
         label = "elevation"
     )
 
     Card(
         modifier = Modifier
-            .width(160.dp)
-            .height(90.dp)
+            .width((item.cardHeight.value * 0.9f * item.displayAspectRatio).dp) // サイズを90%に縮小
+            .height((item.cardHeight.value * 0.9f).dp) // 高さも90%に
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
@@ -354,37 +466,56 @@ private fun MediaCard(
                     Modifier.border(
                         width = 2.dp,
                         color = HomeVideoColors.CardBorderFocus,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(6.dp)
                     )
                 } else Modifier
             ),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(6.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         onClick = onClick
     ) {
-        Box {
+        Box(modifier = Modifier.fillMaxSize()) {
             // サムネイル
             AsyncImage(
-                model = item.thumbnailUrl ?: item.downloadUrl,
+                model = ImageRequest.Builder(context)
+                    .data(item.thumbnailUrl ?: item.downloadUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
 
-            // タイトル表示
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomStart)
-                    .background(HomeVideoColors.ShadowColor)
-                    .padding(4.dp)
-            ) {
-                Text(
-                    text = item.name,
-                    fontSize = 12.sp,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            // 動画の場合の再生時間表示
+            if (item.isVideo && item.duration > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = formatDuration(item.duration),
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // フォルダの場合のアイコン表示
+            if (item.isFolder) {
+                Icon(
+                    imageVector = Icons.Default.Folder,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(Alignment.Center),
+                    tint = Color.White.copy(alpha = 0.8f)
                 )
             }
         }
