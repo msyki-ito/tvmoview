@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.example.tvmoview.presentation.theme.HuluColors
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +42,8 @@ fun ModernMediaCard(
             .aspectRatio(1f)
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(5.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {  // ColumnからBoxに変更
             // サムネイル/アイコン表示部分

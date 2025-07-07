@@ -104,22 +104,21 @@ fun HomeVideoView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(HomeVideoColors.BackgroundPrimary)
     ) {
-        // メインプレビューエリア（45%に縮小）
+        // メインプレビューエリア（55%）
         MainPreviewArea(
             selectedMedia = selectedMedia,
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.45f)
+            modifier = Modifier.weight(0.55f)
         )
 
-        // セクションリストエリア（55%に拡大）
+        // セクションリストエリア（45%）
         SectionListArea(
             sections = sections,
             selectedMedia = selectedMedia,
             onMediaSelected = { selectedMedia = it },
             onItemClick = onItemClick,
-            modifier = Modifier.weight(0.55f)
+            modifier = Modifier.weight(0.45f)
         )
     }
 }
@@ -436,20 +435,20 @@ private fun MediaCard(
 
     // アニメーション値
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.1f else 1f,
+        targetValue = if (isFocused) 1.25f else 1f,
         animationSpec = tween(200),
         label = "scale"
     )
     val elevation by animateDpAsState(
-        targetValue = if (isFocused) 12.dp else 4.dp,
+        targetValue = if (isFocused) 12.dp else 0.dp,
         animationSpec = tween(200),
         label = "elevation"
     )
 
     Card(
         modifier = Modifier
-            .width((item.cardHeight.value * 0.9f * item.displayAspectRatio).dp) // サイズを90%に縮小
-            .height((item.cardHeight.value * 0.9f).dp) // 高さも90%に
+            .width(160.dp)
+            .height(90.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
@@ -460,18 +459,21 @@ private fun MediaCard(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                shadowElevation = elevation.toPx()
+                clip = true
             }
             .then(
                 if (isFocused) {
                     Modifier.border(
                         width = 2.dp,
                         color = HomeVideoColors.CardBorderFocus,
-                        shape = RoundedCornerShape(6.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                 } else Modifier
             ),
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         onClick = onClick
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

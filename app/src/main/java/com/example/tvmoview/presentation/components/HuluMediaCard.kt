@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +26,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.shadow
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.theme.HuluColors
 import androidx.compose.ui.res.painterResource
@@ -38,8 +39,8 @@ fun HuluMediaCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (isFocused) 1.05f else 1f, tween(200))
-    val shadow by animateDpAsState(if (isFocused) 12.dp else 6.dp, tween(200))
+    val scale by animateFloatAsState(if (isFocused) 1.1f else 1f, tween(200))
+    val shadow by animateDpAsState(if (isFocused) 20.dp else 8.dp, tween(200))
 
     Card(
         modifier = modifier
@@ -50,9 +51,15 @@ fun HuluMediaCard(
                 scaleX = scale
                 scaleY = scale
                 shadowElevation = shadow.toPx()
+                clip = true
             }
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) Color.White.copy(alpha = 0.3f) else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
             .zIndex(if (isFocused) 1f else 0f),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = HuluColors.CardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = shadow)
     ) {
