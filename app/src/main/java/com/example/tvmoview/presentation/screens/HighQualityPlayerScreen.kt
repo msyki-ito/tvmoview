@@ -25,15 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.dash.DashMediaSource
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.ui.PlayerView
+import androidx.media3.common.VideoSize
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
@@ -68,6 +71,7 @@ fun HighQualityPlayerScreen(
     var isSeekingPreview by remember { mutableStateOf(false) }
     var previewPosition by remember { mutableLongStateOf(0L) }
     var wasPlayingBeforeSeek by remember { mutableStateOf(false) }
+    var previewJob by remember { mutableStateOf<Job?>(null) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -109,6 +113,20 @@ fun HighQualityPlayerScreen(
                             .createMediaSource(MediaItem.fromUri(url))
                     }
                     player.setMediaSource(mediaSource)
+                    player.addAnalyticsListener(object : AnalyticsListener {
+                        override fun onVideoSizeChanged(eventTime: AnalyticsListener.EventTime, videoSize: VideoSize) {
+                            Log.d("Adaptive", "解像度: ${videoSize.width}x${videoSize.height}")
+                        }
+
+                        override fun onBandwidthEstimate(
+                            eventTime: AnalyticsListener.EventTime,
+                            totalLoadTimeMs: Int,
+                            totalBytesLoaded: Long,
+                            bitrateEstimate: Long
+                        ) {
+                            Log.d("Adaptive", "推定帯域: ${bitrateEstimate / 1000} kbps")
+                        }
+                    })
                     player.prepare()
                     val resume = UserPreferences.getResumePosition(itemId)
                     if (resume > 0) {
@@ -154,8 +172,9 @@ fun HighQualityPlayerScreen(
             seekMessage = message
             showCustomSeek = true
 
-            coroutineScope.launch {
-                delay(3000)
+            previewJob?.cancel()
+            previewJob = coroutineScope.launch {
+                delay(5000)
                 if (isSeekingPreview) {
                     showCustomSeek = false
                 }
