@@ -152,6 +152,7 @@ fun SettingsItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = onClick ?: {}
     ) {
         Row(
