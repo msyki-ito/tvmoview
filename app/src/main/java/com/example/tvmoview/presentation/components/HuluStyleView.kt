@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Calendar
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -27,8 +28,25 @@ import java.util.Calendar
 fun HuluStyleView(
     items: List<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onScroll: (Boolean) -> Unit = {}
 ) {
+    val columnState = rememberLazyListState()
+    var previousIndex by remember { mutableStateOf(0) }
+    var previousOffset by remember { mutableStateOf(0) }
+    LaunchedEffect(columnState) {
+        snapshotFlow { columnState.firstVisibleItemIndex to columnState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                when {
+                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> onScroll(false)
+                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> onScroll(true)
+                }
+                previousIndex = index
+                previousOffset = offset
+            }
+    }
+
     val (folders, media) = remember(items) {
         items.partition { it.isFolder }
     }
@@ -47,6 +65,7 @@ fun HuluStyleView(
     }
 
     LazyColumn(
+        state = columnState,
         modifier = modifier
             .fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)

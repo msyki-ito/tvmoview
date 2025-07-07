@@ -2,6 +2,7 @@
 
 import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
@@ -30,6 +30,7 @@ import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -55,7 +56,21 @@ fun ModernMediaBrowser(
 
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
-    val coroutineScope = rememberCoroutineScope()
+    var showTopBar by remember { mutableStateOf(true) }
+    var previousIndex by remember { mutableStateOf(0) }
+    var previousOffset by remember { mutableStateOf(0) }
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                when {
+                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> showTopBar = false
+                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> showTopBar = true
+                }
+                previousIndex = index
+                previousOffset = offset
+            }
+    }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
@@ -72,24 +87,29 @@ fun ModernMediaBrowser(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Column {
-            ModernTopBar(
-                currentPath = currentPath,
-                viewMode = viewMode,
-                sortOrder = sortOrder,
-                tileColumns = tileColumns,
-                onViewModeChange = { viewModel.toggleViewMode() },
-                onTileColumnsChange = { viewModel.cycleTileColumns() },
-                onSortClick = { showSortDialog = true },
-                onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
-                onRefreshClick = { viewModel.refresh() },
-                onSettingsClick = onSettingsClick,
-                onBackClick = onBackClick,
-                isLoading = isLoading
-            )
+            AnimatedVisibility(
+                visible = showTopBar,
+                enter = fadeIn(tween(150)),
+                exit = fadeOut(tween(150))
+            ) {
+                ModernTopBar(
+                    currentPath = currentPath,
+                    viewMode = viewMode,
+                    sortOrder = sortOrder,
+                    tileColumns = tileColumns,
+                    onViewModeChange = { viewModel.toggleViewMode() },
+                    onTileColumnsChange = { viewModel.cycleTileColumns() },
+                    onSortClick = { showSortDialog = true },
+                    onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
+                    onRefreshClick = { viewModel.refresh() },
+                    onSettingsClick = onSettingsClick,
+                    onBackClick = onBackClick,
+                    isLoading = isLoading
+                )
+            }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
@@ -196,7 +216,8 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    onScroll = { showTopBar = it }
                                 )
                             }
 
@@ -209,7 +230,8 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    }
+                                    },
+                                    onScroll = { showTopBar = it }
                                 )
                             }
                         }
