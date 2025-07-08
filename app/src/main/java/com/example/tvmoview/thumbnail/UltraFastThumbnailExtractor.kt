@@ -183,8 +183,10 @@ object UltraFastThumbnailExtractor {
                         Log.d(TAG, "Output format changed: ${codec.outputFormat}")
                     }
                     outputIndex >= 0 -> {
-                        Log.d(TAG, "\uD83D\uDCCB Frame arrived: ${bufferInfo.presentationTimeUs}us, want >= ${nextSnapshotUs}us")
-                        val needSnap = bufferInfo.presentationTimeUs >= nextSnapshotUs
+                        val tUs = bufferInfo.presentationTimeUs
+                        val delta = kotlin.math.abs(tUs - nextSnapshotUs)
+                        Log.d(TAG, "\uD83D\uDCCB Frame arrived: ${tUs}us, target=${nextSnapshotUs}us, \u0394=${delta}")
+                        val needSnap = delta <= 500_000L
                         codec.releaseOutputBuffer(outputIndex, true)
                         if (needSnap) {
                             grab(reader!!)?.let { bmp ->
