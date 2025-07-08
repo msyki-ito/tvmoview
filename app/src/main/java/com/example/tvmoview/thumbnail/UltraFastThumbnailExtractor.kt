@@ -100,6 +100,7 @@ object UltraFastThumbnailExtractor {
             var outputFinished = false
 
             // Surface経由でのレンダリング設定
+            Log.d(TAG, "\uD83E\uDDE9 codec configured with surface=${reader.surface}, format=${format}")
             codec.configure(format, reader.surface, null, 0)
             codec.start()
 
@@ -188,6 +189,8 @@ object UltraFastThumbnailExtractor {
                         val delta = kotlin.math.abs(tUs - nextSnapshotUs)
                         Log.d(TAG, "\uD83D\uDCCB Frame arrived: ${tUs}us, target=${nextSnapshotUs}us, \u0394=${delta}")
                         val needSnap = delta <= 500_000L
+                        Log.d(TAG, "\uD83D\uDCE6 bufferInfo: timeUs=${bufferInfo.presentationTimeUs}, index=$outputIndex")
+                        Log.d(TAG, "\uD83D\uDCE4 releasing output buffer with render=true")
                         codec.releaseOutputBuffer(outputIndex, true)
 
                         if (pendingGrab) {
@@ -235,9 +238,10 @@ object UltraFastThumbnailExtractor {
     }
 
     private fun grab(reader: ImageReader): Bitmap? {
+        Log.d(TAG, "\uD83D\uDFE1 grab() called")
         val image = reader.acquireLatestImage()
         if (image == null) {
-            Log.w(TAG, "grab(): no image available")
+            Log.w(TAG, "\u26A0\uFE0F grab(): no image available at reader=$reader")
             return null
         }
         return try {
@@ -245,7 +249,11 @@ object UltraFastThumbnailExtractor {
             val buffer = image.planes[0].buffer
             buffer.rewind()
             bmp.copyPixelsFromBuffer(buffer)
+            Log.d(TAG, "\uD83D\uDCF8 grab(): success (w=${image.width}, h=${image.height})")
             bmp
+        } catch (e: Exception) {
+            Log.e(TAG, "\uD83D\uDEA9 grab(): error", e)
+            null
         } finally {
             image.close()
         }
