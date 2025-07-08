@@ -29,6 +29,7 @@ import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
+import com.example.tvmoview.presentation.viewmodels.SharedExoPlayerViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.SimpleDateFormat
@@ -38,6 +39,8 @@ import java.util.Locale
 @Composable
 fun ModernMediaBrowser(
     folderId: String? = null,
+    viewMode: ViewMode = ViewMode.TILE,
+    sharedPlayerViewModel: SharedExoPlayerViewModel? = null,
     onMediaSelected: (MediaItem) -> Unit,
     onFolderSelected: (String) -> Unit,
     onSettingsClick: (() -> Unit)? = null,
@@ -46,7 +49,7 @@ fun ModernMediaBrowser(
     val viewModel: MediaBrowserViewModel = viewModel()
     val items by viewModel.items.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val viewMode by viewModel.viewMode.collectAsState()
+    val viewModeState by viewModel.viewMode.collectAsState(initial = viewMode)
     val sortBy by viewModel.sortBy.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val tileColumns by viewModel.tileColumns.collectAsState()
@@ -97,7 +100,7 @@ fun ModernMediaBrowser(
             ) {
                 ModernTopBar(
                     currentPath = currentPath,
-                    viewMode = viewMode,
+                    viewMode = viewModeState,
                     sortOrder = sortOrder,
                     tileColumns = tileColumns,
                     onViewModeChange = { viewModel.toggleViewMode() },
@@ -121,7 +124,7 @@ fun ModernMediaBrowser(
 
                     // データがある場合は常にコンテンツ表示（手動更新中でも表示継続）
                     else -> {
-                        when (viewMode) {
+                        when (viewModeState) {
                             ViewMode.TILE -> {
                                 ModernTileView(
                                     items = items,
@@ -224,6 +227,7 @@ fun ModernMediaBrowser(
                             ViewMode.HOME_VIDEO -> {
                                 HomeVideoView(
                                     items = items,
+                                    sharedPlayerViewModel = sharedPlayerViewModel,
                                     onItemClick = { item ->
                                         if (item.isFolder) {
                                             onFolderSelected(item.id)

@@ -20,6 +20,8 @@ import androidx.navigation.navArgument
 import com.example.tvmoview.data.repository.MediaRepository
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
+import com.example.tvmoview.presentation.viewmodels.SharedExoPlayerViewModel
+import com.example.tvmoview.presentation.viewmodels.ViewMode
 
 // OneDrive統合のための新しいimport
 import com.example.tvmoview.data.auth.AuthenticationManager
@@ -181,6 +183,7 @@ sealed class AuthState {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val sharedPlayerViewModel: SharedExoPlayerViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -189,6 +192,8 @@ fun AppNavigation() {
         // ホーム画面（メディア一覧）
         composable("home") {
             ModernMediaBrowser(
+                viewMode = ViewMode.HOME_VIDEO,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
@@ -215,6 +220,7 @@ fun AppNavigation() {
             val folderId = backStackEntry.arguments?.getString("folderId") ?: ""
             ModernMediaBrowser(
                 folderId = folderId,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         Log.d("MainActivity", "🎬 フォルダ内動画選択: ${mediaItem.name}")
@@ -245,6 +251,7 @@ fun AppNavigation() {
 
             HighQualityPlayerScreen(
                 itemId = itemId,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
