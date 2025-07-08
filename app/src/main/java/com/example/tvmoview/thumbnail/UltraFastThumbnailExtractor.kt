@@ -6,23 +6,19 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.os.Build
-import android.view.PixelCopy
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.roundToLong
 
 /**
  * One-pass thumbnail extractor that caches all frames in memory.
  */
 object UltraFastThumbnailExtractor {
 
-    private val cache = ConcurrentHashMap<Pair<String, Long>, Bitmap>()
+    private val cache = ConcurrentHashMap<Pair<String, Int>, Bitmap>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
@@ -44,9 +40,8 @@ object UltraFastThumbnailExtractor {
     /**
      * Returns cached bitmap if available. Null until generated.
      */
-    fun get(source: String, timeMs: Long): Bitmap? = cache[source to timeMs.roundFrame()]
-
-    private fun Long.roundFrame() = (this / 10_000L) * 10_000L
+    fun get(source: String, timeMs: Long, intervalMs: Long = 10_000L): Bitmap? =
+        cache[source to (timeMs / intervalMs).toInt()]
 
     @WorkerThread
     private fun decodeAll(source: String, intervalMs: Long, maxW: Int, maxH: Int) {
@@ -64,7 +59,9 @@ object UltraFastThumbnailExtractor {
         val reader = ImageReader.newInstance(maxW, maxH, PixelFormat.RGBA_8888, 2)
         codec.configure(format, reader.surface, null, 0)
         codec.setCallback(object : MediaCodec.Callback() {
-            private var nextSnapshotUs = intervalMs * 1_000L
+            private var nextSnapshotUs = 0L
+            private var frameIndex = 0
+            private var completed = false
 
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 val buf = codec.getInputBuffer(index) ?: return
@@ -80,26 +77,28 @@ object UltraFastThumbnailExtractor {
             override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
                 val tUs = info.presentationTimeUs
                 val needSnap = tUs >= nextSnapshotUs
+                val end = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
                 codec.releaseOutputBuffer(index, true)
                 if (needSnap) {
                     grab(reader)?.let { bmp ->
-                        cache[source to (nextSnapshotUs / 1_000).roundFrame()] = bmp
+                        cache[source to frameIndex] = bmp
                     }
+                    frameIndex++
                     nextSnapshotUs += intervalMs * 1_000L
                 }
+                if (end) completed = true
             }
 
             override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {}
             override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {}
         })
         codec.start()
-        while (true) {
+        while (!completed) {
             Thread.sleep(50)
-            if (extractor.sampleTime < 0 && reader.acquireLatestImage() == null) break
         }
-        codec.stop();
-        codec.release();
-        extractor.release();
+        codec.stop()
+        codec.release()
+        extractor.release()
         reader.close()
     }
 

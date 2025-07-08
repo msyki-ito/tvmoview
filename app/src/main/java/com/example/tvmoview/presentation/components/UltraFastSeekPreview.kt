@@ -22,12 +22,13 @@ import kotlinx.coroutines.delay
 fun UltraFastSeekPreview(
     videoUrl: String,
     seekPosition: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    intervalMs: Long = 10_000L
 ) {
     val thumb by produceState<android.graphics.Bitmap?>(null, videoUrl, seekPosition) {
-        UltraFastThumbnailExtractor.prewarm(videoUrl)
+        UltraFastThumbnailExtractor.prewarm(videoUrl, intervalMs)
         while (value == null) {
-            value = UltraFastThumbnailExtractor.get(videoUrl, seekPosition)
+            value = UltraFastThumbnailExtractor.get(videoUrl, seekPosition, intervalMs)
             if (value == null) delay(40)
         }
     }
