@@ -65,43 +65,51 @@ object UltraFastThumbnailExtractor {
         val reader = ImageReader.newInstance(maxW, maxH, PixelFormat.RGBA_8888, 2)
         codec.configure(format, reader.surface, null, 0)
         codec.setCallback(object : MediaCodec.Callback() {
-            private var nextSnapshotUs = intervalMs * 1000L
-            override fun onInputBufferAvailable(id: Int) {
-                val buf = codec.getInputBuffer(id)!!
+            private var nextSnapshotUs = intervalMs * 1_000L
+
+            override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
+                val buf = codec.getInputBuffer(index) ?: return
                 val sz = extractor.readSampleData(buf, 0)
                 if (sz < 0) {
-                    codec.queueInputBuffer(id, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                 } else {
-                    codec.queueInputBuffer(id, 0, sz, extractor.sampleTime, 0)
+                    codec.queueInputBuffer(index, 0, sz, extractor.sampleTime, 0)
                     extractor.advance()
                 }
             }
-            override fun onOutputBufferAvailable(id: Int, info: MediaCodec.BufferInfo) {
+
+            override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
                 val tUs = info.presentationTimeUs
-                val need = tUs >= nextSnapshotUs
-                codec.releaseOutputBuffer(id, true)
-                if (need) {
+                val needSnap = tUs >= nextSnapshotUs
+                codec.releaseOutputBuffer(index, true)
+                if (needSnap) {
                     grab(reader)?.let { bmp ->
-                        cache[file to (nextSnapshotUs / 1000).roundFrame()] = bmp
+                        cache[file to (nextSnapshotUs / 1_000).roundFrame()] = bmp
                     }
-                    nextSnapshotUs += intervalMs * 1000L
+                    nextSnapshotUs += intervalMs * 1_000L
                 }
             }
-            override fun onError(c: MediaCodec, e: MediaCodec.CodecException) {}
-            override fun onOutputFormatChanged(c: MediaCodec, f: MediaFormat) {}
+
+            override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {}
+            override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {}
         })
         codec.start()
-        while (cache[file to 0L] == null) {
+        while (true) {
             Thread.sleep(50)
-            if (reader.acquireLatestImage() == null && extractor.sampleTime < 0) break
+            if (extractor.sampleTime < 0 && reader.acquireLatestImage() == null) break
         }
-        codec.stop(); codec.release(); extractor.release(); reader.close()
+        codec.stop();
+        codec.release();
+        extractor.release();
+        reader.close()
     }
 
     private fun grab(reader: ImageReader): Bitmap? {
         val img = reader.acquireLatestImage() ?: return null
         val bmp = Bitmap.createBitmap(img.width, img.height, Bitmap.Config.ARGB_8888)
-        PixelCopy.request(img.surface!!, bmp, {}, null)
+        val buffer = img.planes[0].buffer
+        buffer.rewind()
+        bmp.copyPixelsFromBuffer(buffer)
         img.close()
         return bmp
     }
