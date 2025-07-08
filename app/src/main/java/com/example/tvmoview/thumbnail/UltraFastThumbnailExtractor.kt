@@ -95,6 +95,7 @@ object UltraFastThumbnailExtractor {
 
             var frameIndex = 0
             var nextSnapshotUs = 0L
+            var pendingGrab = false
             var inputFinished = false
             var outputFinished = false
 
@@ -188,14 +189,21 @@ object UltraFastThumbnailExtractor {
                         Log.d(TAG, "\uD83D\uDCCB Frame arrived: ${tUs}us, target=${nextSnapshotUs}us, \u0394=${delta}")
                         val needSnap = delta <= 500_000L
                         codec.releaseOutputBuffer(outputIndex, true)
-                        if (needSnap) {
+
+                        if (pendingGrab) {
                             grab(reader!!)?.let { bmp ->
                                 cache[source to frameIndex] = bmp
-                                Log.d(TAG, "\uD83D\uDCF8 Captured frame $frameIndex")
+                                Log.d(TAG, "\uD83D\uDCF8 Captured frame $frameIndex (delayed)")
                             }
+                            pendingGrab = false
                             frameIndex++
                             nextSnapshotUs += intervalMs * 1_000L
                         }
+
+                        if (needSnap) {
+                            pendingGrab = true
+                        }
+
                         if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                             outputFinished = true
                         }
