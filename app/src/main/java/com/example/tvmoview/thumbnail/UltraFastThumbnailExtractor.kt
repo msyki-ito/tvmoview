@@ -58,10 +58,12 @@ object UltraFastThumbnailExtractor {
         val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
         val reader = ImageReader.newInstance(maxW, maxH, PixelFormat.RGBA_8888, 2)
         codec.configure(format, reader.surface, null, 0)
+
+        var completed = false
+
         codec.setCallback(object : MediaCodec.Callback() {
             private var nextSnapshotUs = 0L
             private var frameIndex = 0
-            private var completed = false
 
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
                 val buf = codec.getInputBuffer(index) ?: return
