@@ -168,6 +168,14 @@ class OneDriveRepository(
         }
     }
 
+    suspend fun getPreviewUrl(itemId: String): String? {
+        return getDownloadUrl(itemId)
+    }
+
+    suspend fun getThumbnailUrl(itemId: String, size: String = "large"): String? {
+        return "https://graph.microsoft.com/v1.0/me/drive/items/$itemId/thumbnails/0/$size/content"
+    }
+
     private suspend fun fetchAndCacheItems(folderId: String?) {
         try {
             val items = fetchAllItems(folderId)
