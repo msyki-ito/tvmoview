@@ -40,7 +40,8 @@ import androidx.media3.common.VideoSize
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
-import com.example.tvmoview.presentation.components.SeekPreview
+import com.example.tvmoview.presentation.components.UltraFastSeekPreview
+import java.io.File
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -335,9 +336,9 @@ fun HighQualityPlayerScreen(
                     .padding(horizontal = 32.dp, vertical = 24.dp)
             ) {
                 if (isSeekingPreview) {
-                    if (previewUrl != null) {
-                        SeekPreview(
-                            previewUrl = previewUrl!!,
+                    if (previewUrl != null && resolvedUrl != null) {
+                        UltraFastSeekPreview(
+                            videoFile = File(resolvedUrl!!),
                             seekPosition = previewPosition,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
