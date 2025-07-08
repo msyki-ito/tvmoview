@@ -41,7 +41,6 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.components.UltraFastSeekPreview
-import java.io.File
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -338,7 +337,7 @@ fun HighQualityPlayerScreen(
                 if (isSeekingPreview) {
                     if (previewUrl != null && resolvedUrl != null) {
                         UltraFastSeekPreview(
-                            videoFile = File(resolvedUrl!!),
+                            videoUrl = resolvedUrl!!,
                             seekPosition = previewPosition,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )

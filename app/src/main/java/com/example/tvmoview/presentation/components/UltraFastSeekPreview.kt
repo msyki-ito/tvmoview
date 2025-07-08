@@ -16,19 +16,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import com.example.tvmoview.thumbnail.UltraFastThumbnailExtractor
-import java.io.File
 import kotlinx.coroutines.delay
 
 @Composable
 fun UltraFastSeekPreview(
-    videoFile: File,
+    videoUrl: String,
     seekPosition: Long,
     modifier: Modifier = Modifier
 ) {
-    val thumb by produceState<android.graphics.Bitmap?>(null, videoFile, seekPosition) {
-        UltraFastThumbnailExtractor.prewarm(videoFile)
+    val thumb by produceState<android.graphics.Bitmap?>(null, videoUrl, seekPosition) {
+        UltraFastThumbnailExtractor.prewarm(videoUrl)
         while (value == null) {
-            value = UltraFastThumbnailExtractor.get(videoFile, seekPosition)
+            value = UltraFastThumbnailExtractor.get(videoUrl, seekPosition)
             if (value == null) delay(40)
         }
     }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToLong
 
@@ -23,7 +22,7 @@ import kotlin.math.roundToLong
  */
 object UltraFastThumbnailExtractor {
 
-    private val cache = ConcurrentHashMap<Pair<File, Long>, Bitmap>()
+    private val cache = ConcurrentHashMap<Pair<String, Long>, Bitmap>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
@@ -31,27 +30,27 @@ object UltraFastThumbnailExtractor {
      * @param intervalMs Interval in milliseconds between snapshots.
      */
     fun prewarm(
-        file: File,
+        source: String,
         intervalMs: Long = 10_000L,
         maxW: Int = 300,
         maxH: Int = 180
     ) {
-        if (cache.keys.any { it.first == file }) return
+        if (cache.keys.any { it.first == source }) return
         scope.launch {
-            runCatching { decodeAll(file, intervalMs, maxW, maxH) }
+            runCatching { decodeAll(source, intervalMs, maxW, maxH) }
         }
     }
 
     /**
      * Returns cached bitmap if available. Null until generated.
      */
-    fun get(file: File, timeMs: Long): Bitmap? = cache[file to timeMs.roundFrame()]
+    fun get(source: String, timeMs: Long): Bitmap? = cache[source to timeMs.roundFrame()]
 
     private fun Long.roundFrame() = (this / 10_000L) * 10_000L
 
     @WorkerThread
-    private fun decodeAll(file: File, intervalMs: Long, maxW: Int, maxH: Int) {
-        val extractor = MediaExtractor().apply { setDataSource(file.path) }
+    private fun decodeAll(source: String, intervalMs: Long, maxW: Int, maxH: Int) {
+        val extractor = MediaExtractor().apply { setDataSource(source) }
         val track = (0 until extractor.trackCount).first {
             extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("video/")
         }
@@ -84,7 +83,7 @@ object UltraFastThumbnailExtractor {
                 codec.releaseOutputBuffer(index, true)
                 if (needSnap) {
                     grab(reader)?.let { bmp ->
-                        cache[file to (nextSnapshotUs / 1_000).roundFrame()] = bmp
+                        cache[source to (nextSnapshotUs / 1_000).roundFrame()] = bmp
                     }
                     nextSnapshotUs += intervalMs * 1_000L
                 }
