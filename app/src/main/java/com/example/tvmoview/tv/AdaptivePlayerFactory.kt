@@ -12,6 +12,8 @@ object AdaptivePlayerFactory {
         val trackSelector = DefaultTrackSelector(context).apply {
             parameters = buildUponParameters()
                 .setMaxVideoBitrate(2_000_000)
+                .setForceLowestBitrate(true)
+                .setMaxVideoSizeSd()
                 .setPreferredVideoMimeTypes(
                     MimeTypes.VIDEO_H265,
                     MimeTypes.VIDEO_AV1,
