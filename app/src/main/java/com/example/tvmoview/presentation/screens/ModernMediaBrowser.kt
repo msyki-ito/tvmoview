@@ -17,9 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.R
@@ -57,20 +63,7 @@ fun ModernMediaBrowser(
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     var showTopBar by remember { mutableStateOf(true) }
-    var previousIndex by remember { mutableStateOf(0) }
-    var previousOffset by remember { mutableStateOf(0) }
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
-            .distinctUntilChanged()
-            .collect { (index, offset) ->
-                when {
-                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> showTopBar = false
-                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> showTopBar = true
-                }
-                previousIndex = index
-                previousOffset = offset
-            }
-    }
+    val topBarFocusRequester = remember { FocusRequester() }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
@@ -107,7 +100,8 @@ fun ModernMediaBrowser(
                     onRefreshClick = { viewModel.refresh() },
                     onSettingsClick = onSettingsClick,
                     onBackClick = onBackClick,
-                    isLoading = isLoading
+                    isLoading = isLoading,
+                    focusRequester = topBarFocusRequester
                 )
             }
 
@@ -127,6 +121,19 @@ fun ModernMediaBrowser(
                                     items = items,
                                     columnCount = tileColumns,
                                     state = gridState,
+                                    modifier = Modifier
+                                        .onFocusChanged { showTopBar = !it.isFocused }
+                                        .onKeyEvent { event ->
+                                            if (event.type == KeyEventType.KeyDown &&
+                                                event.key == Key.DirectionUp &&
+                                                gridState.firstVisibleItemIndex == 0 &&
+                                                !showTopBar
+                                            ) {
+                                                showTopBar = true
+                                                topBarFocusRequester.requestFocus()
+                                                true
+                                            } else false
+                                        },
                                     onItemClick = { item ->
                                         if (item.isFolder) {
                                             Log.d("ModernMediaBrowser", "📂 フォルダ選択: ${item.name}")
