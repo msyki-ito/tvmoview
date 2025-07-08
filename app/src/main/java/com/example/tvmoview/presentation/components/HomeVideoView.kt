@@ -42,9 +42,8 @@ import com.example.tvmoview.presentation.viewmodels.DateGroup
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.media3.common.MediaItem as ExoMediaItem
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.tvmoview.presentation.viewmodels.SharedExoPlayerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -61,6 +60,7 @@ object HomeVideoColors {
 @Composable
 fun HomeVideoView(
     items: List<MediaItem>,
+    sharedPlayerViewModel: SharedExoPlayerViewModel?,
     onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier,
     onScroll: (Boolean) -> Unit = {}
@@ -108,6 +108,7 @@ fun HomeVideoView(
         // メインプレビューエリア（60%）
         MainPreviewArea(
             selectedMedia = selectedMedia,
+            sharedPlayerViewModel = sharedPlayerViewModel,
             onItemClick = onItemClick,
             modifier = Modifier.weight(0.60f)
         )
@@ -127,6 +128,7 @@ fun HomeVideoView(
 @Composable
 private fun MainPreviewArea(
     selectedMedia: MediaItem?,
+    sharedPlayerViewModel: SharedExoPlayerViewModel?,
     onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -139,13 +141,14 @@ private fun MainPreviewArea(
         showVideo = false
         videoUrl = null
         if (selectedMedia?.isVideo == true) {
-            // OneDriveからダウンロードURL取得
             val url = com.example.tvmoview.MainActivity.oneDriveRepository
                 .getDownloadUrl(selectedMedia.id)
             if (url != null) {
                 videoUrl = url
+                sharedPlayerViewModel?.prepareVideo(selectedMedia, url)
                 delay(500)
                 showVideo = true
+                sharedPlayerViewModel?.startPreview()
             }
         }
     }
@@ -154,6 +157,14 @@ private fun MainPreviewArea(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.Black)
+            .clickable {
+                selectedMedia?.let { media ->
+                    if (media.isVideo && videoUrl != null && sharedPlayerViewModel != null) {
+                        sharedPlayerViewModel.transitionToFullScreen()
+                        onItemClick(media)
+                    }
+                }
+            }
     ) {
         selectedMedia?.let { media ->
             Crossfade(
@@ -164,11 +175,14 @@ private fun MainPreviewArea(
                     shouldShowVideo && currentMedia.isVideo -> {
                         // 動画プレビュー
                         videoUrl?.let { url ->
-                            VideoPreview(
-                                videoUrl = url,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } ?: Box(Modifier.fillMaxSize()) // URLがまだない場合は空Box
+                            sharedPlayerViewModel?.let { vm ->
+                                VideoPreview(
+                                    videoUrl = url,
+                                    sharedPlayerViewModel = vm,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        } ?: Box(Modifier.fillMaxSize())
                     }
                     else -> {
                         // 静止画表示
@@ -261,29 +275,20 @@ private fun MainPreviewArea(
 @Composable
 private fun VideoPreview(
     videoUrl: String,
+    sharedPlayerViewModel: SharedExoPlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            setMediaItem(ExoMediaItem.fromUri(videoUrl))
-            prepare()
-            playWhenReady = true
-            volume = 0f // ミュート
-            repeatMode = ExoPlayer.REPEAT_MODE_ONE // ループ再生
-        }
-    }
+    val player = remember { sharedPlayerViewModel.initializePlayer(context) }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.release()
-        }
+    DisposableEffect(player) {
+        onDispose { /* managed by ViewModel */ }
     }
 
     AndroidView(
         factory = { ctx ->
             PlayerView(ctx).apply {
-                player = exoPlayer
+                this.player = player
                 useController = false
             }
         },

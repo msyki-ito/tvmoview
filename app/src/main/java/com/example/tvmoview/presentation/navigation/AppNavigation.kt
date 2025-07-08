@@ -7,10 +7,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.tvmoview.presentation.screens.*
+import com.example.tvmoview.presentation.viewmodels.SharedExoPlayerViewModel
+import com.example.tvmoview.presentation.viewmodels.ViewMode
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val sharedPlayerViewModel: SharedExoPlayerViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 
     NavHost(
         navController = navController,
@@ -20,6 +23,8 @@ fun AppNavigation() {
         composable("home") {
             ModernMediaBrowser(
                 folderId = null,
+                viewMode = ViewMode.HOME_VIDEO,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         navController.navigate("player/${mediaItem.id}")
@@ -45,6 +50,7 @@ fun AppNavigation() {
 
             ModernMediaBrowser(
                 folderId = folderId,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         navController.navigate("player/${mediaItem.id}")
@@ -72,6 +78,7 @@ fun AppNavigation() {
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
             HighQualityPlayerScreen(
                 itemId = itemId,
+                sharedPlayerViewModel = sharedPlayerViewModel,
                 onBack = {
                     navController.popBackStack()
                 }
@@ -86,5 +93,4 @@ fun AppNavigation() {
                 }
             )
         }
-    }
-}
+    }}

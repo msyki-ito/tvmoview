@@ -30,10 +30,13 @@ import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
+import com.example.tvmoview.presentation.components.VideoTransitionWrapper
+import com.example.tvmoview.presentation.viewmodels.SharedExoPlayerViewModel
 
 @Composable
 fun HighQualityPlayerScreen(
     itemId: String,
+    sharedPlayerViewModel: SharedExoPlayerViewModel,
     onBack: () -> Unit,
     downloadUrl: String = ""
 ) {
@@ -58,40 +61,31 @@ fun HighQualityPlayerScreen(
     Log.d("VideoPlayer", "🎬 プレイヤー起動: itemId=$itemId")
 
     // ExoPlayer初期化
-    var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
+    val exoPlayer = remember { sharedPlayerViewModel.initializePlayer(context) }
 
-    fun releasePlayer() {
-        exoPlayer?.pause()
-        exoPlayer?.release()
-        exoPlayer = null
-        playerView?.player = null
+    LaunchedEffect(Unit) {
+        sharedPlayerViewModel.transitionToFullScreen()
     }
 
     LaunchedEffect(resolvedUrl) {
-        releasePlayer()
-        exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                val resume = UserPreferences.getResumePosition(itemId)
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
-                }
-                player.playWhenReady = true
-            }
+        resolvedUrl?.let { url ->
+            Log.d("VideoPlayer", "📺 動画URL設定: $url")
+            val mediaItem = MediaItem.fromUri(url)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+            val resume = UserPreferences.getResumePosition(itemId)
+            if (resume > 0) exoPlayer.seekTo(resume)
+            exoPlayer.playWhenReady = true
         }
         playerView?.player = exoPlayer
     }
-    LaunchedEffect(playerView, exoPlayer) {
+    LaunchedEffect(playerView) {
         playerView?.player = exoPlayer
     }
 
     // カスタムシークバー表示コルーチン
     fun showSeekBarTemporarily(forward: Boolean, message: String, durationMillis: Long = 1000L) {
-        exoPlayer?.let {
+        exoPlayer.let {
             currentPosition = it.currentPosition
             duration = it.duration
         }
@@ -108,9 +102,9 @@ fun HighQualityPlayerScreen(
 
     // 再生位置更新ループ
     LaunchedEffect(exoPlayer) {
-        while (exoPlayer != null) {
-            currentPosition = exoPlayer?.currentPosition ?: 0L
-            duration = exoPlayer?.duration ?: 0L
+        while (true) {
+            currentPosition = exoPlayer.currentPosition
+            duration = exoPlayer.duration
             delay(500)
         }
     }
@@ -118,15 +112,14 @@ fun HighQualityPlayerScreen(
     // クリーンアップ
     DisposableEffect(Unit) {
         onDispose {
-            val pos = exoPlayer?.currentPosition ?: 0L
-            val dur = exoPlayer?.duration ?: 0L
+            val pos = exoPlayer.currentPosition
+            val dur = exoPlayer.duration
             if (dur - pos > 3000) {
                 UserPreferences.setResumePosition(itemId, pos)
             } else {
                 UserPreferences.clearResumePosition(itemId)
             }
-            Log.d("VideoPlayer", "🧹 ExoPlayer解放")
-            releasePlayer()
+            sharedPlayerViewModel.exitFullScreen()
         }
     }
 
@@ -137,19 +130,22 @@ fun HighQualityPlayerScreen(
 
     // 戻るボタンで即終了
     BackHandler {
-        val pos = exoPlayer?.currentPosition ?: 0L
-        val dur = exoPlayer?.duration ?: 0L
+        val pos = exoPlayer.currentPosition
+        val dur = exoPlayer.duration
         if (dur - pos > 3000) {
             UserPreferences.setResumePosition(itemId, pos)
         } else {
             UserPreferences.clearResumePosition(itemId)
         }
-        releasePlayer()
+        sharedPlayerViewModel.exitFullScreen()
         onBack()
     }
 
-    Box(
-        modifier = Modifier
+    val isFullScreen by sharedPlayerViewModel.isFullScreen.collectAsState()
+
+    VideoTransitionWrapper(isFullScreen = isFullScreen) {
+        Box(
+            modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
             .focusRequester(focusRequester)
@@ -159,66 +155,66 @@ fun HighQualityPlayerScreen(
                     when (keyEvent.key) {
                         // 📺 TVリモコン：右ボタン（10秒進む）
                         Key.DirectionRight -> {
-                            val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
-                            exoPlayer?.seekTo(newPosition)
+                            val newPosition = exoPlayer.currentPosition + 10000
+                            exoPlayer.seekTo(newPosition)
                             showSeekBarTemporarily(true, "+10秒")
                             Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：左ボタン（10秒戻る）
                         Key.DirectionLeft -> {
-                            val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
-                            exoPlayer?.seekTo(newPosition)
+                            val newPosition = maxOf(0, exoPlayer.currentPosition - 10000)
+                            exoPlayer.seekTo(newPosition)
                             showSeekBarTemporarily(false, "-10秒")
                             Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true
                         }
                         // 📺 TVリモコン：上ボタン（音量上げる）
                         Key.DirectionUp -> {
-                            val currentVolume = exoPlayer?.volume ?: 0f
+                            val currentVolume = exoPlayer.volume
                             val newVolume = minOf(1.0f, currentVolume + 0.1f)
-                            exoPlayer?.volume = newVolume
+                            exoPlayer.volume = newVolume
                             Log.d("VideoPlayer", "🔊 音量上げる: $newVolume")
                             true
                         }
                         // 📺 TVリモコン：下ボタン（音量下げる）
                         Key.DirectionDown -> {
-                            val currentVolume = exoPlayer?.volume ?: 0f
+                            val currentVolume = exoPlayer.volume
                             val newVolume = maxOf(0.0f, currentVolume - 0.1f)
-                            exoPlayer?.volume = newVolume
+                            exoPlayer.volume = newVolume
                             Log.d("VideoPlayer", "🔉 音量下げる: $newVolume")
                             true
                         }
                         // 📺 TVリモコン：決定ボタン/再生停止ボタン
                         Key.DirectionCenter, Key.Enter, Key.MediaPlayPause -> {
-                            if (exoPlayer?.isPlaying == true) {
-                                exoPlayer?.pause()
+                            if (exoPlayer.isPlaying) {
+                                exoPlayer.pause()
                                 Log.d("VideoPlayer", "⏸️ 一時停止")
                             } else {
-                                exoPlayer?.play()
+                                exoPlayer.play()
                                 Log.d("VideoPlayer", "▶️ 再生開始")
                             }
                             true
                         }
                         // 📺 TVリモコン：戻るボタン
                         Key.Back, Key.Escape -> {
-                            val pos = exoPlayer?.currentPosition ?: 0L
-                            val dur = exoPlayer?.duration ?: 0L
+                            val pos = exoPlayer.currentPosition
+                            val dur = exoPlayer.duration
                             if (dur - pos > 3000) {
                                 UserPreferences.setResumePosition(itemId, pos)
                             } else {
                                 UserPreferences.clearResumePosition(itemId)
                             }
-                            releasePlayer()
+                            sharedPlayerViewModel.exitFullScreen()
                             onBack()
                             true
                         }
                         // キーボード用（開発時）
                         Key.Spacebar -> {
-                            if (exoPlayer?.isPlaying == true) {
-                                exoPlayer?.pause()
+                            if (exoPlayer.isPlaying) {
+                                exoPlayer.pause()
                             } else {
-                                exoPlayer?.play()
+                                exoPlayer.play()
                             }
                             true
                         }
@@ -228,10 +224,10 @@ fun HighQualityPlayerScreen(
                     false
                 }
             }
-    ) {
-        // ExoPlayer表示（URL未解決時はローディング）
-        resolvedUrl?.let {
-            AndroidView(
+        ) {
+            // ExoPlayer表示（URL未解決時はローディング）
+            resolvedUrl?.let {
+                AndroidView(
                 factory = { ctx ->
                     PlayerView(ctx).apply {
                         player = exoPlayer
@@ -242,8 +238,8 @@ fun HighQualityPlayerScreen(
                     }
                 },
                 modifier = Modifier.fillMaxSize()
-            )
-        } ?: LoadingAnimation()
+                )
+            } ?: LoadingAnimation()
 
 
 
