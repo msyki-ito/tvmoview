@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,10 +27,18 @@ fun UltraFastSeekPreview(
     intervalMs: Long = 10_000L
 ) {
     val thumb by produceState<android.graphics.Bitmap?>(null, videoUrl, seekPosition) {
+        Log.d("SeekPreview", "🔍 request frame @${seekPosition}ms")
         UltraFastThumbnailExtractor.prewarm(videoUrl, intervalMs)
+        var loggedWait = false
         while (value == null) {
             value = UltraFastThumbnailExtractor.get(videoUrl, seekPosition, intervalMs)
-            if (value == null) delay(40)
+            if (value == null) {
+                if (!loggedWait) Log.d("SeekPreview", "⏳ waiting for frame")
+                loggedWait = true
+                delay(40)
+            } else {
+                Log.d("SeekPreview", "✅ frame ready")
+            }
         }
     }
 
