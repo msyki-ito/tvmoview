@@ -26,6 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.example.tvmoview.tv.AdaptivePlayerFactory
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
@@ -85,6 +86,18 @@ fun HighQualityPlayerScreen(
             }
         }
         playerView?.player = exoPlayer
+    }
+    LaunchedEffect(exoPlayer) {
+        exoPlayer?.let { player ->
+            delay(2000)
+            val selector = player.trackSelector as? DefaultTrackSelector
+            selector?.let { sel ->
+                sel.parameters = sel.parameters.buildUpon()
+                    .clearVideoSizeConstraints()
+                    .setForceLowestBitrate(false)
+                    .build()
+            }
+        }
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer

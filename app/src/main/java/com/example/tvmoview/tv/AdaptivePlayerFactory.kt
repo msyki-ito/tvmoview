@@ -11,9 +11,8 @@ object AdaptivePlayerFactory {
     fun create(context: Context): ExoPlayer {
         val trackSelector = DefaultTrackSelector(context).apply {
             parameters = buildUponParameters()
-                .setMaxVideoBitrate(2_000_000)
-                .setForceLowestBitrate(true)
                 .setMaxVideoSizeSd()
+                .setForceLowestBitrate(true)
                 .setPreferredVideoMimeTypes(
                     MimeTypes.VIDEO_H265,
                     MimeTypes.VIDEO_AV1,
@@ -23,14 +22,14 @@ object AdaptivePlayerFactory {
         }
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                15_000,
-                50_000,
-                500,
+                5_000,
+                30_000,
+                300,
                 1_000
             )
             .build()
         val bandwidthMeter = DefaultBandwidthMeter.Builder(context)
-            .setInitialBitrateEstimate(5_000_000)
+            .setInitialBitrateEstimate(3_000_000)
             .build()
         return ExoPlayer.Builder(context)
             .setTrackSelector(trackSelector)
