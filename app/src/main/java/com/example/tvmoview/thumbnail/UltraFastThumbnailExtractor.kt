@@ -6,11 +6,8 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.util.Log
 import androidx.annotation.WorkerThread
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -19,32 +16,42 @@ import java.util.concurrent.ConcurrentHashMap
 object UltraFastThumbnailExtractor {
 
     private val cache = ConcurrentHashMap<Pair<String, Int>, Bitmap>()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
-     * Prewarm cache by decoding every frame on a background thread.
+     * Prewarm cache synchronously by decoding every frame.
      * @param intervalMs Interval in milliseconds between snapshots.
      */
-    fun prewarm(
+    suspend fun prewarm(
         source: String,
         intervalMs: Long = 10_000L,
         maxW: Int = 300,
         maxH: Int = 180
     ) {
-        if (cache.keys.any { it.first == source }) return
-        scope.launch {
-            runCatching { decodeAll(source, intervalMs, maxW, maxH) }
+        if (cache.keys.any { it.first == source }) {
+            Log.d("ThumbnailExtractor", "🔄 cache already prepared: $source")
+            return
         }
+        Log.d("ThumbnailExtractor", "🚀 prewarm start: $source")
+        runCatching { decodeAll(source, intervalMs, maxW, maxH) }
+            .onFailure { Log.e("ThumbnailExtractor", "❌ prewarm error", it) }
     }
 
     /**
      * Returns cached bitmap if available. Null until generated.
      */
     fun get(source: String, timeMs: Long, intervalMs: Long = 10_000L): Bitmap? =
-        cache[source to (timeMs / intervalMs).toInt()]
+        cache[source to (timeMs / intervalMs).toInt()].also { bmp ->
+            if (bmp == null) {
+                Log.d(
+                    "ThumbnailExtractor",
+                    "⏳ cache miss for $source@${timeMs / intervalMs}"
+                )
+            }
+        }
 
     @WorkerThread
     private fun decodeAll(source: String, intervalMs: Long, maxW: Int, maxH: Int) {
+        Log.d("ThumbnailExtractor", "🎞️ decoding start: $source")
         val extractor = MediaExtractor().apply { setDataSource(source) }
         val track = (0 until extractor.trackCount).first {
             extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("video/")
@@ -61,6 +68,7 @@ object UltraFastThumbnailExtractor {
 
         var completed = false
 
+        var frames = 0
         codec.setCallback(object : MediaCodec.Callback() {
             private var nextSnapshotUs = 0L
             private var frameIndex = 0
@@ -84,6 +92,7 @@ object UltraFastThumbnailExtractor {
                 if (needSnap) {
                     grab(reader)?.let { bmp ->
                         cache[source to frameIndex] = bmp
+                        frames++
                     }
                     frameIndex++
                     nextSnapshotUs += intervalMs * 1_000L
@@ -102,6 +111,7 @@ object UltraFastThumbnailExtractor {
         codec.release()
         extractor.release()
         reader.close()
+        Log.d("ThumbnailExtractor", "✅ decoding complete: $source frames=$frames")
     }
 
     private fun grab(reader: ImageReader): Bitmap? {
