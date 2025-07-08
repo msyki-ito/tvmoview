@@ -26,6 +26,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import com.example.tvmoview.tv.AdaptivePlayerFactory
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
@@ -70,7 +72,7 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
+            AdaptivePlayerFactory.create(context).also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
@@ -84,6 +86,18 @@ fun HighQualityPlayerScreen(
             }
         }
         playerView?.player = exoPlayer
+    }
+    LaunchedEffect(exoPlayer) {
+        exoPlayer?.let { player ->
+            delay(2000)
+            val selector = player.trackSelector as? DefaultTrackSelector
+            selector?.let { sel ->
+                sel.parameters = sel.parameters.buildUpon()
+                    .clearVideoSizeConstraints()
+                    .setForceLowestBitrate(false)
+                    .build()
+            }
+        }
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer
@@ -161,6 +175,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionRight -> {
                             val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
                             exoPlayer?.seekTo(newPosition)
+                            exoPlayer?.let { AdaptivePlayerFactory.forceLowResTemporarily(it) }
                             showSeekBarTemporarily(true, "+10秒")
                             Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
@@ -169,6 +184,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionLeft -> {
                             val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
                             exoPlayer?.seekTo(newPosition)
+                            exoPlayer?.let { AdaptivePlayerFactory.forceLowResTemporarily(it) }
                             showSeekBarTemporarily(false, "-10秒")
                             Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true

@@ -45,6 +45,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.tvmoview.tv.AdaptivePlayerFactory
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -265,12 +267,24 @@ private fun VideoPreview(
 ) {
     val context = LocalContext.current
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
+        AdaptivePlayerFactory.create(context).apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
             prepare()
             playWhenReady = true
             volume = 0f // ミュート
             repeatMode = ExoPlayer.REPEAT_MODE_ONE // ループ再生
+        }
+    }
+
+    LaunchedEffect(exoPlayer) {
+        delay(2000)
+        val selector = exoPlayer.trackSelector as? DefaultTrackSelector
+        selector?.let {
+            it.parameters = it.parameters
+                .buildUpon()
+                .clearVideoSizeConstraints()
+                .setForceLowestBitrate(false)
+                .build()
         }
     }
 
