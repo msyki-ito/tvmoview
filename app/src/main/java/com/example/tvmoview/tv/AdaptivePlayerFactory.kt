@@ -11,7 +11,7 @@ object AdaptivePlayerFactory {
     fun create(context: Context): ExoPlayer {
         val trackSelector = DefaultTrackSelector(context).apply {
             parameters = buildUponParameters()
-                .setMaxInitialBitrate(2_000_000)
+                .setMaxVideoBitrate(2_000_000)
                 .setPreferredVideoMimeTypes(
                     MimeTypes.VIDEO_H265,
                     MimeTypes.VIDEO_AV1,
