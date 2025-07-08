@@ -26,6 +26,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
@@ -41,6 +43,7 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.components.UltraFastSeekPreview
+import com.example.tvmoview.thumbnail.UltraFastThumbnailExtractor
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -90,6 +93,11 @@ fun HighQualityPlayerScreen(
 
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
+        resolvedUrl?.let { url ->
+            withContext(Dispatchers.Default) {
+                UltraFastThumbnailExtractor.prewarm(url)
+            }
+        }
         exoPlayer = resolvedUrl?.let { url ->
             ExoPlayer.Builder(context)
                 .setTrackSelector(

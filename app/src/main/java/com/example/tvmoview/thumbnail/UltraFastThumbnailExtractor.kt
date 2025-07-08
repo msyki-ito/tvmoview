@@ -8,10 +8,6 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.util.Log
 import androidx.annotation.WorkerThread
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -20,13 +16,12 @@ import java.util.concurrent.ConcurrentHashMap
 object UltraFastThumbnailExtractor {
 
     private val cache = ConcurrentHashMap<Pair<String, Int>, Bitmap>()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
-     * Prewarm cache by decoding every frame on a background thread.
+     * Prewarm cache synchronously by decoding every frame.
      * @param intervalMs Interval in milliseconds between snapshots.
      */
-    fun prewarm(
+    suspend fun prewarm(
         source: String,
         intervalMs: Long = 10_000L,
         maxW: Int = 300,
@@ -37,10 +32,8 @@ object UltraFastThumbnailExtractor {
             return
         }
         Log.d("ThumbnailExtractor", "🚀 prewarm start: $source")
-        scope.launch {
-            runCatching { decodeAll(source, intervalMs, maxW, maxH) }
-                .onFailure { Log.e("ThumbnailExtractor", "❌ prewarm error", it) }
-        }
+        runCatching { decodeAll(source, intervalMs, maxW, maxH) }
+            .onFailure { Log.e("ThumbnailExtractor", "❌ prewarm error", it) }
     }
 
     /**

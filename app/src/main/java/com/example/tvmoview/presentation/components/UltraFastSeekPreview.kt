@@ -28,7 +28,6 @@ fun UltraFastSeekPreview(
 ) {
     val thumb by produceState<android.graphics.Bitmap?>(null, videoUrl, seekPosition) {
         Log.d("SeekPreview", "🔍 request frame @${seekPosition}ms")
-        UltraFastThumbnailExtractor.prewarm(videoUrl, intervalMs)
         var loggedWait = false
         while (value == null) {
             value = UltraFastThumbnailExtractor.get(videoUrl, seekPosition, intervalMs)
