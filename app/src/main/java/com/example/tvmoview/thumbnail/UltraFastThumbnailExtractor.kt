@@ -6,121 +6,231 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.os.Build
 import android.util.Log
 import androidx.annotation.WorkerThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * One-pass thumbnail extractor that caches all frames in memory.
  */
 object UltraFastThumbnailExtractor {
+    private const val TAG = "UltraFastThumb"
 
     private val cache = ConcurrentHashMap<Pair<String, Int>, Bitmap>()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val prewarmingUrls = mutableSetOf<String>()
 
     /**
-     * Prewarm cache synchronously by decoding every frame.
+     * Prewarm cache by decoding every frame on a background thread.
      * @param intervalMs Interval in milliseconds between snapshots.
      */
-    suspend fun prewarm(
+    fun prewarm(
         source: String,
         intervalMs: Long = 10_000L,
-        maxW: Int = 300,
+        maxW: Int = 320,
         maxH: Int = 180
     ) {
-        if (cache.keys.any { it.first == source }) {
-            Log.d("ThumbnailExtractor", "🔄 cache already prepared: $source")
-            return
+        // 既にキャッシュ済みまたはプリウォーム中の場合はスキップ
+        if (cache.keys.any { it.first == source } || !prewarmingUrls.add(source)) return
+
+        scope.launch {
+            try {
+                Log.d(TAG, "Starting prewarm for: $source")
+                decodeAll(source, intervalMs, maxW, maxH)
+            } catch (e: Exception) {
+                Log.e(TAG, "Prewarm failed for $source", e)
+            } finally {
+                prewarmingUrls.remove(source)
+            }
         }
-        Log.d("ThumbnailExtractor", "🚀 prewarm start: $source")
-        runCatching { decodeAll(source, intervalMs, maxW, maxH) }
-            .onFailure { Log.e("ThumbnailExtractor", "❌ prewarm error", it) }
     }
 
     /**
      * Returns cached bitmap if available. Null until generated.
      */
-    fun get(source: String, timeMs: Long, intervalMs: Long = 10_000L): Bitmap? =
-        cache[source to (timeMs / intervalMs).toInt()].also { bmp ->
-            if (bmp == null) {
-                Log.d(
-                    "ThumbnailExtractor",
-                    "⏳ cache miss for $source@${timeMs / intervalMs}"
-                )
-            }
-        }
+    fun get(source: String, timeMs: Long, intervalMs: Long = 10_000L): Bitmap? {
+        val index = (timeMs / intervalMs).toInt()
+        return cache[source to index]
+    }
 
     @WorkerThread
     private fun decodeAll(source: String, intervalMs: Long, maxW: Int, maxH: Int) {
-        Log.d("ThumbnailExtractor", "🎞️ decoding start: $source")
-        val extractor = MediaExtractor().apply { setDataSource(source) }
-        val track = (0 until extractor.trackCount).first {
-            extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!!.startsWith("video/")
-        }
-        val format = extractor.getTrackFormat(track).apply {
-            setInteger(MediaFormat.KEY_MAX_WIDTH, maxW)
-            setInteger(MediaFormat.KEY_MAX_HEIGHT, maxH)
-        }
-        extractor.selectTrack(track)
+        val extractor = MediaExtractor()
+        var codec: MediaCodec? = null
+        var reader: ImageReader? = null
 
-        val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
-        val reader = ImageReader.newInstance(maxW, maxH, PixelFormat.RGBA_8888, 2)
-        codec.configure(format, reader.surface, null, 0)
+        try {
+            extractor.setDataSource(source)
 
-        var completed = false
+            // ビデオトラックを探す
+            val trackIndex = (0 until extractor.trackCount).firstOrNull {
+                extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true
+            } ?: throw IllegalArgumentException("No video track found")
 
-        var frames = 0
-        codec.setCallback(object : MediaCodec.Callback() {
-            private var nextSnapshotUs = 0L
-            private var frameIndex = 0
+            val format = extractor.getTrackFormat(trackIndex)
+            extractor.selectTrack(trackIndex)
 
-            override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-                val buf = codec.getInputBuffer(index) ?: return
-                val sz = extractor.readSampleData(buf, 0)
-                if (sz < 0) {
-                    codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                } else {
-                    codec.queueInputBuffer(index, 0, sz, extractor.sampleTime, 0)
-                    extractor.advance()
-                }
-            }
+            // 元の解像度を取得
+            val width = format.getInteger(MediaFormat.KEY_WIDTH)
+            val height = format.getInteger(MediaFormat.KEY_HEIGHT)
 
-            override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
-                val tUs = info.presentationTimeUs
-                val needSnap = tUs >= nextSnapshotUs
-                val end = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
-                codec.releaseOutputBuffer(index, true)
-                if (needSnap) {
-                    grab(reader)?.let { bmp ->
-                        cache[source to frameIndex] = bmp
-                        frames++
+            // アスペクト比を維持しながらリサイズ
+            val scale = minOf(maxW.toFloat() / width, maxH.toFloat() / height)
+            val scaledW = (width * scale).toInt()
+            val scaledH = (height * scale).toInt()
+
+            Log.d(TAG, "Video: ${width}x${height} -> ${scaledW}x${scaledH}")
+
+            // RGBA_8888フォーマットでImageReaderを作成
+            reader = ImageReader.newInstance(scaledW, scaledH, PixelFormat.RGBA_8888, 2)
+
+            val mime = format.getString(MediaFormat.KEY_MIME)!!
+            codec = MediaCodec.createDecoderByType(mime)
+
+            var frameIndex = 0
+            var nextSnapshotUs = 0L
+            var inputFinished = false
+            var outputFinished = false
+
+            // Surface経由でのレンダリング設定
+            codec.configure(format, reader.surface, null, 0)
+            codec.start()
+
+            // ImageReaderのコールバック設定
+//            reader.setOnImageAvailableListener({ imageReader ->
+//                val image = imageReader.acquireLatestImage()
+//                if (image != null) {
+//                    try {
+//                        val planes = image.planes
+//                        val buffer = planes[0].buffer
+//                        val pixelStride = planes[0].pixelStride
+//                        val rowStride = planes[0].rowStride
+//                        val rowPadding = rowStride - pixelStride * scaledW
+//
+//                        val bitmap = Bitmap.createBitmap(
+//                            scaledW + rowPadding / pixelStride,
+//                            scaledH,
+//                            Bitmap.Config.ARGB_8888
+//                        )
+//                        bitmap.copyPixelsFromBuffer(buffer)
+//
+//                        // 必要に応じてクロップ
+//                        val croppedBitmap = if (rowPadding > 0) {
+//                            Bitmap.createBitmap(bitmap, 0, 0, scaledW, scaledH)
+//                        } else {
+//                            bitmap
+//                        }
+//
+//                        cache[source to frameIndex] = croppedBitmap
+//                        Log.d(TAG, "Captured frame $frameIndex")
+//                        frameIndex++
+//                    } catch (e: Exception) {
+//                        Log.e(TAG, "Error processing image", e)
+//                    } finally {
+//                        image.close()
+//                    }
+//                }
+//            }, null)
+
+            // デコードループ
+            val bufferInfo = MediaCodec.BufferInfo()
+            var seekCount = 0
+
+            while (!outputFinished) {
+                // 入力処理
+                if (!inputFinished) {
+                    val inputIndex = codec.dequeueInputBuffer(10000)
+                    if (inputIndex >= 0) {
+                        val inputBuffer = codec.getInputBuffer(inputIndex)!!
+                        val sampleSize = extractor.readSampleData(inputBuffer, 0)
+
+                        if (sampleSize < 0) {
+                            codec.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            inputFinished = true
+                        } else {
+                            val presentationTimeUs = extractor.sampleTime
+                            codec.queueInputBuffer(inputIndex, 0, sampleSize, presentationTimeUs, 0)
+
+                            // 次のキーフレームまでシーク
+                            if (presentationTimeUs >= nextSnapshotUs) {
+                                nextSnapshotUs += intervalMs * 1000L
+                                val seekTarget = nextSnapshotUs
+
+                                // シーク実行
+                                extractor.seekTo(seekTarget, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+                                seekCount++
+
+                                if (seekCount > 100) { // 安全のため上限を設定
+                                    inputFinished = true
+                                }
+                            } else {
+                                extractor.advance()
+                            }
+                        }
                     }
-                    frameIndex++
-                    nextSnapshotUs += intervalMs * 1_000L
                 }
-                if (end) completed = true
+
+                // 出力処理
+                val outputIndex = codec.dequeueOutputBuffer(bufferInfo, 10000)
+                when {
+                    outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        Log.d(TAG, "Output format changed: ${codec.outputFormat}")
+                    }
+                    outputIndex >= 0 -> {
+                        val render = bufferInfo.presentationTimeUs >= (frameIndex * intervalMs * 1000L - 100000) // 100ms の余裕
+                        codec.releaseOutputBuffer(outputIndex, render)
+
+                        if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            outputFinished = true
+                        }
+                    }
+                }
+
+                // タイムアウト防止
+                if (System.currentTimeMillis() - System.currentTimeMillis() > 30000) {
+                    Log.w(TAG, "Timeout reached, stopping decode")
+                    break
+                }
             }
 
-            override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {}
-            override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {}
-        })
-        codec.start()
-        while (!completed) {
-            Thread.sleep(50)
+            Log.d(TAG, "Decoding completed. Total frames: $frameIndex")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Decoding failed", e)
+            throw e
+        } finally {
+            try {
+                codec?.stop()
+                codec?.release()
+                extractor.release()
+                reader?.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Cleanup error", e)
+            }
         }
-        codec.stop()
-        codec.release()
-        extractor.release()
-        reader.close()
-        Log.d("ThumbnailExtractor", "✅ decoding complete: $source frames=$frames")
     }
 
-    private fun grab(reader: ImageReader): Bitmap? {
-        val img = reader.acquireLatestImage() ?: return null
-        val bmp = Bitmap.createBitmap(img.width, img.height, Bitmap.Config.ARGB_8888)
-        val buffer = img.planes[0].buffer
-        buffer.rewind()
-        bmp.copyPixelsFromBuffer(buffer)
-        img.close()
-        return bmp
+    /**
+     * キャッシュをクリア
+     */
+    fun clearCache(source: String? = null) {
+        if (source != null) {
+            cache.keys.removeIf { it.first == source }
+        } else {
+            cache.clear()
+        }
+    }
+
+    /**
+     * デバッグ用：キャッシュ状態を取得
+     */
+    fun getCacheInfo(): String {
+        return "Cache size: ${cache.size}, URLs: ${cache.keys.map { it.first }.distinct()}"
     }
 }
