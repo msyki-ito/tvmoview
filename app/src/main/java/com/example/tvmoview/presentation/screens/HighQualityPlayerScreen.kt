@@ -95,7 +95,7 @@ fun HighQualityPlayerScreen(
         releasePlayer()
         resolvedUrl?.let { url ->
             withContext(Dispatchers.Default) {
-                UltraFastThumbnailExtractor.prewarm(url)
+                UltraFastThumbnailExtractor.prewarm(url, intervalMs = 1_000L)
             }
         }
         exoPlayer = resolvedUrl?.let { url ->
@@ -347,7 +347,8 @@ fun HighQualityPlayerScreen(
                         UltraFastSeekPreview(
                             videoUrl = resolvedUrl!!,
                             seekPosition = previewPosition,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            intervalMs = 1_000L
                         )
                     } else {
                         Box(
