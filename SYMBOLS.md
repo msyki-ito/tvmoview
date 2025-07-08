@@ -218,5 +218,6 @@
   - [F] initializeForFireTV(activity: Activity)
 - AdaptivePlayerFactory
   - [F] create(context: Context): ExoPlayer
+  - [F] forceLowResTemporarily(player: ExoPlayer)
 
 

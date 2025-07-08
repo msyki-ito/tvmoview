@@ -175,6 +175,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionRight -> {
                             val newPosition = exoPlayer?.currentPosition?.plus(10000) ?: 0
                             exoPlayer?.seekTo(newPosition)
+                            exoPlayer?.let { AdaptivePlayerFactory.forceLowResTemporarily(it) }
                             showSeekBarTemporarily(true, "+10秒")
                             Log.d("VideoPlayer", "⏩ 10秒進む: ${newPosition}ms")
                             true
@@ -183,6 +184,7 @@ fun HighQualityPlayerScreen(
                         Key.DirectionLeft -> {
                             val newPosition = maxOf(0, (exoPlayer?.currentPosition ?: 0) - 10000)
                             exoPlayer?.seekTo(newPosition)
+                            exoPlayer?.let { AdaptivePlayerFactory.forceLowResTemporarily(it) }
                             showSeekBarTemporarily(false, "-10秒")
                             Log.d("VideoPlayer", "⏪ 10秒戻る: ${newPosition}ms")
                             true

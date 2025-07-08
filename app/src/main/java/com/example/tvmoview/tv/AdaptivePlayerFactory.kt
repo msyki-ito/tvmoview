@@ -6,6 +6,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 object AdaptivePlayerFactory {
     fun create(context: Context): ExoPlayer {
@@ -36,6 +40,21 @@ object AdaptivePlayerFactory {
             .setLoadControl(loadControl)
             .setBandwidthMeter(bandwidthMeter)
             .build()
+    }
+
+    fun forceLowResTemporarily(player: ExoPlayer, durationMs: Long = 2000L) {
+        val selector = player.trackSelector as? DefaultTrackSelector ?: return
+        selector.parameters = selector.parameters.buildUpon()
+            .setMaxVideoSizeSd()
+            .setForceLowestBitrate(true)
+            .build()
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(durationMs)
+            selector.parameters = selector.parameters.buildUpon()
+                .clearVideoSizeConstraints()
+                .setForceLowestBitrate(false)
+                .build()
+        }
     }
 }
 
