@@ -27,7 +27,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.common.util.MimeTypes
+import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
@@ -74,23 +74,18 @@ fun HighQualityPlayerScreen(
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
             val trackSelector = DefaultTrackSelector(context).apply {
-                setParameters(
-                    buildUponParameters()
-                        .setMaxInitialBitrate(2_000_000)
-                        .setPreferredVideoMimeTypes(
-                            MimeTypes.VIDEO_H265,
-                            MimeTypes.VIDEO_AV1,
-                            MimeTypes.VIDEO_H264
-                        )
-                )
+                val params = buildUponParameters()
+                    .setMaxVideoBitrate(2_000_000)
+                    .setPreferredVideoMimeTypes(
+                        MimeTypes.VIDEO_H265,
+                        MimeTypes.VIDEO_AV1,
+                        MimeTypes.VIDEO_H264
+                    )
+                    .build()
+                setParameters(params)
             }
             val loadControl = DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    minBufferMs = 15000,
-                    maxBufferMs = 50000,
-                    bufferForPlaybackMs = 500,
-                    bufferForPlaybackAfterRebufferMs = 1000
-                )
+                .setBufferDurationsMs(15000, 50000, 500, 1000)
                 .build()
             val bandwidthMeter = DefaultBandwidthMeter.Builder(context)
                 .setInitialBitrateEstimate(5_000_000)
