@@ -12,11 +12,13 @@ fun ModernTileView(
     items: List<MediaItem>,
     columnCount: Int,
     state: LazyGridState,
+    modifier: Modifier = Modifier,
     onItemClick: (MediaItem) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
         state = state,
+        modifier = modifier,
         contentPadding = PaddingValues(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -37,5 +39,4 @@ fun ModernTileView(
                 showName = item.isFolder || (!item.isVideo && !item.isImage)
             )
         }
-    }
-}
+    }}

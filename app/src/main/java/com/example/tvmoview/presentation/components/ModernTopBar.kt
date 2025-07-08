@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.painterResource
+import com.example.tvmoview.R
 
 // ViewMode import追加
 import com.example.tvmoview.presentation.viewmodels.ViewMode
@@ -32,7 +36,8 @@ fun ModernTopBar(
     onRefreshClick: () -> Unit,
     onSettingsClick: (() -> Unit)? = null,
     onBackClick: (() -> Unit)? = null,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    focusRequester: FocusRequester
 ) {
     // 回転アニメーション
     val rotation by animateFloatAsState(
@@ -67,13 +72,19 @@ fun ModernTopBar(
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(R.drawable.app_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "TV Movie Viewer",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = currentPath,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f, fill = false)
                         )
-                        // 更新中表示
                         if (isLoading) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -83,17 +94,15 @@ fun ModernTopBar(
                             )
                         }
                     }
-                    Text(
-                        text = currentPath,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         },
         actions = {
             // 表示モード切り替えボタン
-            IconButton(onClick = onViewModeChange) {
+            IconButton(
+                onClick = onViewModeChange,
+                modifier = Modifier.focusRequester(focusRequester)
+            ) {
                 Icon(
                     imageVector = when (viewMode) {
                         ViewMode.TILE -> Icons.Rounded.ViewList
