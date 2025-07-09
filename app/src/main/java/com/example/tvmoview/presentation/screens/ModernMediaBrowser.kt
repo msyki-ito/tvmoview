@@ -20,7 +20,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.R
 import com.example.tvmoview.domain.model.*
@@ -37,13 +36,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernMediaBrowser(
+    viewModel: MediaBrowserViewModel,
     folderId: String? = null,
     onMediaSelected: (MediaItem) -> Unit,
     onFolderSelected: (String) -> Unit,
     onSettingsClick: (() -> Unit)? = null,
     onBackClick: (() -> Unit)? = null
 ) {
-    val viewModel: MediaBrowserViewModel = viewModel()
     val items by viewModel.items.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
@@ -231,6 +230,7 @@ fun ModernMediaBrowser(
                                             onMediaSelected(item)
                                         }
                                     },
+                                    viewModel = viewModel,
                                     onScroll = { showTopBar = it }
                                 )
                             }

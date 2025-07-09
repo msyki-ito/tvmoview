@@ -31,18 +31,17 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun HighQualityPlayerScreen(
     itemId: String,
     onBack: () -> Unit,
+    viewModel: MediaBrowserViewModel,
     downloadUrl: String = ""
 ) {
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
-    val viewModel: MediaBrowserViewModel = viewModel()
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)

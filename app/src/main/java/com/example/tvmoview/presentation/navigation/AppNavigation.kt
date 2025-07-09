@@ -1,16 +1,22 @@
 package com.example.tvmoview.presentation.navigation
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.tvmoview.presentation.screens.*
+import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val owner = LocalContext.current as ViewModelStoreOwner
+    val sharedViewModel: MediaBrowserViewModel = viewModel(viewModelStoreOwner = owner)
 
     NavHost(
         navController = navController,
@@ -19,6 +25,7 @@ fun AppNavigation() {
         // ホーム画面
         composable("home") {
             ModernMediaBrowser(
+                viewModel = sharedViewModel,
                 folderId = null,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
@@ -44,6 +51,7 @@ fun AppNavigation() {
             val folderId = backStackEntry.arguments?.getString("folderId") ?: ""
 
             ModernMediaBrowser(
+                viewModel = sharedViewModel,
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
@@ -74,7 +82,8 @@ fun AppNavigation() {
                 itemId = itemId,
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                viewModel = sharedViewModel
             )
         }
 
@@ -86,5 +95,4 @@ fun AppNavigation() {
                 }
             )
         }
-    }
-}
+    }}

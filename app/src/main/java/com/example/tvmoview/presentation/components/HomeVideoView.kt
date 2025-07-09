@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -64,10 +63,10 @@ object HomeVideoColors {
 fun HomeVideoView(
     items: List<MediaItem>,
     onItemClick: (MediaItem) -> Unit,
+    viewModel: MediaBrowserViewModel,
     modifier: Modifier = Modifier,
     onScroll: (Boolean) -> Unit = {}
 ) {
-    val viewModel: MediaBrowserViewModel = viewModel()
 
     // 選択中のメディア状態
     var selectedMedia by remember { mutableStateOf<MediaItem?>(null) }

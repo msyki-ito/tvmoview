@@ -11,7 +11,9 @@ import com.example.tvmoview.presentation.screens.SplashScreen
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +22,7 @@ import androidx.navigation.navArgument
 import com.example.tvmoview.data.repository.MediaRepository
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
+import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 
 // OneDrive統合のための新しいimport
 import com.example.tvmoview.data.auth.AuthenticationManager
@@ -181,6 +184,8 @@ sealed class AuthState {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val owner = LocalContext.current as ViewModelStoreOwner
+    val sharedViewModel: MediaBrowserViewModel = viewModel(viewModelStoreOwner = owner)
 
     NavHost(
         navController = navController,
@@ -189,6 +194,7 @@ fun AppNavigation() {
         // ホーム画面（メディア一覧）
         composable("home") {
             ModernMediaBrowser(
+                viewModel = sharedViewModel,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
@@ -214,6 +220,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val folderId = backStackEntry.arguments?.getString("folderId") ?: ""
             ModernMediaBrowser(
+                viewModel = sharedViewModel,
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
@@ -245,7 +252,8 @@ fun AppNavigation() {
 
             HighQualityPlayerScreen(
                 itemId = itemId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                viewModel = sharedViewModel
             )
         }
 
