@@ -28,8 +28,6 @@ import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
 import com.example.tvmoview.presentation.viewmodels.SortOrder
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -60,42 +58,6 @@ fun ModernMediaBrowser(
     // 表示モード切り替え時にヘッダーをリセット
     LaunchedEffect(viewMode) { showTopBar = true }
 
-    // タイル表示専用のスクロール監視
-    LaunchedEffect(gridState, viewMode) {
-        if (viewMode == ViewMode.TILE) {
-            var lastScrollOffset = 0
-            var scrollDirection = 0 // 1: down, -1: up
-            var upCount = 0
-            snapshotFlow { gridState.firstVisibleItemScrollOffset }
-                .distinctUntilChanged()
-                .collect { currentOffset ->
-                    val delta = currentOffset - lastScrollOffset
-                    if (kotlin.math.abs(delta) > 10) {
-                        when {
-                            delta > 0 -> {
-                                upCount = 0
-                                if (scrollDirection != 1) {
-                                    scrollDirection = 1
-                                    showTopBar = false
-                                }
-                            }
-                            delta < 0 -> {
-                                if (scrollDirection != -1) {
-                                    scrollDirection = -1
-                                    upCount = 1
-                                } else {
-                                    upCount++
-                                }
-                                if (upCount >= 2) {
-                                    showTopBar = true
-                                }
-                            }
-                        }
-                    }
-                    lastScrollOffset = currentOffset
-                }
-        }
-    }
 
     DisposableEffect(Unit) {
         onDispose { viewModel.saveScrollPosition(gridState.firstVisibleItemIndex) }
@@ -116,7 +78,10 @@ fun ModernMediaBrowser(
     ) {
         Column {
             AnimatedVisibility(
-                visible = showTopBar,
+                visible = when (viewMode) {
+                    ViewMode.TILE -> true
+                    else -> showTopBar
+                },
                 enter = fadeIn(tween(150)),
                 exit = fadeOut(tween(150))
             ) {
