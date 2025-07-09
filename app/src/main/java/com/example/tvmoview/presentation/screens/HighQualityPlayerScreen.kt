@@ -347,4 +347,3 @@ private fun getTestVideoUrl(itemId: String): String {
     }
 }
 
-}
