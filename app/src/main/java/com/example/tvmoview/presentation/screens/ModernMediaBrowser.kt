@@ -56,19 +56,34 @@ fun ModernMediaBrowser(
     var showSortDialog by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState(initialFirstVisibleItemIndex = lastIndex)
     var showTopBar by remember { mutableStateOf(true) }
-    var previousIndex by remember { mutableStateOf(0) }
-    var previousOffset by remember { mutableStateOf(0) }
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset }
-            .distinctUntilChanged()
-            .collect { (index, offset) ->
-                when {
-                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> showTopBar = false
-                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> showTopBar = true
+
+    // 表示モード切り替え時にヘッダーをリセット
+    LaunchedEffect(viewMode) { showTopBar = true }
+
+    // タイル表示専用のスクロール監視
+    LaunchedEffect(gridState, viewMode) {
+        if (viewMode == ViewMode.TILE) {
+            var lastScrollOffset = 0
+            var scrollDirection = 0 // 1: down, -1: up
+            snapshotFlow { gridState.firstVisibleItemScrollOffset }
+                .distinctUntilChanged()
+                .collect { currentOffset ->
+                    val delta = currentOffset - lastScrollOffset
+                    if (kotlin.math.abs(delta) > 10) {
+                        when {
+                            delta > 0 && scrollDirection != 1 -> {
+                                scrollDirection = 1
+                                showTopBar = false
+                            }
+                            delta < 0 && scrollDirection != -1 -> {
+                                scrollDirection = -1
+                                showTopBar = true
+                            }
+                        }
+                    }
+                    lastScrollOffset = currentOffset
                 }
-                previousIndex = index
-                previousOffset = offset
-            }
+        }
     }
 
     DisposableEffect(Unit) {
@@ -216,7 +231,11 @@ fun ModernMediaBrowser(
                                             onMediaSelected(item)
                                         }
                                     },
-                                    onScroll = { showTopBar = it }
+                                    onScroll = { isScrollingUp ->
+                                        if (viewMode == ViewMode.HULU_STYLE) {
+                                            showTopBar = isScrollingUp
+                                        }
+                                    }
                                 )
                             }
 
@@ -231,7 +250,11 @@ fun ModernMediaBrowser(
                                         }
                                     },
                                     viewModel = viewModel,
-                                    onScroll = { showTopBar = it }
+                                    onScroll = { isScrollingUp ->
+                                        if (viewMode == ViewMode.HOME_VIDEO) {
+                                            showTopBar = isScrollingUp
+                                        }
+                                    }
                                 )
                             }
                         }
