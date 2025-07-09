@@ -331,7 +331,9 @@ private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String
     }
 }
 
-// テスト動画URL取得（変更なし）
+
+}
+
 private fun getTestVideoUrl(itemId: String): String {
     return when (itemId.takeLast(1)) {
         "1" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
@@ -341,4 +343,5 @@ private fun getTestVideoUrl(itemId: String): String {
         "5" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         else -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
     }
+}
 }
