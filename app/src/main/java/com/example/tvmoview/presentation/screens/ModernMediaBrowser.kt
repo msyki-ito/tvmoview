@@ -65,19 +65,30 @@ fun ModernMediaBrowser(
         if (viewMode == ViewMode.TILE) {
             var lastScrollOffset = 0
             var scrollDirection = 0 // 1: down, -1: up
+            var upCount = 0
             snapshotFlow { gridState.firstVisibleItemScrollOffset }
                 .distinctUntilChanged()
                 .collect { currentOffset ->
                     val delta = currentOffset - lastScrollOffset
                     if (kotlin.math.abs(delta) > 10) {
                         when {
-                            delta > 0 && scrollDirection != 1 -> {
-                                scrollDirection = 1
-                                showTopBar = false
+                            delta > 0 -> {
+                                upCount = 0
+                                if (scrollDirection != 1) {
+                                    scrollDirection = 1
+                                    showTopBar = false
+                                }
                             }
-                            delta < 0 && scrollDirection != -1 -> {
-                                scrollDirection = -1
-                                showTopBar = true
+                            delta < 0 -> {
+                                if (scrollDirection != -1) {
+                                    scrollDirection = -1
+                                    upCount = 1
+                                } else {
+                                    upCount++
+                                }
+                                if (upCount >= 2) {
+                                    showTopBar = true
+                                }
                             }
                         }
                     }
