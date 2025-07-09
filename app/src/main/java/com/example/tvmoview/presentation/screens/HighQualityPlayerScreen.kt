@@ -1,6 +1,5 @@
 ﻿package com.example.tvmoview.presentation.screens
 
-import android.content.Context
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -26,6 +25,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.common.util.MimeTypes
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
@@ -72,7 +75,28 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
+            val trackSelector = DefaultTrackSelector(context).apply {
+                val params = buildUponParameters()
+                    .setMaxVideoBitrate(2_000_000)
+                    .setPreferredVideoMimeTypes(
+                        MimeTypes.VIDEO_H265,
+                        MimeTypes.VIDEO_AV1,
+                        MimeTypes.VIDEO_H264
+                    )
+                    .build()
+                setParameters(params)
+            }
+            val loadControl = DefaultLoadControl.Builder()
+                .setBufferDurationsMs(15000, 50000, 500, 1000)
+                .build()
+            val bandwidthMeter = DefaultBandwidthMeter.Builder(context)
+                .setInitialBitrateEstimate(5_000_000)
+                .build()
+            ExoPlayer.Builder(context)
+                .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
+                .setBandwidthMeter(bandwidthMeter)
+                .build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
