@@ -65,7 +65,8 @@ class AdaptiveQualityManager(
             .setMaxVideoSize(QUALITY_SD_WIDTH, QUALITY_SD_HEIGHT)
             .setMaxVideoBitrate(1_500_000)
             .setForceHighestSupportedBitrate(false)
-            .setExceedVideoConstraintsIfNecessary(false)
+            // 低解像度トラックが無い場合でも最適なトラックを選択
+            .setExceedVideoConstraintsIfNecessary(true)
             .build()
         trackSelector.setParameters(params)
         Log.d("AdaptiveQuality", "\uD83D\uDCFA 初期画質設定: SD (${QUALITY_SD_WIDTH}x${QUALITY_SD_HEIGHT})")
