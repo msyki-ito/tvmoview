@@ -44,8 +44,11 @@ fun HighQualityPlayerScreen(
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
-        value = resolveVideoUrl(itemId, downloadUrl)
+    val currentItem by sharedPlayerViewModel.currentItem.collectAsState()
+    val shouldReload = currentItem?.id != itemId
+
+    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl, shouldReload) {
+        value = if (shouldReload) resolveVideoUrl(itemId, downloadUrl) else null
     }
 
     // カスタムシークバー表示制御
@@ -67,15 +70,17 @@ fun HighQualityPlayerScreen(
         sharedPlayerViewModel.transitionToFullScreen()
     }
 
-    LaunchedEffect(resolvedUrl) {
-        resolvedUrl?.let { url ->
-            Log.d("VideoPlayer", "📺 動画URL設定: $url")
-            val mediaItem = MediaItem.fromUri(url)
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.prepare()
-            val resume = UserPreferences.getResumePosition(itemId)
-            if (resume > 0) exoPlayer.seekTo(resume)
-            exoPlayer.playWhenReady = true
+    LaunchedEffect(resolvedUrl, shouldReload) {
+        if (shouldReload) {
+            resolvedUrl?.let { url ->
+                Log.d("VideoPlayer", "📺 動画URL設定: $url")
+                val mediaItem = MediaItem.fromUri(url)
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                val resume = UserPreferences.getResumePosition(itemId)
+                if (resume > 0) exoPlayer.seekTo(resume)
+                exoPlayer.playWhenReady = true
+            }
         }
         playerView?.player = exoPlayer
     }
@@ -331,9 +336,6 @@ private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String
     }
 }
 
-
-}
-
 private fun getTestVideoUrl(itemId: String): String {
     return when (itemId.takeLast(1)) {
         "1" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
@@ -344,4 +346,4 @@ private fun getTestVideoUrl(itemId: String): String {
         else -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
     }
 }
-}
+
