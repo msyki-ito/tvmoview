@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.tvmoview.R
+import com.example.tvmoview.presentation.theme.HuluColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -50,7 +51,13 @@ fun SplashScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0A0A0A), Color(0xFF1A1A1A))
+                    colors = listOf(
+                        HuluColors.GradientTop,
+                        HuluColors.GradientMid1,
+                        HuluColors.GradientCenter,
+                        HuluColors.GradientMid2,
+                        HuluColors.GradientBottom
+                    )
                 )
             ),
         contentAlignment = Alignment.Center
