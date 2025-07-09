@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-07-08)
+# 📘 SYMBOLS.md (generated 2025-07-09)
 
 ## 
 - AuthenticationManager
@@ -53,6 +53,7 @@
 ## com.example.tvmoview
 - NotAuthenticated
   - [F] AppNavigation()
+  - [P] sharedViewModel: MediaBrowserViewModel
 
 ## com.example.tvmoview.data.db
 - CachedMediaItem
@@ -196,18 +197,23 @@
 
 ## com.example.tvmoview.presentation.viewmodels
 - MediaBrowserViewModel
+  - [F] clearPreviewPosition()
   - [F] cycleTileColumns()
+  - [F] getAndClearPreviewPosition(videoId: String): Long
   - [F] loadItems(folderId: String? = null, force: Boolean = false)
   - [F] refresh()
   - [F] saveScrollPosition(index: Int)
   - [F] setSortBy(sortBy: SortBy)
   - [F] setSortOrder(order: SortOrder)
   - [F] toggleViewMode()
+  - [F] updatePreviewPosition(videoId: String, position: Long)
   - [P] currentFolderId: StateFlow<String?>
   - [P] currentPath: StateFlow<String>
   - [P] isLoading: StateFlow<Boolean>
   - [P] items: StateFlow<List<MediaItem>>
   - [P] lastIndex: StateFlow<Int>
+  - [P] previewPlaybackPosition: StateFlow<Long>
+  - [P] previewVideoId: StateFlow<String?>
   - [P] sortBy: StateFlow<SortBy>
   - [P] sortOrder: StateFlow<SortOrder>
   - [P] tileColumns: StateFlow<Int>

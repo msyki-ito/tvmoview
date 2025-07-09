@@ -13,6 +13,7 @@
 └── presentation/
 │   └── components/
 │   └── navigation/
+│   └── player/
 │   └── screens/
 │   └── theme/
 │   └── viewmodels/

@@ -20,6 +20,9 @@
 - `MediaDao`, `FolderSyncDao`: メディアキャッシュとフォルダ同期情報の CRUD を提供。
 - `CachedMediaItem`, `FolderSyncStatus`: これら Dao が扱うエンティティ。
 
+## 設定
+- `UserPreferences`: ソート順や再生位置などユーザー設定を `SharedPreferences` に保存するヘルパー。`getResumePosition` や `setResumePosition` を提供。
+
 ## ドメインモデル
 - `MediaItem`: ファイルやフォルダを表すモデル。`isVideo` や `formattedSize` 等の拡張プロパティを持つ。
 
@@ -38,6 +41,9 @@
 - `ModernMediaBrowser`: OneDrive 上のメディア閲覧画面。
 - `HighQualityPlayerScreen`: ExoPlayer を用いた動画再生。
 - `SettingsScreen`: アプリ設定画面。
+- `ImageViewerScreen`: 画像をズームしながら閲覧できるビューア。
+- `SplashScreen`: 起動ロゴを表示して初期化完了を待つ画面。
+- `AuthenticationWrapper`: 認証状態に応じ `LoginScreen` または `AppNavigation` を切り替える。
 
 ## ナビゲーション
 - `AppNavigation`: Compose Navigation を利用しホーム、フォルダ、プレイヤー、設定画面へ遷移。
