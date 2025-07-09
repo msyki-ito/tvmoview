@@ -25,12 +25,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
+import com.example.tvmoview.presentation.player.PlaybackTimingLogger
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -72,11 +74,13 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
+            PlaybackTimingLogger.log(4, "プレイヤー初期化開始")
             ExoPlayer.Builder(context).build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
                 player.prepare()
+                PlaybackTimingLogger.log(5, "プレイヤー初期化完了")
                 val previewPos = viewModel.getAndClearPreviewPosition(itemId)
                 val savedPos = UserPreferences.getResumePosition(itemId)
                 val resume = if (previewPos > 0) previewPos else savedPos
@@ -85,6 +89,19 @@ fun HighQualityPlayerScreen(
                     Log.d("VideoPlayer", "⏩ 再開位置 $resume")
                 }
                 player.playWhenReady = true
+                player.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_READY) {
+                            val f = player.videoFormat
+                            PlaybackTimingLogger.log(6, "READY状態到達")
+                            PlaybackTimingLogger.detail("解像度: ${f?.width}×${f?.height}")
+                            PlaybackTimingLogger.detail("Bitrate: ${f?.bitrate?.div(1000)} kbps")
+                            if (player.playWhenReady) {
+                                PlaybackTimingLogger.log(7, "再生開始")
+                            }
+                        }
+                    }
+                })
             }
         }
         playerView?.player = exoPlayer
@@ -131,6 +148,7 @@ fun HighQualityPlayerScreen(
             }
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
             releasePlayer()
+            PlaybackTimingLogger.reset()
         }
     }
 
@@ -323,7 +341,7 @@ private fun formatTime(timeMs: Long): String {
 private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String {
     // 再生直前で常に最新のURLを取得する
     val freshUrl = MainActivity.oneDriveRepository.getDownloadUrl(itemId)
-    return when {
+    val finalUrl = when {
         freshUrl != null -> {
             Log.d("VideoPlayer", "✅ downloadURL取得成功: $itemId")
             freshUrl
@@ -337,6 +355,9 @@ private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String
             getTestVideoUrl(itemId)
         }
     }
+    PlaybackTimingLogger.log(3, "URL取得完了")
+    PlaybackTimingLogger.detail("取得URL: $finalUrl")
+    return finalUrl
 }
 
 // テスト動画URL取得（変更なし）
@@ -348,5 +369,4 @@ private fun getTestVideoUrl(itemId: String): String {
         "4" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
         "5" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         else -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
-    }
-}
+    }}
