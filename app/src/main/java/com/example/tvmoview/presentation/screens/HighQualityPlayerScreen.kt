@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.tvmoview.presentation.player.AdaptiveQualityManager
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
@@ -42,6 +43,7 @@ fun HighQualityPlayerScreen(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val adaptiveQualityManager = remember { AdaptiveQualityManager(coroutineScope) }
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)
@@ -72,20 +74,28 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                val previewPos = viewModel.getAndClearPreviewPosition(itemId)
-                val savedPos = UserPreferences.getResumePosition(itemId)
-                val resume = if (previewPos > 0) previewPos else savedPos
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+            val trackSelector = adaptiveQualityManager.createInitialTrackSelector(context)
+            val loadControl = adaptiveQualityManager.createFastStartLoadControl()
+
+            ExoPlayer.Builder(context)
+                .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
+                .build().also { player ->
+                    Log.d("VideoPlayer", "📺 動画URL設定: $url")
+                    val mediaItem = MediaItem.fromUri(url)
+                    player.setMediaItem(mediaItem)
+                    player.prepare()
+                    val previewPos = viewModel.getAndClearPreviewPosition(itemId)
+                    val savedPos = UserPreferences.getResumePosition(itemId)
+                    val resume = if (previewPos > 0) previewPos else savedPos
+                    if (resume > 0) {
+                        player.seekTo(resume)
+                        Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                    }
+                    player.playWhenReady = true
+
+                    adaptiveQualityManager.startQualityProgression(player, isFullScreen = true, enable4K = false)
                 }
-                player.playWhenReady = true
-            }
         }
         playerView?.player = exoPlayer
     }
@@ -130,6 +140,7 @@ fun HighQualityPlayerScreen(
                 UserPreferences.clearResumePosition(itemId)
             }
             Log.d("VideoPlayer", "🧹 ExoPlayer解放")
+            adaptiveQualityManager.cleanup()
             releasePlayer()
         }
     }
