@@ -15,6 +15,11 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
@@ -89,28 +94,36 @@ fun ModernMediaBrowser(
         modifier = Modifier.fillMaxSize()
     ) {
         Column {
-            AnimatedVisibility(
-                visible = showTopBar,
-                enter = fadeIn(tween(150)),
-                exit = fadeOut(tween(150))
-            ) {
-                ModernTopBar(
-                    currentPath = currentPath,
-                    viewMode = viewMode,
-                    sortOrder = sortOrder,
-                    tileColumns = tileColumns,
-                    onViewModeChange = { viewModel.toggleViewMode() },
-                    onTileColumnsChange = { viewModel.cycleTileColumns() },
-                    onSortClick = { showSortDialog = true },
-                    onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
-                    onRefreshClick = { viewModel.refresh() },
-                    onSettingsClick = onSettingsClick,
-                    onBackClick = onBackClick,
-                    isLoading = isLoading
-                )
-            }
+            val topBarOffset by animateDpAsState(
+                targetValue = if (showTopBar) 0.dp else -64.dp,
+                label = "topBarOffset"
+            )
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            ModernTopBar(
+                modifier = Modifier
+                    .onFocusChanged { if (it.hasFocus) showTopBar = true }
+                    .offset { IntOffset(0, topBarOffset.roundToPx()) },
+                currentPath = currentPath,
+                viewMode = viewMode,
+                sortOrder = sortOrder,
+                tileColumns = tileColumns,
+                onViewModeChange = { viewModel.toggleViewMode() },
+                onTileColumnsChange = { viewModel.cycleTileColumns() },
+                onSortClick = { showSortDialog = true },
+                onOrderToggle = { viewModel.setSortOrder(if (sortOrder == SortOrder.ASC) SortOrder.DESC else SortOrder.ASC) },
+                onRefreshClick = { viewModel.refresh() },
+                onSettingsClick = onSettingsClick,
+                onBackClick = onBackClick,
+                isLoading = isLoading
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onFocusChanged { if (it.hasFocus) showTopBar = false }
+                    .focusTarget()
+                    .focusProperties { canFocus = false }
+            ) {
                 when {
                     // 初回読み込み時のみローディング表示（データがない + 読み込み中）
                     isLoading && items.isEmpty() -> LoadingAnimation()
