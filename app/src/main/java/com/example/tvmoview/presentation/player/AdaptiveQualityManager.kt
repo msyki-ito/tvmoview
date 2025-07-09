@@ -87,16 +87,20 @@ class AdaptiveQualityManager(
         if (!isFullScreen) return
         clearPendingQualityChanges()
 
-        val hdRunnable = Runnable {
-            upgradeToHD(player)
-            pendingRunnables.remove(it)
+        val hdRunnable = object : Runnable {
+            override fun run() {
+                upgradeToHD(player)
+                pendingRunnables.remove(this)
+            }
         }
         handler.postDelayed(hdRunnable, DELAY_TO_HD)
         pendingRunnables.add(hdRunnable)
 
-        val fhdRunnable = Runnable {
-            upgradeToFullHD(player)
-            pendingRunnables.remove(it)
+        val fhdRunnable = object : Runnable {
+            override fun run() {
+                upgradeToFullHD(player)
+                pendingRunnables.remove(this)
+            }
         }
         handler.postDelayed(fhdRunnable, DELAY_TO_FHD)
         pendingRunnables.add(fhdRunnable)
