@@ -24,6 +24,7 @@ import com.example.tvmoview.presentation.viewmodels.SortOrder
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernTopBar(
+    modifier: Modifier = Modifier,
     currentPath: String,
     viewMode: ViewMode,
     sortOrder: SortOrder,
@@ -52,6 +53,7 @@ fun ModernTopBar(
     )
 
     TopAppBar(
+        modifier = modifier,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -89,7 +91,7 @@ fun ModernTopBar(
                     }
                     Text(
                         text = currentPath,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
