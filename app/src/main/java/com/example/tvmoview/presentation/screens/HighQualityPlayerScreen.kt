@@ -30,6 +30,8 @@ import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
+import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -40,6 +42,7 @@ fun HighQualityPlayerScreen(
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val viewModel: MediaBrowserViewModel = viewModel()
 
     val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
         value = resolveVideoUrl(itemId, downloadUrl)
@@ -75,7 +78,9 @@ fun HighQualityPlayerScreen(
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
                 player.prepare()
-                val resume = UserPreferences.getResumePosition(itemId)
+                val previewPos = viewModel.getAndClearPreviewPosition(itemId)
+                val savedPos = UserPreferences.getResumePosition(itemId)
+                val resume = if (previewPos > 0) previewPos else savedPos
                 if (resume > 0) {
                     player.seekTo(resume)
                     Log.d("VideoPlayer", "⏩ 再開位置 $resume")

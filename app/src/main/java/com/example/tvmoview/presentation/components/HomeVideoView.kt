@@ -39,12 +39,14 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.tvmoview.domain.model.MediaItem
 import com.example.tvmoview.presentation.viewmodels.DateGroup
+import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -65,6 +67,8 @@ fun HomeVideoView(
     modifier: Modifier = Modifier,
     onScroll: (Boolean) -> Unit = {}
 ) {
+    val viewModel: MediaBrowserViewModel = viewModel()
+
     // 選択中のメディア状態
     var selectedMedia by remember { mutableStateOf<MediaItem?>(null) }
 
@@ -109,6 +113,7 @@ fun HomeVideoView(
         MainPreviewArea(
             selectedMedia = selectedMedia,
             onItemClick = onItemClick,
+            viewModel = viewModel,
             modifier = Modifier.weight(0.60f)
         )
 
@@ -128,6 +133,7 @@ fun HomeVideoView(
 private fun MainPreviewArea(
     selectedMedia: MediaItem?,
     onItemClick: (MediaItem) -> Unit,
+    viewModel: MediaBrowserViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -166,6 +172,8 @@ private fun MainPreviewArea(
                         videoUrl?.let { url ->
                             VideoPreview(
                                 videoUrl = url,
+                                videoId = currentMedia.id,
+                                viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize()
                             )
                         } ?: Box(Modifier.fillMaxSize()) // URLがまだない場合は空Box
@@ -261,9 +269,12 @@ private fun MainPreviewArea(
 @Composable
 private fun VideoPreview(
     videoUrl: String,
+    videoId: String,
+    viewModel: MediaBrowserViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var currentPosition by remember { mutableLongStateOf(0L) }
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
@@ -274,8 +285,17 @@ private fun VideoPreview(
         }
     }
 
+    LaunchedEffect(exoPlayer) {
+        while (true) {
+            currentPosition = exoPlayer.currentPosition
+            viewModel.updatePreviewPosition(videoId, currentPosition)
+            delay(100)
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
+            viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
             exoPlayer.release()
         }
     }

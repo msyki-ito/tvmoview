@@ -73,6 +73,34 @@ class MediaBrowserViewModel : ViewModel() {
     private val _lastIndex = MutableStateFlow(0)
     val lastIndex: StateFlow<Int> = _lastIndex.asStateFlow()
 
+    // プレビュー再生位置管理
+    private val _previewPlaybackPosition = MutableStateFlow(0L)
+    val previewPlaybackPosition: StateFlow<Long> = _previewPlaybackPosition.asStateFlow()
+
+    private val _previewVideoId = MutableStateFlow<String?>(null)
+    val previewVideoId: StateFlow<String?> = _previewVideoId.asStateFlow()
+
+    fun updatePreviewPosition(videoId: String, position: Long) {
+        _previewVideoId.value = videoId
+        _previewPlaybackPosition.value = position
+        Log.d("MediaBrowserViewModel", "Preview position updated: $videoId at ${position}ms")
+    }
+
+    fun clearPreviewPosition() {
+        _previewVideoId.value = null
+        _previewPlaybackPosition.value = 0L
+    }
+
+    fun getAndClearPreviewPosition(videoId: String): Long {
+        return if (_previewVideoId.value == videoId) {
+            val pos = _previewPlaybackPosition.value
+            clearPreviewPosition()
+            pos
+        } else {
+            0L
+        }
+    }
+
     private var loadJob: Job? = null
 
     fun saveScrollPosition(index: Int) {
