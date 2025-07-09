@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,6 +97,7 @@ fun ModernMediaBrowser(
                 exit = fadeOut(tween(150))
             ) {
                 ModernTopBar(
+                    modifier = Modifier.onFocusChanged { if (it.isFocused) showTopBar = true },
                     currentPath = currentPath,
                     viewMode = viewMode,
                     sortOrder = sortOrder,
@@ -110,7 +113,11 @@ fun ModernMediaBrowser(
                 )
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onFocusChanged { if (it.isFocused) showTopBar = false }
+            ) {
                 when {
                     // 初回読み込み時のみローディング表示（データがない + 読み込み中）
                     isLoading && items.isEmpty() -> LoadingAnimation()
@@ -215,8 +222,7 @@ fun ModernMediaBrowser(
                                         } else {
                                             onMediaSelected(item)
                                         }
-                                    },
-                                    onScroll = { showTopBar = it }
+                                    }
                                 )
                             }
 
@@ -230,8 +236,7 @@ fun ModernMediaBrowser(
                                             onMediaSelected(item)
                                         }
                                     },
-                                    viewModel = viewModel,
-                                    onScroll = { showTopBar = it }
+                                    viewModel = viewModel
                                 )
                             }
                         }
