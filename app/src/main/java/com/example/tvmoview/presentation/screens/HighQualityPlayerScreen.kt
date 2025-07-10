@@ -32,8 +32,10 @@ import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
+import com.example.tvmoview.presentation.player.AdaptiveQualityManager
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.player.PlaybackTimingLogger
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -76,23 +78,40 @@ fun HighQualityPlayerScreen(
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
             PlaybackTimingLogger.log(4, "プレイヤー初期化開始")
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                PlaybackTimingLogger.log(5, "プレイヤー初期化完了")
-                val previewPos = viewModel.getAndClearPreviewPosition(itemId)
-                val savedPos = UserPreferences.getResumePosition(itemId)
-                val resume = if (previewPos > 0) previewPos else savedPos
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
-                }
-                player.playWhenReady = true
-                player.addListener(object : Player.Listener {
-                    private var readyLogged = false
-                    private var lastSize: Pair<Int, Int>? = null
+
+            // AdaptiveQualityManagerの初期化
+            val qualityManager = AdaptiveQualityManager(context, coroutineScope)
+            val trackSelector = qualityManager.createInitialTrackSelector()
+            val loadControl = qualityManager.createFastStartLoadControl()
+
+            ExoPlayer.Builder(context)
+                .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
+                .build()
+                .also { player ->
+                    Log.d("VideoPlayer", "📺 動画URL設定: $url")
+                    val mediaItem = MediaItem.fromUri(url)
+                    player.setMediaItem(mediaItem)
+                    player.prepare()
+                    PlaybackTimingLogger.log(5, "プレイヤー初期化完了")
+
+                    // 既存の再開位置設定ロジック
+                    val previewPos = viewModel.getAndClearPreviewPosition(itemId)
+                    val savedPos = UserPreferences.getResumePosition(itemId)
+                    val resume = if (previewPos > 0) previewPos else savedPos
+                    if (resume > 0) {
+                        player.seekTo(resume)
+                        Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                    }
+
+                    player.playWhenReady = true
+
+                    // 品質向上プロセスの開始（プレビューモードではない場合）
+                    qualityManager.startQualityProgression(trackSelector, enable4K = true)
+
+                    player.addListener(object : Player.Listener {
+                        private var readyLogged = false
+                        private var lastSize: Pair<Int, Int>? = null
 
                     override fun onPlaybackStateChanged(state: Int) {
                         if (state == Player.STATE_READY && !readyLogged) {
