@@ -35,10 +35,10 @@ class AdaptiveQualityManager(
         const val DELAY_TO_FHD = 5000L
         const val DELAY_TO_4K = 10000L
 
-        const val MIN_BUFFER_MS = 15000
-        const val MAX_BUFFER_MS = 30000
-        const val BUFFER_FOR_PLAYBACK_MS = 500
-        const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 1000
+        const val MIN_BUFFER_MS = 1000
+        const val MAX_BUFFER_MS = 10000
+        const val BUFFER_FOR_PLAYBACK_MS = 250
+        const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 500
     }
 
     fun createFastStartLoadControl(): LoadControl {
@@ -58,6 +58,7 @@ class AdaptiveQualityManager(
         val initialParams = trackSelector.buildUponParameters()
             .setMaxVideoSize(QUALITY_SD_WIDTH, QUALITY_SD_HEIGHT)
             .setForceLowestBitrate(true)
+            .setPreferredVideoMimeTypes("video/avc", "video/mp4")
             .build()
         trackSelector.setParameters(initialParams)
         Log.d("AdaptiveQuality", "\uD83D\uDCFA 初期画質: SD ${QUALITY_SD_WIDTH}x${QUALITY_SD_HEIGHT}")
