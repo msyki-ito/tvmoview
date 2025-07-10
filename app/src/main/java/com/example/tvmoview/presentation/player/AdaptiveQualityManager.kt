@@ -58,7 +58,6 @@ class AdaptiveQualityManager(
         val initialParams = trackSelector.buildUponParameters()
             .setMaxVideoSize(QUALITY_SD_WIDTH, QUALITY_SD_HEIGHT)
             .setForceLowestBitrate(true)
-            .setExceedVideoConstraintsIfNecessary(false)
             .build()
         trackSelector.setParameters(initialParams)
         Log.d("AdaptiveQuality", "\uD83D\uDCFA 初期画質: SD ${QUALITY_SD_WIDTH}x${QUALITY_SD_HEIGHT}")
@@ -70,7 +69,6 @@ class AdaptiveQualityManager(
             .setMaxVideoSize(640, 360)
             .setMaxVideoBitrate(800_000)
             .setForceLowestBitrate(true)
-            .setExceedVideoConstraintsIfNecessary(false)
             .build()
         player.trackSelectionParameters = params
         Log.d("AdaptiveQuality", "\uD83D\uDC41\uFE0F プレビュー画質: 360p")
@@ -102,7 +100,6 @@ class AdaptiveQualityManager(
             .setMinVideoSize(width, height)
             .setMaxVideoSize(width, height)
             .setForceLowestBitrate(forceLowest)
-            .setExceedVideoConstraintsIfNecessary(false)
             .build()
         trackSelector.setParameters(newParams)
         Log.d("AdaptiveQuality", "\uD83D\uDD3C 画質アップ: ${width}x${height}")
