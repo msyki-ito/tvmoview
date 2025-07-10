@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.tvmoview.presentation.player.oneSecondStartLoadControl
 import androidx.media3.ui.PlayerView
 import java.text.SimpleDateFormat
 import java.util.*
@@ -275,7 +276,9 @@ private fun VideoPreview(
     val context = LocalContext.current
     var currentPosition by remember { mutableLongStateOf(0L) }
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
+        ExoPlayer.Builder(context)
+            .setLoadControl(oneSecondStartLoadControl())
+            .build().apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
             prepare()
             playWhenReady = true

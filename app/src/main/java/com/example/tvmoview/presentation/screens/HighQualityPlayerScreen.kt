@@ -26,6 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.tvmoview.presentation.player.oneSecondStartLoadControl
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
@@ -72,7 +73,9 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
+            ExoPlayer.Builder(context)
+                .setLoadControl(oneSecondStartLoadControl())
+                .build().also { player ->
                 Log.d("VideoPlayer", "📺 動画URL設定: $url")
                 val mediaItem = MediaItem.fromUri(url)
                 player.setMediaItem(mediaItem)
