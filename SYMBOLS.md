@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-07-09)
+# 📘 SYMBOLS.md (generated 2025-07-10)
 
 ## 
 - AuthenticationManager
@@ -160,6 +160,21 @@
 - MediaSection
   - [P] items: List<MediaItem>
   - [P] title: String,
+
+## com.example.tvmoview.presentation.player
+- AdaptiveQualityManager
+  - [F] applyPreviewQuality(player: ExoPlayer)
+  - [F] cleanup()
+  - [F] createFastStartLoadControl(): LoadControl
+  - [F] createInitialTrackSelector(): DefaultTrackSelector
+
+## com.example.tvmoview.presentation.player
+- PlaybackTimingLogger
+  - [F] detail(message: String)
+  - [F] detailFormat(format: Format?)
+  - [F] log(step: Int, message: String)
+  - [F] reset()
+  - [F] start()
 
 ## com.example.tvmoview.presentation.screens
 - Authenticated
