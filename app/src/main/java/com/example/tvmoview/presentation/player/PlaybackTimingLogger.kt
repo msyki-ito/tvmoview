@@ -1,6 +1,7 @@
 package com.example.tvmoview.presentation.player
 
 import android.util.Log
+import androidx.media3.common.Format
 
 object PlaybackTimingLogger {
     private const val TAG = "PlaybackTiming"
@@ -19,6 +20,13 @@ object PlaybackTimingLogger {
 
     fun detail(message: String) {
         if (baseTime != 0L) Log.d(TAG, "    $message")
+    }
+
+    fun detailFormat(format: Format?) {
+        format ?: return
+        detail("解像度: ${format.width}×${format.height}")
+        detail("Bitrate: ${format.bitrate.div(1000)} kbps")
+        detail("コーデック: ${format.codecs}")
     }
 
     fun reset() {

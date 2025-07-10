@@ -26,6 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.example.tvmoview.MainActivity
@@ -90,14 +91,29 @@ fun HighQualityPlayerScreen(
                 }
                 player.playWhenReady = true
                 player.addListener(object : Player.Listener {
+                    private var readyLogged = false
+                    private var lastSize: Pair<Int, Int>? = null
+
                     override fun onPlaybackStateChanged(state: Int) {
-                        if (state == Player.STATE_READY) {
+                        if (state == Player.STATE_READY && !readyLogged) {
                             val f = player.videoFormat
                             PlaybackTimingLogger.log(6, "READY状態到達")
-                            PlaybackTimingLogger.detail("解像度: ${f?.width}×${f?.height}")
-                            PlaybackTimingLogger.detail("Bitrate: ${f?.bitrate?.div(1000)} kbps")
+                            PlaybackTimingLogger.detailFormat(f)
                             if (player.playWhenReady) {
                                 PlaybackTimingLogger.log(7, "再生開始")
+                            }
+                            lastSize = Pair(f?.width ?: 0, f?.height ?: 0)
+                            readyLogged = true
+                        }
+                    }
+
+                    override fun onVideoSizeChanged(videoSize: VideoSize) {
+                        if (readyLogged) {
+                            val size = Pair(videoSize.width, videoSize.height)
+                            if (size != lastSize) {
+                                lastSize = size
+                                PlaybackTimingLogger.log(8, "解像度変更")
+                                PlaybackTimingLogger.detailFormat(player.videoFormat)
                             }
                         }
                     }
