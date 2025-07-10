@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import com.example.tvmoview.presentation.player.PlaybackTimingLogger
 import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -133,6 +134,7 @@ class OneDriveRepository(
                 }
 
                 Log.d("OneDriveRepo", "downloadURL取得開始: $itemId")
+                PlaybackTimingLogger.log(2, "API開始")
 
                 val url = "https://graph.microsoft.com/v1.0/me/drive/items/$itemId?select=id,@microsoft.graph.downloadUrl"
 

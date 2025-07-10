@@ -24,6 +24,7 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.R
 import com.example.tvmoview.domain.model.*
 import com.example.tvmoview.presentation.components.*
+import com.example.tvmoview.presentation.player.PlaybackTimingLogger
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
 import com.example.tvmoview.presentation.viewmodels.ViewMode
 import com.example.tvmoview.presentation.viewmodels.SortBy
@@ -124,6 +125,7 @@ fun ModernMediaBrowser(
                                         } else {
                                             Log.d("ModernMediaBrowser", "🎬 メディア選択: ${item.name}")
                                             Log.d("ModernMediaBrowser", "📊 downloadUrl: ${item.downloadUrl}")
+                                            if (item.isVideo) PlaybackTimingLogger.start()
                                             onMediaSelected(item)
                                         }
                                     }
@@ -204,6 +206,7 @@ fun ModernMediaBrowser(
                                         if (item.isFolder) {
                                             onFolderSelected(item.id)
                                         } else {
+                                            if (item.isVideo) PlaybackTimingLogger.start()
                                             onMediaSelected(item)
                                         }
                                     },
@@ -222,6 +225,7 @@ fun ModernMediaBrowser(
                                         if (item.isFolder) {
                                             onFolderSelected(item.id)
                                         } else {
+                                            if (item.isVideo) PlaybackTimingLogger.start()
                                             onMediaSelected(item)
                                         }
                                     },
