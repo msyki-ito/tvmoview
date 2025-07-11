@@ -410,4 +410,8 @@ class OneDriveRepository(
         val cached = mediaDao.getItemById(coverId)
         return cached?.toDomain()
     }
+
+    suspend fun getItemById(itemId: String): MediaItem? = withContext(Dispatchers.IO) {
+        mediaDao.getItemById(itemId)?.toDomain()
+    }
 }

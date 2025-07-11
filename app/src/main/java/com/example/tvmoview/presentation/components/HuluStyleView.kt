@@ -38,12 +38,16 @@ fun HuluStyleView(
         snapshotFlow { columnState.firstVisibleItemIndex to columnState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
             .collect { (index, offset) ->
-                when {
-                    index > previousIndex || (index == previousIndex && offset > previousOffset) -> onScroll(false)
-                    index < previousIndex || (index == previousIndex && offset < previousOffset) -> onScroll(true)
+                val deltaIndex = index - previousIndex
+                val deltaOffset = offset - previousOffset
+                if (kotlin.math.abs(deltaOffset) > 20 || deltaIndex != 0) {
+                    when {
+                        deltaIndex > 0 || (deltaIndex == 0 && deltaOffset > 0) -> onScroll(false)
+                        deltaIndex < 0 || (deltaIndex == 0 && deltaOffset < 0) -> onScroll(true)
+                    }
+                    previousIndex = index
+                    previousOffset = offset
                 }
-                previousIndex = index
-                previousOffset = offset
             }
     }
 

@@ -22,11 +22,16 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.common.Player
+import com.example.tvmoview.domain.model.MediaItem as DomainMediaItem
 import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
@@ -47,12 +52,19 @@ fun HighQualityPlayerScreen(
         value = resolveVideoUrl(itemId, downloadUrl)
     }
 
+    val itemInfo by produceState<DomainMediaItem?>(null, itemId) {
+        value = MainActivity.oneDriveRepository.getItemById(itemId)
+    }
+
     // カスタムシークバー表示制御
     var showCustomSeek by remember { mutableStateOf(false) }
     var currentPosition by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
     var seekMessage by remember { mutableStateOf("") }
     var seekForward by remember { mutableStateOf(true) }
+
+    var showCover by remember { mutableStateOf(true) }
+    var bufferProgress by remember { mutableFloatStateOf(0f) }
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
@@ -88,9 +100,28 @@ fun HighQualityPlayerScreen(
             }
         }
         playerView?.player = exoPlayer
+        showCover = true
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer
+    }
+
+    LaunchedEffect(exoPlayer) {
+        val player = exoPlayer
+        if (player != null) {
+            showCover = true
+            val listener = object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY) showCover = false
+                }
+            }
+            player.addListener(listener)
+            while (showCover) {
+                bufferProgress = player.bufferedPercentage / 100f
+                delay(100)
+            }
+            player.removeListener(listener)
+        }
     }
 
     // カスタムシークバー表示コルーチン
@@ -248,6 +279,31 @@ fun HighQualityPlayerScreen(
                 modifier = Modifier.fillMaxSize()
             )
         } ?: LoadingAnimation()
+
+        if (showCover) {
+            val thumb = itemInfo?.thumbnailUrl
+            thumb?.let { url ->
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(url)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White
+            )
+            LinearProgressIndicator(
+                progress = bufferProgress,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
+        }
 
 
 
