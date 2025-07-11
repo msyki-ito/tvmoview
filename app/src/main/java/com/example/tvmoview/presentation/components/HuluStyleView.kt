@@ -45,9 +45,9 @@ fun HuluStyleView(
                         deltaIndex > 0 || (deltaIndex == 0 && deltaOffset > 0) -> onScroll(false)
                         deltaIndex < 0 || (deltaIndex == 0 && deltaOffset < 0) -> onScroll(true)
                     }
-                    previousIndex = index
-                    previousOffset = offset
                 }
+                previousIndex = index
+                previousOffset = offset
             }
     }
 
