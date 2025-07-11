@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +48,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.media3.common.Player
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -172,6 +175,7 @@ private fun MainPreviewArea(
                             VideoPreview(
                                 videoUrl = url,
                                 videoId = currentMedia.id,
+                                thumbnailUrl = currentMedia.thumbnailUrl ?: currentMedia.downloadUrl,
                                 viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -269,11 +273,14 @@ private fun MainPreviewArea(
 private fun VideoPreview(
     videoUrl: String,
     videoId: String,
+    thumbnailUrl: String?,
     viewModel: MediaBrowserViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var currentPosition by remember { mutableLongStateOf(0L) }
+    var showCover by remember { mutableStateOf(true) }
+    var bufferProgress by remember { mutableFloatStateOf(0f) }
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
@@ -288,26 +295,60 @@ private fun VideoPreview(
         while (true) {
             currentPosition = exoPlayer.currentPosition
             viewModel.updatePreviewPosition(videoId, currentPosition)
+            if (showCover) bufferProgress = exoPlayer.bufferedPercentage / 100f
             delay(100)
         }
     }
 
     DisposableEffect(Unit) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) showCover = false
+            }
+        }
+        exoPlayer.addListener(listener)
         onDispose {
             viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
+            exoPlayer.removeListener(listener)
             exoPlayer.release()
         }
     }
 
-    AndroidView(
-        factory = { ctx ->
-            PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = false
+    Box(modifier = modifier) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = false
+                }
+            },
+            modifier = Modifier.matchParentSize()
+        )
+
+        if (showCover) {
+            thumbnailUrl?.let { url ->
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(url)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
             }
-        },
-        modifier = modifier
-    )
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White
+            )
+            LinearProgressIndicator(
+                progress = bufferProgress,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            )
+        }
+    }
 }
 
 @Composable
