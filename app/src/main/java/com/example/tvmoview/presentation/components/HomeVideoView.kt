@@ -279,6 +279,7 @@ private fun VideoPreview(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val isTransitioning by viewModel.isTransitioningToFullscreen.collectAsState()
     var currentPosition by remember { mutableLongStateOf(0L) }
     var showCover by remember { mutableStateOf(true) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
@@ -301,8 +302,7 @@ private fun VideoPreview(
         }
     }
 
-    DisposableEffect(viewModel.isTransitioningToFullscreen.collectAsState().value) {
-        val isTransitioning = viewModel.isTransitioningToFullscreen.collectAsState().value
+    DisposableEffect(isTransitioning) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) showCover = false
