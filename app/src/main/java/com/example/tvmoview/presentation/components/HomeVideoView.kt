@@ -49,6 +49,7 @@ import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.media3.common.Player
+import com.example.tvmoview.presentation.player.SharedPlayerManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -147,11 +148,11 @@ private fun MainPreviewArea(
         showVideo = false
         videoUrl = null
         if (selectedMedia?.isVideo == true) {
-            // OneDriveからダウンロードURL取得
             val url = com.example.tvmoview.MainActivity.oneDriveRepository
                 .getDownloadUrl(selectedMedia.id)
             if (url != null) {
                 videoUrl = url
+                viewModel.setCurrentVideoUrl(url)
                 delay(500)
                 showVideo = true
             }
@@ -278,16 +279,17 @@ private fun VideoPreview(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val isTransitioning by viewModel.isTransitioningToFullscreen.collectAsState()
     var currentPosition by remember { mutableLongStateOf(0L) }
     var showCover by remember { mutableStateOf(true) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
+        SharedPlayerManager.getOrCreatePlayer(context, videoId).apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
             prepare()
             playWhenReady = true
-            volume = 0f // ミュート
-            repeatMode = ExoPlayer.REPEAT_MODE_ONE // ループ再生
+            volume = 0f
+            repeatMode = ExoPlayer.REPEAT_MODE_ONE
         }
     }
 
@@ -300,7 +302,7 @@ private fun VideoPreview(
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(isTransitioning) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) showCover = false
@@ -310,7 +312,9 @@ private fun VideoPreview(
         onDispose {
             viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
             exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            if (!isTransitioning) {
+                SharedPlayerManager.releasePlayer()
+            }
         }
     }
 

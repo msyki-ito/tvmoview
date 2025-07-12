@@ -36,6 +36,7 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
+import com.example.tvmoview.presentation.player.SharedPlayerManager
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -44,16 +45,29 @@ fun HighQualityPlayerScreen(
     viewModel: MediaBrowserViewModel,
     downloadUrl: String = ""
 ) {
+    Log.d("VideoPlayer", "🚀 HighQualityPlayerScreen開始: $itemId")
+
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
-        value = resolveVideoUrl(itemId, downloadUrl)
+    val resolvedUrl by produceState<String?>(null, itemId) {
+        Log.d("VideoPlayer", "\uD83D\uDCE1 URL解決開始")
+        val cachedUrl = viewModel.currentVideoUrl.value
+        if (cachedUrl != null && SharedPlayerManager.currentVideoId.value == itemId) {
+            Log.d("VideoPlayer", "\u2705 キャッシュURL使用: ${cachedUrl.take(50)}...")
+            value = cachedUrl
+        } else {
+            Log.d("VideoPlayer", "\uD83D\uDD04 新規URL取得開始")
+            value = resolveVideoUrl(itemId, downloadUrl)
+        }
+        Log.d("VideoPlayer", "\uD83D\uDCE1 URL解決完了")
     }
 
     val itemInfo by produceState<DomainMediaItem?>(null, itemId) {
-        value = MainActivity.oneDriveRepository.getItemById(itemId)
+        if (SharedPlayerManager.currentVideoId.value != itemId) {
+            value = MainActivity.oneDriveRepository.getItemById(itemId)
+        }
     }
 
     // カスタムシークバー表示制御
@@ -63,7 +77,7 @@ fun HighQualityPlayerScreen(
     var seekMessage by remember { mutableStateOf("") }
     var seekForward by remember { mutableStateOf(true) }
 
-    var showCover by remember { mutableStateOf(true) }
+    var showCover by remember { mutableStateOf(false) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
 
     // PlayerView参照用とコントローラー制御
@@ -82,34 +96,46 @@ fun HighQualityPlayerScreen(
     }
 
     LaunchedEffect(resolvedUrl) {
+        Log.d("VideoPlayer", "\uD83C\uDFAC Player初期化開始")
         releasePlayer()
-        exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                val previewPos = viewModel.getAndClearPreviewPosition(itemId)
-                val savedPos = UserPreferences.getResumePosition(itemId)
-                val resume = if (previewPos > 0) previewPos else savedPos
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+        val transferredPlayer = SharedPlayerManager.transferPlayer()
+
+        val isTransferred = transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId
+        Log.d("VideoPlayer", "\uD83D\uDD04 転送プレイヤー: $isTransferred")
+
+        exoPlayer = if (isTransferred) {
+            showCover = false
+            transferredPlayer!!.apply {
+                volume = 1f
+                repeatMode = ExoPlayer.REPEAT_MODE_OFF
+            }
+        } else {
+            showCover = true
+            resolvedUrl?.let { url ->
+                ExoPlayer.Builder(context).build().apply {
+                    setMediaItem(MediaItem.fromUri(url))
+                    prepare()
+                    val previewPos = viewModel.getAndClearPreviewPosition(itemId)
+                    val savedPos = UserPreferences.getResumePosition(itemId)
+                    val resume = if (previewPos > 0) previewPos else savedPos
+                    if (resume > 0) {
+                        seekTo(resume)
+                        Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                    }
+                    playWhenReady = true
                 }
-                player.playWhenReady = true
             }
         }
         playerView?.player = exoPlayer
-        showCover = true
+        viewModel.setFullscreenTransition(false)
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer
     }
 
-    LaunchedEffect(exoPlayer) {
+    LaunchedEffect(exoPlayer, showCover) {
         val player = exoPlayer
-        if (player != null) {
-            showCover = true
+        if (player != null && showCover) {
             val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) showCover = false
@@ -280,8 +306,9 @@ fun HighQualityPlayerScreen(
             )
         } ?: LoadingAnimation()
 
-        if (showCover) {
-            val thumb = itemInfo?.thumbnailUrl
+        val info = itemInfo
+        if (showCover && info != null) {
+            val thumb = info.thumbnailUrl
             thumb?.let { url ->
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
