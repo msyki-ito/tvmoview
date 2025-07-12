@@ -90,13 +90,16 @@ fun HighQualityPlayerScreen(
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
         val transferredPlayer = SharedPlayerManager.transferPlayer()
+        val isTransferred = transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId
 
-        exoPlayer = if (transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId) {
-            transferredPlayer.apply {
+        exoPlayer = if (isTransferred) {
+            showCover = false
+            transferredPlayer!!.apply {
                 volume = 1f
                 repeatMode = ExoPlayer.REPEAT_MODE_OFF
             }
         } else {
+            showCover = true
             resolvedUrl?.let { url ->
                 ExoPlayer.Builder(context).build().apply {
                     setMediaItem(MediaItem.fromUri(url))
@@ -113,17 +116,15 @@ fun HighQualityPlayerScreen(
             }
         }
         playerView?.player = exoPlayer
-        showCover = true
         viewModel.setFullscreenTransition(false)
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer
     }
 
-    LaunchedEffect(exoPlayer) {
+    LaunchedEffect(exoPlayer, showCover) {
         val player = exoPlayer
-        if (player != null) {
-            showCover = true
+        if (player != null && showCover) {
             val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
                     if (state == Player.STATE_READY) showCover = false
