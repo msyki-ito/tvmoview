@@ -306,8 +306,9 @@ fun HighQualityPlayerScreen(
             )
         } ?: LoadingAnimation()
 
-        if (showCover && itemInfo != null) {
-            val thumb = itemInfo.thumbnailUrl
+        val info = itemInfo
+        if (showCover && info != null) {
+            val thumb = info.thumbnailUrl
             thumb?.let { url ->
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
