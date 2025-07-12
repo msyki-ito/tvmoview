@@ -77,7 +77,7 @@ fun ModernTopBar(
 
                 Text(
                     text = currentPath,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f, fill = false)
                 )
