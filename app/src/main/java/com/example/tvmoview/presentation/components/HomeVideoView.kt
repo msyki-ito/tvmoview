@@ -302,7 +302,8 @@ private fun VideoPreview(
         }
     }
 
-    DisposableEffect(isTransitioning) {
+    val transitioningState = rememberUpdatedState(isTransitioning)
+    DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) showCover = false
@@ -312,8 +313,11 @@ private fun VideoPreview(
         onDispose {
             viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
             exoPlayer.removeListener(listener)
-            if (!isTransitioning) {
+            if (!transitioningState.value) {
+                Log.d("HomeVideoView", "🧹 Preview player released")
                 SharedPlayerManager.releasePlayer()
+            } else {
+                Log.d("HomeVideoView", "➡️ Keep player for fullscreen")
             }
         }
     }

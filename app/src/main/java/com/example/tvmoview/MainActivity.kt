@@ -9,20 +9,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import com.example.tvmoview.presentation.screens.SplashScreen
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+
 import com.example.tvmoview.data.repository.MediaRepository
 import com.example.tvmoview.presentation.screens.*
 import com.example.tvmoview.presentation.theme.TVMovieTheme
-import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
+import com.example.tvmoview.presentation.navigation.AppNavigation
 
 // OneDrive統合のための新しいimport
 import com.example.tvmoview.data.auth.AuthenticationManager
@@ -115,7 +106,7 @@ class MainActivity : ComponentActivity() {
                 if (showSplash) {
                     SplashScreen(onFinished = { showSplash = false })
                 } else {
-                    AuthenticationWrapper()
+                    AuthenticationWrapper { AppNavigation() }
                 }
             }
         }
@@ -141,146 +132,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-@Composable
-fun AuthenticationWrapper() {
-    var authState by remember { mutableStateOf<AuthState>(AuthState.Checking) }
-
-    LaunchedEffect(Unit) {
-        authState = if (MainActivity.authManager.isAuthenticated()) {
-            AuthState.Authenticated
-        } else {
-            AuthState.NotAuthenticated
-        }
-    }
-
-    when (authState) {
-        AuthState.Checking -> SplashScreen(onFinished = {})
-
-        AuthState.Authenticated -> {
-            AppNavigation()
-        }
-
-        AuthState.NotAuthenticated -> {
-            LoginScreen(
-                onLoginSuccess = {
-                    authState = AuthState.Authenticated
-                },
-                onUseTestData = {
-                    // テストデータ版で起動
-                    authState = AuthState.Authenticated
-                }
-            )
-        }
-    }
-}
-
-sealed class AuthState {
-    object Checking : AuthState()
-    object Authenticated : AuthState()
-    object NotAuthenticated : AuthState()
-}
-
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-    val owner = LocalContext.current as ViewModelStoreOwner
-    val sharedViewModel: MediaBrowserViewModel = viewModel(viewModelStoreOwner = owner)
-
-    NavHost(
-        navController = navController,
-        startDestination = "home"
-    ) {
-        // ホーム画面（メディア一覧）
-        composable("home") {
-            ModernMediaBrowser(
-                viewModel = sharedViewModel,
-                onMediaSelected = { mediaItem ->
-                    if (mediaItem.isVideo) {
-                        Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
-                        sharedViewModel.setFullscreenTransition(true)
-                        navController.navigate("player/${mediaItem.id}")
-                    } else if (mediaItem.isImage) {
-                        Log.d("MainActivity", "🖼️ 画像選択: ${mediaItem.name}")
-                        navController.navigate("image/${mediaItem.id}")
-                    }
-                },
-                onFolderSelected = { folderId ->
-                    navController.navigate("folder/$folderId")
-                },
-                onSettingsClick = {
-                    navController.navigate("settings")
-                }
-            )
-        }
-
-        // フォルダ内表示
-        composable(
-            "folder/{folderId}",
-            arguments = listOf(navArgument("folderId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val folderId = backStackEntry.arguments?.getString("folderId") ?: ""
-            ModernMediaBrowser(
-                viewModel = sharedViewModel,
-                folderId = folderId,
-                onMediaSelected = { mediaItem ->
-                    if (mediaItem.isVideo) {
-                        Log.d("MainActivity", "🎬 フォルダ内動画選択: ${mediaItem.name}")
-                        sharedViewModel.setFullscreenTransition(true)
-                        navController.navigate("player/${mediaItem.id}")
-                    } else if (mediaItem.isImage) {
-                        Log.d("MainActivity", "🖼️ フォルダ内画像選択: ${mediaItem.name}")
-                        navController.navigate("image/${mediaItem.id}")
-                    }
-                },
-                onFolderSelected = { childFolderId ->
-                    navController.navigate("folder/$childFolderId")
-                },
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        // 動画プレイヤー（downloadURLは再生時に取得）
-        composable(
-            "player/{itemId}",
-            arguments = listOf(
-                navArgument("itemId") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            Log.d("MainActivity", "🎥 プレイヤー起動: itemId=$itemId")
-
-            HighQualityPlayerScreen(
-                itemId = itemId,
-                onBack = { navController.popBackStack() },
-                viewModel = sharedViewModel
-            )
-        }
-
-        // 画像ビューア
-        composable(
-            "image/{itemId}",
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
-            val parentFolderId = navController.previousBackStackEntry?.arguments?.getString("folderId")
-
-            Log.d("MainActivity", "🖼️ 画像ビューワー起動: itemId=$itemId, parentFolder=$parentFolderId")
-
-            ImageViewerScreen(
-                currentImageId = itemId,
-                folderId = parentFolderId,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // 設定画面
-        composable("settings") {
-            SettingsScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
-    }
-}
+
