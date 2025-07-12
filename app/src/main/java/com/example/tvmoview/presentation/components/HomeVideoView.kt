@@ -302,8 +302,9 @@ private fun VideoPreview(
         }
     }
 
+    val isTransitioningState = rememberUpdatedState(isTransitioning)
+
     DisposableEffect(Unit) {
-        val isTransitioningState = rememberUpdatedState(isTransitioning)
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) showCover = false
