@@ -49,8 +49,13 @@ fun HighQualityPlayerScreen(
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
-        value = resolveVideoUrl(itemId, downloadUrl)
+    val resolvedUrl by produceState<String?>(null, itemId) {
+        val cachedUrl = viewModel.currentVideoUrl.value
+        if (cachedUrl != null && SharedPlayerManager.currentVideoId.value == itemId) {
+            value = cachedUrl
+        } else {
+            value = resolveVideoUrl(itemId, downloadUrl)
+        }
     }
 
     val itemInfo by produceState<DomainMediaItem?>(null, itemId) {
@@ -64,7 +69,7 @@ fun HighQualityPlayerScreen(
     var seekMessage by remember { mutableStateOf("") }
     var seekForward by remember { mutableStateOf(true) }
 
-    var showCover by remember { mutableStateOf(true) }
+    var showCover by remember { mutableStateOf(SharedPlayerManager.currentVideoId.value != itemId) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
 
     // PlayerView参照用とコントローラー制御

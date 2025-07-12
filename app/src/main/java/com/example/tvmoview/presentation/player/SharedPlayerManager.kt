@@ -29,6 +29,14 @@ object SharedPlayerManager {
         return player
     }
 
+    fun isCurrentVideo(videoId: String): Boolean {
+        return sharedPlayer != null && _currentVideoId.value == videoId
+    }
+
+    fun getCurrentPosition(): Long {
+        return sharedPlayer?.currentPosition ?: 0L
+    }
+
     fun releasePlayer() {
         sharedPlayer?.release()
         sharedPlayer = null

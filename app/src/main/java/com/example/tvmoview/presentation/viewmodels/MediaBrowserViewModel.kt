@@ -83,6 +83,13 @@ class MediaBrowserViewModel : ViewModel() {
     private val _isTransitioningToFullscreen = MutableStateFlow(false)
     val isTransitioningToFullscreen: StateFlow<Boolean> = _isTransitioningToFullscreen
 
+    private val _currentVideoUrl = MutableStateFlow<String?>(null)
+    val currentVideoUrl: StateFlow<String?> = _currentVideoUrl.asStateFlow()
+
+    fun setCurrentVideoUrl(url: String?) {
+        _currentVideoUrl.value = url
+    }
+
     fun setFullscreenTransition(isTransitioning: Boolean) {
         _isTransitioningToFullscreen.value = isTransitioning
     }

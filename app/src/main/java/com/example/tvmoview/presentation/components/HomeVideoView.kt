@@ -148,11 +148,11 @@ private fun MainPreviewArea(
         showVideo = false
         videoUrl = null
         if (selectedMedia?.isVideo == true) {
-            // OneDriveからダウンロードURL取得
             val url = com.example.tvmoview.MainActivity.oneDriveRepository
                 .getDownloadUrl(selectedMedia.id)
             if (url != null) {
                 videoUrl = url
+                viewModel.setCurrentVideoUrl(url)
                 delay(500)
                 showVideo = true
             }
