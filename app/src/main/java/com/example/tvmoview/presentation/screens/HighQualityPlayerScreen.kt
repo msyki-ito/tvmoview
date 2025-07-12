@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.media3.common.MediaItem
@@ -82,6 +85,21 @@ fun HighQualityPlayerScreen(
 
     // PlayerView参照用とコントローラー制御
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
+
+    // 画面遷移アニメーション制御
+    val transitioning by viewModel.isTransitioningToFullscreen.collectAsState()
+    var startAnim by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (startAnim) 1f else 0.95f,
+        animationSpec = tween(300),
+        label = "fullscreenScale"
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (startAnim) 1f else 0f,
+        animationSpec = tween(300),
+        label = "fullscreenAlpha"
+    )
+    LaunchedEffect(transitioning) { startAnim = true }
 
     Log.d("VideoPlayer", "🎬 プレイヤー起動: itemId=$itemId")
 
@@ -218,6 +236,11 @@ fun HighQualityPlayerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = alpha
+            }
             .background(Color.Black)
             .focusRequester(focusRequester)
             .focusable()
