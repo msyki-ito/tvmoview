@@ -19,9 +19,9 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="background_light">#FAFAFA</color>
-    <color name="background_dark">#121212</color>
+    <color name="background_dark">#000000</color>
     <color name="surface_light">#FFFFFF</color>
-    <color name="surface_dark">#1E1E1E</color>
+    <color name="surface_dark">#222222</color>
 
     <!-- テキストカラー -->
     <color name="text_primary_light">#212121</color>
@@ -74,9 +74,9 @@
     <color name="md_theme_dark_errorContainer">#C62828</color>
     <color name="md_theme_dark_onError">#FFFFFF</color>
     <color name="md_theme_dark_onErrorContainer">#FFCDD2</color>
-    <color name="md_theme_dark_background">#121212</color>
+    <color name="md_theme_dark_background">#000000</color>
     <color name="md_theme_dark_onBackground">#E0E0E0</color>
-    <color name="md_theme_dark_surface">#1E1E1E</color>
+    <color name="md_theme_dark_surface">#222222</color>
     <color name="md_theme_dark_onSurface">#E0E0E0</color>
     <color name="md_theme_dark_surfaceVariant">#2E2E2E</color>
     <color name="md_theme_dark_onSurfaceVariant">#BDBDBD</color>
