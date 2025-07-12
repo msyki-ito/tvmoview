@@ -152,6 +152,7 @@ private fun MainPreviewArea(
                 .getDownloadUrl(selectedMedia.id)
             if (url != null) {
                 videoUrl = url
+                viewModel.updatePreviewUrl(selectedMedia.id, url)
                 delay(500)
                 showVideo = true
             }

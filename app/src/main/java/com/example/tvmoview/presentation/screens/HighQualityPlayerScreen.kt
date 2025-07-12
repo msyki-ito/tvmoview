@@ -48,8 +48,9 @@ fun HighQualityPlayerScreen(
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    val resolvedUrl by produceState<String?>(null, itemId, downloadUrl) {
-        value = resolveVideoUrl(itemId, downloadUrl)
+    val previewUrl = remember(itemId) { viewModel.getAndClearPreviewUrl(itemId) }
+    val resolvedUrl by produceState<String?>(previewUrl, itemId, downloadUrl) {
+        value = previewUrl ?: resolveVideoUrl(itemId, downloadUrl)
     }
 
     val itemInfo by produceState<DomainMediaItem?>(null, itemId) {

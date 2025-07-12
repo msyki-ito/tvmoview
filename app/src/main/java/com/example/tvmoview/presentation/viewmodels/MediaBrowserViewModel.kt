@@ -80,15 +80,24 @@ class MediaBrowserViewModel : ViewModel() {
     private val _previewVideoId = MutableStateFlow<String?>(null)
     val previewVideoId: StateFlow<String?> = _previewVideoId.asStateFlow()
 
+    private val _previewVideoUrl = MutableStateFlow<String?>(null)
+    val previewVideoUrl: StateFlow<String?> = _previewVideoUrl.asStateFlow()
+
     fun updatePreviewPosition(videoId: String, position: Long) {
         _previewVideoId.value = videoId
         _previewPlaybackPosition.value = position
         Log.d("MediaBrowserViewModel", "Preview position updated: $videoId at ${position}ms")
     }
 
+    fun updatePreviewUrl(videoId: String, url: String) {
+        _previewVideoId.value = videoId
+        _previewVideoUrl.value = url
+    }
+
     fun clearPreviewPosition() {
         _previewVideoId.value = null
         _previewPlaybackPosition.value = 0L
+        _previewVideoUrl.value = null
     }
 
     fun getAndClearPreviewPosition(videoId: String): Long {
@@ -99,6 +108,14 @@ class MediaBrowserViewModel : ViewModel() {
         } else {
             0L
         }
+    }
+
+    fun getAndClearPreviewUrl(videoId: String): String? {
+        return if (_previewVideoId.value == videoId) {
+            val url = _previewVideoUrl.value
+            _previewVideoUrl.value = null
+            url
+        } else null
     }
 
     private var loadJob: Job? = null
