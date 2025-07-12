@@ -1,4 +1,4 @@
-# 📘 SYMBOLS.md (generated 2025-07-09)
+# 📘 SYMBOLS.md (generated 2025-07-12)
 
 ## 
 - AuthenticationManager
@@ -131,6 +131,7 @@
   - [F] getDownloadUrl(itemId: String): String?
   - [F] getFolderCoverItem(folderId: String): MediaItem?
   - [F] getFolderItems(folderId: String? = null, force: Boolean = false): Flow<List<MediaItem>>
+  - [F] getItemById(itemId: String): MediaItem?
   - [F] setFolderCover(folderId: String, itemId: String)
 
 ## com.example.tvmoview.domain.model
