@@ -45,21 +45,29 @@ fun HighQualityPlayerScreen(
     viewModel: MediaBrowserViewModel,
     downloadUrl: String = ""
 ) {
+    Log.d("VideoPlayer", "🚀 HighQualityPlayerScreen開始: $itemId")
+
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
     val coroutineScope = rememberCoroutineScope()
 
     val resolvedUrl by produceState<String?>(null, itemId) {
+        Log.d("VideoPlayer", "\uD83D\uDCE1 URL解決開始")
         val cachedUrl = viewModel.currentVideoUrl.value
         if (cachedUrl != null && SharedPlayerManager.currentVideoId.value == itemId) {
+            Log.d("VideoPlayer", "\u2705 キャッシュURL使用: ${cachedUrl.take(50)}...")
             value = cachedUrl
         } else {
+            Log.d("VideoPlayer", "\uD83D\uDD04 新規URL取得開始")
             value = resolveVideoUrl(itemId, downloadUrl)
         }
+        Log.d("VideoPlayer", "\uD83D\uDCE1 URL解決完了")
     }
 
     val itemInfo by produceState<DomainMediaItem?>(null, itemId) {
-        value = MainActivity.oneDriveRepository.getItemById(itemId)
+        if (SharedPlayerManager.currentVideoId.value != itemId) {
+            value = MainActivity.oneDriveRepository.getItemById(itemId)
+        }
     }
 
     // カスタムシークバー表示制御
@@ -69,7 +77,7 @@ fun HighQualityPlayerScreen(
     var seekMessage by remember { mutableStateOf("") }
     var seekForward by remember { mutableStateOf(true) }
 
-    var showCover by remember { mutableStateOf(SharedPlayerManager.currentVideoId.value != itemId) }
+    var showCover by remember { mutableStateOf(false) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
 
     // PlayerView参照用とコントローラー制御
@@ -88,9 +96,12 @@ fun HighQualityPlayerScreen(
     }
 
     LaunchedEffect(resolvedUrl) {
+        Log.d("VideoPlayer", "\uD83C\uDFAC Player初期化開始")
         releasePlayer()
         val transferredPlayer = SharedPlayerManager.transferPlayer()
+
         val isTransferred = transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId
+        Log.d("VideoPlayer", "\uD83D\uDD04 転送プレイヤー: $isTransferred")
 
         exoPlayer = if (isTransferred) {
             showCover = false
@@ -295,8 +306,8 @@ fun HighQualityPlayerScreen(
             )
         } ?: LoadingAnimation()
 
-        if (showCover) {
-            val thumb = itemInfo?.thumbnailUrl
+        if (showCover && itemInfo != null) {
+            val thumb = itemInfo.thumbnailUrl
             thumb?.let { url ->
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
