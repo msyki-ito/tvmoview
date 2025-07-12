@@ -198,6 +198,7 @@ fun AppNavigation() {
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         Log.d("MainActivity", "🎬 動画選択: ${mediaItem.name}")
+                        sharedViewModel.setFullscreenTransition(true)
                         navController.navigate("player/${mediaItem.id}")
                     } else if (mediaItem.isImage) {
                         Log.d("MainActivity", "🖼️ 画像選択: ${mediaItem.name}")
@@ -225,6 +226,7 @@ fun AppNavigation() {
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
                         Log.d("MainActivity", "🎬 フォルダ内動画選択: ${mediaItem.name}")
+                        sharedViewModel.setFullscreenTransition(true)
                         navController.navigate("player/${mediaItem.id}")
                     } else if (mediaItem.isImage) {
                         Log.d("MainActivity", "🖼️ フォルダ内画像選択: ${mediaItem.name}")

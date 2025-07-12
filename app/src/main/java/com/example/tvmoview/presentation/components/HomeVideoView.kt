@@ -49,6 +49,7 @@ import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.media3.common.Player
+import com.example.tvmoview.presentation.player.SharedPlayerManager
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -282,12 +283,12 @@ private fun VideoPreview(
     var showCover by remember { mutableStateOf(true) }
     var bufferProgress by remember { mutableFloatStateOf(0f) }
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
+        SharedPlayerManager.getOrCreatePlayer(context, videoId).apply {
             setMediaItem(ExoMediaItem.fromUri(videoUrl))
             prepare()
             playWhenReady = true
-            volume = 0f // ミュート
-            repeatMode = ExoPlayer.REPEAT_MODE_ONE // ループ再生
+            volume = 0f
+            repeatMode = ExoPlayer.REPEAT_MODE_ONE
         }
     }
 
@@ -300,7 +301,8 @@ private fun VideoPreview(
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(viewModel.isTransitioningToFullscreen.collectAsState().value) {
+        val isTransitioning = viewModel.isTransitioningToFullscreen.collectAsState().value
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_READY) showCover = false
@@ -310,7 +312,9 @@ private fun VideoPreview(
         onDispose {
             viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
             exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            if (!isTransitioning) {
+                SharedPlayerManager.releasePlayer()
+            }
         }
     }
 

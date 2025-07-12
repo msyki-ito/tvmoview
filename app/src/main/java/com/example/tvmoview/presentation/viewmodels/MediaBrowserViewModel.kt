@@ -80,6 +80,13 @@ class MediaBrowserViewModel : ViewModel() {
     private val _previewVideoId = MutableStateFlow<String?>(null)
     val previewVideoId: StateFlow<String?> = _previewVideoId.asStateFlow()
 
+    private val _isTransitioningToFullscreen = MutableStateFlow(false)
+    val isTransitioningToFullscreen: StateFlow<Boolean> = _isTransitioningToFullscreen
+
+    fun setFullscreenTransition(isTransitioning: Boolean) {
+        _isTransitioningToFullscreen.value = isTransitioning
+    }
+
     fun updatePreviewPosition(videoId: String, position: Long) {
         _previewVideoId.value = videoId
         _previewPlaybackPosition.value = position

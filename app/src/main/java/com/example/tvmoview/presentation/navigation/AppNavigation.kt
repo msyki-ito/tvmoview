@@ -29,6 +29,7 @@ fun AppNavigation() {
                 folderId = null,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
+                        sharedViewModel.setFullscreenTransition(true)
                         navController.navigate("player/${mediaItem.id}")
                     }
                 },
@@ -55,6 +56,7 @@ fun AppNavigation() {
                 folderId = folderId,
                 onMediaSelected = { mediaItem ->
                     if (mediaItem.isVideo) {
+                        sharedViewModel.setFullscreenTransition(true)
                         navController.navigate("player/${mediaItem.id}")
                     }
                 },

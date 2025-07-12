@@ -36,6 +36,7 @@ import com.example.tvmoview.MainActivity
 import com.example.tvmoview.data.prefs.UserPreferences
 import com.example.tvmoview.presentation.components.LoadingAnimation
 import com.example.tvmoview.presentation.viewmodels.MediaBrowserViewModel
+import com.example.tvmoview.presentation.player.SharedPlayerManager
 
 @Composable
 fun HighQualityPlayerScreen(
@@ -83,24 +84,32 @@ fun HighQualityPlayerScreen(
 
     LaunchedEffect(resolvedUrl) {
         releasePlayer()
-        exoPlayer = resolvedUrl?.let { url ->
-            ExoPlayer.Builder(context).build().also { player ->
-                Log.d("VideoPlayer", "📺 動画URL設定: $url")
-                val mediaItem = MediaItem.fromUri(url)
-                player.setMediaItem(mediaItem)
-                player.prepare()
-                val previewPos = viewModel.getAndClearPreviewPosition(itemId)
-                val savedPos = UserPreferences.getResumePosition(itemId)
-                val resume = if (previewPos > 0) previewPos else savedPos
-                if (resume > 0) {
-                    player.seekTo(resume)
-                    Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+        val transferredPlayer = SharedPlayerManager.transferPlayer()
+
+        exoPlayer = if (transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId) {
+            transferredPlayer.apply {
+                volume = 1f
+                repeatMode = ExoPlayer.REPEAT_MODE_OFF
+            }
+        } else {
+            resolvedUrl?.let { url ->
+                ExoPlayer.Builder(context).build().apply {
+                    setMediaItem(MediaItem.fromUri(url))
+                    prepare()
+                    val previewPos = viewModel.getAndClearPreviewPosition(itemId)
+                    val savedPos = UserPreferences.getResumePosition(itemId)
+                    val resume = if (previewPos > 0) previewPos else savedPos
+                    if (resume > 0) {
+                        seekTo(resume)
+                        Log.d("VideoPlayer", "⏩ 再開位置 $resume")
+                    }
+                    playWhenReady = true
                 }
-                player.playWhenReady = true
             }
         }
         playerView?.player = exoPlayer
         showCover = true
+        viewModel.setFullscreenTransition(false)
     }
     LaunchedEffect(playerView, exoPlayer) {
         playerView?.player = exoPlayer
