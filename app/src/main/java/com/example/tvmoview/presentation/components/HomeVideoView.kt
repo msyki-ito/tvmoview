@@ -314,7 +314,10 @@ private fun VideoPreview(
             viewModel.updatePreviewPosition(videoId, exoPlayer.currentPosition)
             exoPlayer.removeListener(listener)
             if (!transitioningState.value) {
+                Log.d("HomeVideoView", "🧹 Preview player released")
                 SharedPlayerManager.releasePlayer()
+            } else {
+                Log.d("HomeVideoView", "➡️ Keep player for fullscreen")
             }
         }
     }
