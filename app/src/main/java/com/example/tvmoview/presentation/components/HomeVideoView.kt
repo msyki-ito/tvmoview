@@ -54,7 +54,7 @@ import java.util.*
 
 // カラー定義
 object HomeVideoColors {
-    val BackgroundPrimary = Color(0xFF0B0C0F)
+    val BackgroundPrimary = Color(0xFF000000)
     val CardBorderFocus = Color.White
     val TextPrimary = Color.White.copy(alpha = 0.9f)
     val TextSecondary = Color.White.copy(alpha = 0.7f)
