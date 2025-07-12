@@ -150,12 +150,11 @@ private fun MainPreviewArea(
             // OneDriveからダウンロードURL取得
             val url = com.example.tvmoview.MainActivity.oneDriveRepository
                 .getDownloadUrl(selectedMedia.id)
-            if (url != null) {
-                videoUrl = url
-                viewModel.updatePreviewUrl(selectedMedia.id, url)
-                delay(500)
-                showVideo = true
-            }
+                ?: getTestVideoUrl(selectedMedia.id)
+            videoUrl = url
+            viewModel.updatePreviewUrl(selectedMedia.id, url)
+            delay(500)
+            showVideo = true
         }
     }
 
@@ -609,5 +608,17 @@ private fun formatDuration(ms: Long): String {
     return when {
         hours > 0 -> String.format("%d:%02d:%02d", hours, minutes, seconds)
         else -> String.format("%d:%02d", minutes, seconds)
+    }
+}
+
+// テスト動画URL取得（プレイヤーと共用）
+private fun getTestVideoUrl(itemId: String): String {
+    return when (itemId.takeLast(1)) {
+        "1" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        "2" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+        "3" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        "4" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+        "5" -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        else -> "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
     }
 }

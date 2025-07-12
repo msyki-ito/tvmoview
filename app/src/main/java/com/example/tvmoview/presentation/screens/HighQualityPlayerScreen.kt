@@ -50,7 +50,8 @@ fun HighQualityPlayerScreen(
 
     val previewUrl = remember(itemId) { viewModel.getAndClearPreviewUrl(itemId) }
     val resolvedUrl by produceState<String?>(previewUrl, itemId, downloadUrl) {
-        value = previewUrl ?: resolveVideoUrl(itemId, downloadUrl)
+        val fresh = resolveVideoUrl(itemId, downloadUrl, previewUrl)
+        value = fresh
     }
 
     val itemInfo by produceState<DomainMediaItem?>(null, itemId) {
@@ -377,13 +378,20 @@ private fun formatTime(timeMs: Long): String {
 
 // 動画URL取得（OneDrive統合版）
 
-private suspend fun resolveVideoUrl(itemId: String, downloadUrl: String): String {
-    // 再生直前で常に最新のURLを取得する
+private suspend fun resolveVideoUrl(
+    itemId: String,
+    downloadUrl: String,
+    previewUrl: String? = null,
+): String {
     val freshUrl = MainActivity.oneDriveRepository.getDownloadUrl(itemId)
     return when {
         freshUrl != null -> {
             Log.d("VideoPlayer", "✅ downloadURL取得成功: $itemId")
             freshUrl
+        }
+        previewUrl != null -> {
+            Log.d("VideoPlayer", "⚠️ 新規URL取得失敗、プレビューURL使用: $itemId")
+            previewUrl
         }
         downloadUrl.isNotEmpty() -> {
             Log.d("VideoPlayer", "⚠️ 新規URL取得失敗、既存downloadURL使用: $itemId")
