@@ -96,20 +96,23 @@ fun HighQualityPlayerScreen(
     }
 
     LaunchedEffect(resolvedUrl) {
+        val transferred = SharedPlayerManager.transferPlayer()
+        val currentUri = transferred?.currentMediaItem?.localConfiguration?.uri?.toString()
+        val useTransfer = transferred != null &&
+            SharedPlayerManager.currentVideoId.value == itemId &&
+            (resolvedUrl == null || resolvedUrl == currentUri)
+
         Log.d("VideoPlayer", "\uD83C\uDFAC Player初期化開始")
-        releasePlayer()
-        val transferredPlayer = SharedPlayerManager.transferPlayer()
+        Log.d("VideoPlayer", "\uD83D\uDD04 転送プレイヤー: $useTransfer")
 
-        val isTransferred = transferredPlayer != null && SharedPlayerManager.currentVideoId.value == itemId
-        Log.d("VideoPlayer", "\uD83D\uDD04 転送プレイヤー: $isTransferred")
-
-        exoPlayer = if (isTransferred) {
+        exoPlayer = if (useTransfer) {
             showCover = false
-            transferredPlayer!!.apply {
+            transferred!!.apply {
                 volume = 1f
                 repeatMode = ExoPlayer.REPEAT_MODE_OFF
             }
         } else {
+            releasePlayer()
             showCover = true
             resolvedUrl?.let { url ->
                 ExoPlayer.Builder(context).build().apply {
